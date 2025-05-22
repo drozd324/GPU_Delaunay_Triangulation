@@ -1,0 +1,24 @@
+point class
+
+ 
+line class
+	
+
+n-triangle class
+	index set
+	point set
+
+
+class convex hull 
+	done*
+
+
+triangulation class
+	create random triangulation
+		
+
+delaunay_tri class inherits from the triangulation class (cool)
+	
+	
+
+

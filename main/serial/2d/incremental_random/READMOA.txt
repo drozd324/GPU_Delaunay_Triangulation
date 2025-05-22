@@ -1,0 +1,3 @@
+This should contain the random incremental verssion
+of a delaunay triagaulation algo from Numerical
+recipies
