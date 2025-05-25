@@ -1,8 +1,8 @@
-#include <math>
+#ifndef CIRCLE_H
+#define CIRCLE_H
 
-#include "point.h"
-
-#define SQR(x) (x*x)
+#include "point.h" 
+#include "macros.h"
 
 struct Circle {
 	Point center;
@@ -43,12 +43,10 @@ Circle circumcircle(Point a, Point b, Point c) {
 double incircle(Point d, Point a, Point b, Point c){
 	// Return positive, zero, or negative value if point d is respectively inside, on, or outside the circle
 	// through points a, b, and c.
-	Circle cc = cricumcircle(a, b, c);
+	Circle cc = circumcircle(a, b, c);
+	double dist_d = SQR(d.x[0] - cc.center.x[0]) + SQR(d.x[1] - cc.center.x[1]); // distance from center to d
 
-	//double dist_d = SQR(d.x[0] - cc.center.x[0]) + SQR(d.x[1] - cc.center.x[1]); // distance from center to d
-	double dist_d = sqrt(SQR(d.x[0] - cc.center.x[0]) + SQR(d.x[1] - cc.center.x[1])); // distance from center to d
-
-	//return (SQR(cc.radius) - dist_d);
-	return cc.radius - dist_d;
+	return SQR(cc.radius) - dist_d;
 }
 
+#endif

@@ -61,3 +61,11 @@ void Trianulation::init(){
 		
 }
 
+
+//triangle_splitting
+//	- convex hull
+//		- sort points
+//			- point struct
+//	- trianglute polygon ()  
+//		- tri struct
+//

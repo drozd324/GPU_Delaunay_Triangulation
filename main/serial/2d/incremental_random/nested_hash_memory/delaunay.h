@@ -1,17 +1,14 @@
-#include <math>
+#ifndef DELAUNAY_H
+#define DELAUNAY_H
 
-#include "my_vector.h"
-#include "point.h"
-#include "circumcircle.h"
-
-#define SQR(x) (x*x)
-
-struct Nullhash {
-	Nullhash(int nn) {}
-	inline unsigned long long fn(const void *key) const {
-		return *((unsigned long long *)key);
-	}
-};
+#include <iostream>
+#include <cmath>
+#include "vector.h"
+#include "ran.h"
+#include "hash.h"
+#include "point.h" 
+#include "circle.h"
+#include "macros.h"
 
 struct Triel {
 	Point *pts;
@@ -21,7 +18,10 @@ struct Triel {
 
 	void setme(int a, int b, int c, Point *ptss) {
 		pts = ptss;
-		p[0] = a; p[1] = b; p[2] = c;
+		p[0] = a;
+		p[1] = b;
+		p[2] = c;
+
 		d[0] = d[1] = d[2] = -1;
 		stat = 1;
 	}
@@ -30,7 +30,7 @@ struct Triel {
 	// (CCW triangle is assumed) equations (21.3.10) and the paragraph below.
 	int contains(Point point) {
 		double d;
-		int i, j, ztest=1;
+		int i, j, ztest=0;
 
 		for (i=0; i<3; ++i) {
 			j = (i+1) % 3;
@@ -40,60 +40,71 @@ struct Triel {
 			if (d < 0.0)
 				return -1;
 			if (d == 0.0) 
-				ztest = 0;
+				ztest = 1;
 		}
-
-		return ztest;
-		//return (ztest? 0:1);
+   
+		return (ztest? 0:1);
 	}
 };
 
+
+struct Nullhash {
+	Nullhash(int nn) {}
+	inline unsigned long long fn(const void *key) const {
+		return *((unsigned long long *)key);
+	}
+};
+
+                                    
 struct Delaunay {
 	//Structure for constructing a Delaunay triangulation from a given set of points.
 
 	int npts, ntri, ntree, ntreemax, opt;
 	double delx, dely;
-	Point* pts;
-	Triel* thelist;
+	vector<Point> pts;
+	vector<Triel> thelist;
 
-	Hash<unsigned long long, int, Nullhash>* linehash;
-	Hash<unsigned long long, int, Nullhash>* trihash;
+	Hash<unsigned long long, int, Nullhash> *linehash;
+	Hash<unsigned long long, int, Nullhash> *trihash;
 	int *perm;
 
-	Delaunay(Point* pvec, int n, int options=0);
+	Delaunay(vector<Point> &pvec, int options=0);
 	Ranhash hashfn;
 	
-	//double interpolate(const Point &p, const double* &fnvals, double defaultval=0.0);
+	//double interpolate(const Point &p, const vector<double> &fnvals, double defaultval=0.0);
 
 	void insertapoint(int r);
-	int whichcontainspt(const Point &p, int strict = 0);
+	int whichcontainspt(const Point &p, int strict=0);
+
 	int storetriangle(int a, int b, int c);
 	void erasetriangle(int a, int b, int c, int d0, int d1, int d2);
-	static unsigned int jran; // Random number counter.
-	static const double fuzz, bigscale;
-};
 
+	//void save_to_file(char* filename);
+
+	static unsigned int jran; // Random number counter.
+	static const double fuzz;
+	static const double bigscale;
+};
+unsigned int Delaunay::jran = 14921620; // Random number counter.
 const double Delaunay::fuzz = 1.0e-6;
 const double Delaunay::bigscale = 1000.0;
-unsigned int Delaunay::jran = 14921620;
 
-
-Delaunay::Delaunay(Point* pvec, int n, int options) 
-		:
-		npts(n), ntri(0), ntree(0), ntreemax(10*npts+1000), 
-		opt(options), pts(npts+3), thelist(ntreemax) {
-			
+Delaunay::Delaunay(vector<Point> &pvec, int options) :
+		npts(pvec.size()), ntri(0), ntree(0), ntreemax(10*npts+1000), 
+		opt(options), pts(npts+3), thelist(ntreemax) 
+{
 	// Construct Delaunay triangulation from an array of points pvec. If bit 0 in options is nonzero, 
 	// hash memories used in the construction are deleted. (Some applications may want to use them
 	// and will set options to 1.)
-
-
+ 
 	linehash = new Hash<unsigned long long, int, Nullhash>(6*npts+12, 6*npts+12);
 	trihash  = new Hash<unsigned long long, int, Nullhash>(2*npts+6, 2*npts+6);
 	perm     = new int[npts]; //Permutation for randomizing point order.
-
-	double xl = xh = pvec[0].x[0]; // Copy points to local store and calculate their bounding box.
-	double yl = yh = pvec[0].x[1];
+							  //
+	// Copy points to local store and calculate their bounding box.
+	double xl, yl, xh, yh;
+	xl = xh = pvec[0].x[0]; 
+	yl = yh = pvec[0].x[1];
 
 	for (int j=0; j<npts; j++) {
 		pts[j] = pvec[j];
@@ -101,19 +112,18 @@ Delaunay::Delaunay(Point* pvec, int n, int options)
 
 		if (pvec[j].x[0] < xl)
 			xl = pvec[j].x[0];
-
 		if (pvec[j].x[0] > xh)
 			xh = pvec[j].x[0];
-
 		if (pvec[j].x[1] < yl)
 			yl = pvec[j].x[1];
-
 		if (pvec[j].x[1] > yh)
 			yh = pvec[j].x[1];
 	}
-
-	delx = xh - xl; // Store bounding box dimensions,  then construct
-	dely = yh - yl;	// the three fictitious points and store them.
+	
+	// Store bounding box dimensions,  then construct
+	// the three fictitious points and store them.
+	delx = xh - xl; 
+	dely = yh - yl;	
 
 	pts[npts]   = Point(0.5*(xl + xh), yh + bigscale*dely);
 	pts[npts+1] = Point(xl - 0.5*bigscale*delx, yl - 0.5*bigscale*dely);
@@ -121,7 +131,7 @@ Delaunay::Delaunay(Point* pvec, int n, int options)
 
 	storetriangle(npts, npts+1, npts+2);
 
-	//Create a random permutation:
+	// Create a random permutation:
 	for (int j=npts; j>0; j--)
 		SWAP(perm[j-1], perm[hashfn.int64(jran++) % j]);
 	
@@ -138,9 +148,9 @@ Delaunay::Delaunay(Point* pvec, int n, int options)
 	}
 
 	if (!(opt & 1)) { //Clean up,  unless option bit says not to.
-		delete [] perm;
-		delete trihash;
-		delete linehash;
+		delete[] perm;
+		delete   trihash;
+		delete   linehash;
 	}
 }
 
@@ -152,17 +162,18 @@ void Delaunay::insertapoint(int r) {
 	int i, j, k, l, s, tno, ntask, d0, d1, d2;
 	unsigned long long key;
 	int tasks[50], taski[50], taskj[50]; // Stacks (3 vertices) for legalizing edges.
-	for (j=0; j<3; j++) { // Find triangle containing point. Fuzz if it lies on an edge.tno = whichcontainspt(pts[r], 1);
+	for (j=0; j<3; j++) { // Find triangle containing point. Fuzz if it lies on an edge.
+		tno = whichcontainspt(pts[r], 1);
 		if (tno >= 0) // The desired result: Point is OK. 
 			break; 
 							 
-		// 21.6 Triangulation and Delaunay Triangulation 1139
 		pts[r].x[0] += fuzz * delx * (hashfn.doub(jran++)-0.5);
 		pts[r].x[1] += fuzz * dely * (hashfn.doub(jran++)-0.5);
 	}
 
-	if (j == 3)
+	if (j == 3) 
 		throw("points degenerate even after fuzzing");
+	
 
 	ntask = 0;
 	
@@ -174,7 +185,8 @@ void Delaunay::insertapoint(int r) {
 	if (opt & 2 && i < npts && j < npts && k < npts)
 		return;
 	
-	d0 = storetriangle(r, i, j); // Create three triangles and queue them for legal edge tests.
+	// Create three triangles and queue them for legal edge tests.
+	d0 = storetriangle(r, i, j); 
 	tasks[++ntask] = r; taski[ntask] = i; taskj[ntask] = j;
 
 	d1 = storetriangle(r, j, k);
@@ -271,27 +283,33 @@ int Delaunay::storetriangle(int a, int b, int c) {
 	key = hashfn.int64(a) ^ hashfn.int64(b) ^ hashfn.int64(c);
 	trihash->set(key, ntree);
 	
-	key = hashfn.int64(b)-hashfn.int64(c);
+	key = hashfn.int64(b) - hashfn.int64(c);
 	linehash->set(key, a);
-
-	key = hashfn.int64(c)-hashfn.int64(a);
+	key = hashfn.int64(c) - hashfn.int64(a);
 	linehash->set(key, b);
-
-	key = hashfn.int64(a)-hashfn.int64(b);
+	key = hashfn.int64(a) - hashfn.int64(b);
 	linehash->set(key, c);
 	
 	if (++ntree == ntreemax) 
 		throw("thelist is sized too small");
 	
+	
 	ntri++;
-	return (ntree-1);
+	return (ntree - 1);
 }
 
-
-//triangle_splitting
-//	- convex hull
-//		- sort points
-//			- point struct
-//	- trianglute polygon ()  
-//		- tri struct
 //
+//void Delaunay::store(char* filename) {
+//	FILE* fp;
+//
+//	fptr = fopen("filename.txt", "w");
+//	for (int i=0; i<thelist.size(); ++i) {
+//		for (int i=0; i<thelist.size(); ++i) {
+//			fprintf(fptr, "%lf ", );
+//		}
+//	}
+//
+//	fclose(fptr);
+//}
+
+#endif
