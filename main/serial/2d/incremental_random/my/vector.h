@@ -1,9 +1,6 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-//#include <vector>
-//using namespace std;
-
 template <typename T>
 struct vector {
 	int n;

@@ -37,11 +37,19 @@
 
 = Motivation
 = Preliminary
-==
 
 = Serial Algorithms
 == Lawsons algorithm
+=== implementation
 == Incremental Point Insertion 
+=== implementation
+
+= The CUDA programming model
+= Parallel Algorithms
+=== implementation
+
+
+
 
 
 #algorithm({
@@ -76,3 +84,6 @@
   )
 })
 
+text in here and funny thing to @NumericalRecipies
+
+#bibliography("references.bib")

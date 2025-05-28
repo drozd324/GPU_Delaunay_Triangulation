@@ -4,7 +4,7 @@
 #include "vector.h"
 
 struct Hashfn {
-	// Example of an object encapsulating a hash function, allowing arbitrary fixed key sizes
+	// Another example of an object encapsulating a hash function, allowing arbitrary fixed key sizes
 	// or variable-length null terminated strings. The hash function algorithm is self-contained.
 
 	static unsigned long long hashfn_tab[256];
@@ -25,7 +25,7 @@ struct Hashfn {
 				h = (h << 11) ^ h;
 				h = (h >> 10) ^ h;
 			}
-			hashfn_tab[j] = h;
+		hashfn_tab[j] = h;
 		}
 	}
 
@@ -44,6 +44,7 @@ struct Hashfn {
 	}
 };
 unsigned long long Hashfn::hashfn_tab[256];
+
 
 template<class keyT, class hfnT> 
 struct Hashtable { 
@@ -81,11 +82,10 @@ Hashtable<keyT, hfnT>::Hashtable(int nh, int nv):
 
 template<class keyT, class hfnT>
 int Hashtable<keyT, hfnT>::iget(const keyT &key) {
-	// Returns integer in 0..nmax-1 corresponding to key, or -1 if no such key was previously stored.
+	// Returns integer in 0..nmax-1 corresponding to key, or 1 if no such key was previously stored.
 	int j, k;
 	unsigned long long pp = hash.fn(&key); // Get 64-bit hash
 	j = (int)(pp % nhash); // and map it into the hash table.
-						   
 	for (k = htable[j]; k != -1; k = next[k]) { // Traverse linked list until an exact match is found.
 		if (thehash[k] == pp) {
 			return k;
@@ -226,6 +226,5 @@ struct Hash : Hashtable<keyT, hfnT> {
 		return (ierase(key) < 0 ? 0 : 1);
 	}
 };
-
 
 #endif
