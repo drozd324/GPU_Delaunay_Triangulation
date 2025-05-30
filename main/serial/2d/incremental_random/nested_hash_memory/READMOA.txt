@@ -4,3 +4,6 @@ recipies
 
 Right now its becoming a collection of bits of code that I
 think will be useful in the future of the project
+
+
+hash function maps wrong? in finding which triel a pt is in

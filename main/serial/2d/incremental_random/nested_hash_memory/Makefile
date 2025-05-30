@@ -6,7 +6,7 @@ DEBUG = -g #-fsanitize=address -lefence
 
 all: $(execs)
 
-main: main.cpp delaunay.h 
+main: main.cpp src/delaunay.h 
 	$(CXX) -o $@ $^ $(DEBUG) $(CXXFLAGS) 
 
 %.o: %.cpp

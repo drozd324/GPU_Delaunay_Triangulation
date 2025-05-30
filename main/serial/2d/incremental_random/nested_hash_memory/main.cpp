@@ -1,31 +1,24 @@
-#include "delaunay.h"
-#include "vector.h"
-#include "ran.h"
+#include "src/delaunay.h"
+#include "src/vector.h"
+#include "src/ran.h"
 
 int main(){
 
-	Ran ran(123);
+	Ran ran(1234);
 
-	int n = 100;
+	int n = 10;
 	vector<Point> points(n);
 	for (int i=0; i<n; ++i) {
 		points[i].x[0] = ran.doub();
 		points[i].x[1] = ran.doub();
 	}
 	
-//	for (int i=0; i<n; ++i) {
-//		std::cout << "(" << points[i].x[0] << ", " << points[i].x[1] << ")\n";
-//	}
-//	std::cout << std::endl;
-	
 	try {
 	  Delaunay delaunay(points);
 	} 
 	catch (const char* msg) {
-		std::cerr << msg;
+		std::cerr << "CAUGHT: " << msg << "\n";
 	}
 				
-	//delaunay.store("triangulation.txt")
 	return 0;	
-
 }

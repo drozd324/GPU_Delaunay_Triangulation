@@ -40,8 +40,7 @@ struct Ran {
 struct Ranhash {
 	// High-quality random hash of an integer into several numeric types.
 
-	unsigned long long u, v;
-	inline unsigned long long int64(unsigned long long) {
+	inline unsigned long long int64(unsigned long long u) {
 		// Returns hash of u as a 64-bit integer.
 		unsigned long long v = u * 3935559000370003845LL + 2691343689449507681LL;
 		v ^= v >> 21; v ^= v << 37; v ^= v >> 4;
@@ -52,7 +51,7 @@ struct Ranhash {
 
 	inline unsigned int int32(unsigned long long u) {
 		// Returns hash of u as a 32-bit integer.
-		return (unsigned int)(int64(u) & 0xffffffff) ;
+		return (unsigned int)(int64(u) & 0xffffffff);
 	}
 
 	inline double doub(unsigned long long u) {

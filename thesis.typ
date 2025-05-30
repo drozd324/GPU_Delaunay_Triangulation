@@ -46,6 +46,8 @@
 
 = The CUDA programming model
 = Parallel Algorithms
+== GPU-DT
+== gDel3d
 === implementation
 
 
@@ -86,4 +88,5 @@
 
 text in here and funny thing to @NumericalRecipies
 
+#pagebreak()
 #bibliography("references.bib")

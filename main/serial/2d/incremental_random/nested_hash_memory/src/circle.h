@@ -3,22 +3,26 @@
 
 #include "point.h" 
 #include "macros.h"
+#include "types.h"
 
 struct Circle {
 	Point center;
-	double radius;
+	real radius;
 
-	Circle(const Point &cen, double rad) : center(cen), radius(rad) {};
+	Circle(const Point &cen, real rad) : center(cen), radius(rad) {};
 };
 
+/*
+ * @brief A function to contruct the circumcircle of 3 points
+ */	
 Circle circumcircle(Point a, Point b, Point c) {
 	// equation (21.3.7)
 	// equation (21.3.8)
 
-	double ba0, ba1, ca0, ca1;
-	double asq, csq;
-	double ctr0, ctr1, rad; // center0, center1, radius
-	double det; 
+	real ba0, ba1, ca0, ca1;
+	real asq, csq;
+	real ctr0, ctr1, rad; // center0, center1, radius
+	real det; 
 
 	ba0 = a.x[0] - b.x[0];
 	ba1 = a.x[1] - b.x[1];
@@ -40,13 +44,13 @@ Circle circumcircle(Point a, Point b, Point c) {
 	return Circle(Point(ctr0 + a.x[0], ctr1 + a.x[1]), rad);
 }
 
-double incircle(Point d, Point a, Point b, Point c){
+real incircle(Point d, Point a, Point b, Point c){
 	// Return positive, zero, or negative value if point d is respectively inside, on, or outside the circle
 	// through points a, b, and c.
 	Circle cc = circumcircle(a, b, c);
-	double dist_d = SQR(d.x[0] - cc.center.x[0]) + SQR(d.x[1] - cc.center.x[1]); // distance from center to d
+	real dist_sqr = SQR(d.x[0] - cc.center.x[0]) + SQR(d.x[1] - cc.center.x[1]); // distance from center to d
 
-	return SQR(cc.radius) - dist_d;
+	return SQR(cc.radius) - dist_sqr;
 }
 
 #endif
