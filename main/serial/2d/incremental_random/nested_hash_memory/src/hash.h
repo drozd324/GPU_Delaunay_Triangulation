@@ -3,6 +3,13 @@
 
 #include "vector.h"
 
+struct Nullhash {
+	Nullhash(int nn) {}
+	inline unsigned long long fn(const void *key) const {
+		return *((unsigned long long *)key);
+	}
+};
+
 struct Hashfn {
 	// Example of an object encapsulating a hash function, allowing arbitrary fixed key sizes
 	// or variable-length null terminated strings. The hash function algorithm is self-contained.

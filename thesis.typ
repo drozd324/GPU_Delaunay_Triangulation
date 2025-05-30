@@ -87,6 +87,7 @@
 })
 
 text in here and funny thing to @NumericalRecipies
+text in here and funny thing to @devadoss2011
 
 #pagebreak()
 #bibliography("references.bib")

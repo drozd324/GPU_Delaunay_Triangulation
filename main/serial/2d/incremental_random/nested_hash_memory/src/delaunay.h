@@ -60,13 +60,6 @@ struct Triel {
 };
 
 
-struct Nullhash {
-	Nullhash(int nn) {}
-	inline unsigned long long fn(const void *key) const {
-		return *((unsigned long long *)key);
-	}
-};
-
                                     
 struct Delaunay {
 	//Structure for constructing a Delaunay triangulation from a given set of points.
@@ -144,7 +137,8 @@ Delaunay::Delaunay(vector<Point> &pvec, int options) :
 
 	// Create a random permutation:
 	for (j=npts; j>0; j--)
-		SWAP(perm[j-1], perm[hashfn.int64(jran++) % j]);
+		//SWAP(perm[j-1], perm[hashfn.int64(jran++) % j]);
+		perm[j-1] = j-1;
 	
 	for (j=0; j<npts; j++) { 
 		std::cout << "========= ITER: " << j << "\n"; 

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 pts = np.loadtxt("./data/points.txt")
 num_pts = len(pts)
 
-for iter in range(num_pts):
+for iter in range(num_pts-3):
 	plt.clf()
 
 	plt.scatter(pts[:,0 ], pts[:, 1], color="red")
