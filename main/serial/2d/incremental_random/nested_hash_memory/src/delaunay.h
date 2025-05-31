@@ -135,11 +135,6 @@ Delaunay::Delaunay(vector<Point> &pvec, int options) :
 
 	storetriangle(npts, npts+1, npts+2);
 
-	// Create a random permutation:
-	for (j=npts; j>0; j--)
-		//SWAP(perm[j-1], perm[hashfn.int64(jran++) % j]);
-		perm[j-1] = j-1;
-	
 	for (j=0; j<npts; j++) { 
 		std::cout << "========= ITER: " << j << "\n"; 
 //		for (int ii=thelist.size(); ii>=0; ii--) {
@@ -147,11 +142,8 @@ Delaunay::Delaunay(vector<Point> &pvec, int options) :
 //			thelist[ii].print();
 //		}
 
-		insertapoint(perm[j]); 
-
+		insertapoint(j); 
 		savetofile(j);
-//		int user;
-//		std::cin >> user;
 	}
 
 //	for (j=0; j<ntree; j++) {	// Delete the huge root triangle and all of its con-necting edges.
@@ -192,16 +184,13 @@ void Delaunay::insertapoint(int r) {
 	for (j=0; j<3; j++) { // Find triangle containing point. Fuzz if it lies on an edge.
 		tno = whichcontainspt(pts[r]);
 		std::cout << "tno : " << tno << "\n";
-//		
+		
 		if (tno >= 0) // The desired result: Point is OK. 
 			break; 
-//							 
+							 
 //		pts[r].x[0] += fuzz * delx * (hashfn.doub(jran++)-0.5);
 //		pts[r].x[1] += fuzz * dely * (hashfn.doub(jran++)-0.5);
 	}
-
-//	if (j == 3) 
-//		throw("points degenerate even after fuzzing");
 
 	ntask = 0; // init
 	// store index of points of mother Triel
@@ -209,50 +198,45 @@ void Delaunay::insertapoint(int r) {
 	j = thelist[tno].p[1];
 	k = thelist[tno].p[2];
 
-//	std::cout << "mother Triel pts: " << i << " " << j << " " << k << "\n";    
-//	std::cout << "insert pt: " << r << "\n";
-
 	// Create three triangles and queue them for legal edge tests.
-	d0 = storetriangle(r, i, j); 
-	tasks[++ntask] = r; taski[ntask] = i; taskj[ntask] = j;
+	d0 = storetriangle(r, i, j);
+	taski[++ntask] = i; taskj[ntask] = j;
 	d1 = storetriangle(r, j, k);
-	tasks[++ntask] = r; taski[ntask] = j; taskj[ntask] = k;
+	taski[++ntask] = j; taskj[ntask] = k;
 	d2 = storetriangle(r, k, i);
-	tasks[++ntask] = r; taski[ntask] = k; taskj[ntask] = i;
-
-	std::cout << "||||||ERASING  (" << i << ", " << j << ", " << k << ")\n";    
-	std::cout << "||||||INSERTING(" << d0 << ", " << d1 << ", " << d2 << ")\n";    
-
-
+	taski[++ntask] = k; taskj[ntask] = i;
 
 	erasetriangle(i, j, k, d0, d1, d2); // Erase the old triangle and init the 3 new daughters
 
-//	while (ntask) { // Legalize edges
-//		s = tasks[ntask]; i = taski[ntask]; j = taskj[ntask--];
-//		key = hashfn.int64(j) - hashfn.int64(i); //  Look up fourth point.
-//
-//		if ( ! linehash->get(key, l) )
-//			continue; // Case of no triangle on other side.
-//
-//		if (incircle(pts[l], pts[j], pts[s], pts[i]) > 0.0) { // Needs legalizing?
-//			// Create two new triangles
-//			d0 = storetriangle(s, l, j);
-//			d1 = storetriangle(s, i, l);
-//			// and erase old ones.
-//			erasetriangle(s, i, j, d0, d1, -1);
-//			erasetriangle(l, j, i, d0, d1, -1);
-//
-//			// Erase line in both directions.
-//			key = hashfn.int64(i) - hashfn.int64(j); 
-//			linehash->erase(key);
-//			key = 0 - key; // Unsigned, hence binary minus.
-//			linehash->erase(key);
-//			
-//			// Two new edges now need checking:
-//			tasks[++ntask] = s; taski[ntask] = l; taskj[ntask] = j;
-//			tasks[++ntask] = s; taski[ntask] = i; taskj[ntask] = l;
-//		}
-//	}
+	std::cout << "FLIPPING\n";
+	while (ntask) { // Legalize edges
+		i = taski[ntask]; j = taskj[ntask--];
+		key = hashfn.int64(j) - hashfn.int64(i); //  Look up fourth point.
+		std::cout << "ntask: " << ntask << "| checking edge (" << i << ", " << j << ")\n";
+
+		if ( ! linehash->get(key, l) )
+			std::cout << "NO TRIANGLE ON OTHER SID\n";
+			continue; // Case of no triangle on other side.
+
+		if (incircle(pts[l], pts[j], pts[r], pts[i]) >= 0.0) {
+			// Create two new triangles
+			d0 = storetriangle(r, l, j);
+			d1 = storetriangle(r, i, l);
+			// and erase old ones.
+			erasetriangle(r, i, j, d0, d1, -1);
+			erasetriangle(l, j, i, d0, d1, -1);
+
+			// Erase line in both directions.
+			key = hashfn.int64(i) - hashfn.int64(j); 
+			linehash->erase(key);
+			key = 0 - key; // Unsigned, hence binary minus.
+			linehash->erase(key);
+			
+			// Two new edges now need checking:
+			taski[ntask] = l; taskj[ntask] = j;
+			taski[ntask] = i; taskj[ntask] = l;
+		}
+	}
 }
 
 int Delaunay::whichcontainspt(const Point &p) { 
@@ -276,9 +260,7 @@ int Delaunay::whichcontainspt(const Point &p) {
 				break;
 		}
 
-		// once the live daughter is found do the following
 		if (i == 3) {
-			//std::cout << "no daughters in whichcontainspt\n";
 			return -1; // No daughters contain the point.
 		}
 
@@ -296,7 +278,7 @@ void Delaunay::erasetriangle(int a, int b, int c, int d0, int d1, int d2) {
 	key = hashfn.int64(a) ^ hashfn.int64(b) ^ hashfn.int64(c);
 	//std::cout << "key to find : " << key << "\n";
 
-	std::cout << "ERASING| " << a << "," << b << ", " << c << "\n";
+	//std::cout << "ERASING| " << a << "," << b << ", " << c << "\n";
 	//std::cout << "      ERASING: " << key << "\n";
 	if (trihash->get(key, j) == 0)
 		throw("nonexistent triangle");
@@ -328,7 +310,7 @@ int Delaunay::storetriangle(int a, int b, int c) {
 	key = hashfn.int64(a) ^ hashfn.int64(b) ^ hashfn.int64(c);
 	trihash->set(key, ntree);
 	//std::cout << "STORING | key: " << key << "| ntree: " << ntree << "\n";
-	std::cout << "STORING | " << a << "," << b << ", " << c << "\n";
+	//std::cout << "STORING | " << a << "," << b << ", " << c << "\n";
 	
 	// save opposite points locations
 	key = hashfn.int64(b) - hashfn.int64(c);

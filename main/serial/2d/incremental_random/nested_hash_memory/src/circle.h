@@ -1,6 +1,7 @@
 #ifndef CIRCLE_H
 #define CIRCLE_H
 
+#include <cmath>
 #include "point.h" 
 #include "macros.h"
 #include "types.h"
@@ -47,8 +48,10 @@ Circle circumcircle(Point a, Point b, Point c) {
 real incircle(Point d, Point a, Point b, Point c){
 	// Return positive, zero, or negative value if point d is respectively inside, on, or outside the circle
 	// through points a, b, and c.
+
 	Circle cc = circumcircle(a, b, c);
-	real dist_sqr = SQR(d.x[0] - cc.center.x[0]) + SQR(d.x[1] - cc.center.x[1]); // distance from center to d
+	// distance from center to d
+	real dist_sqr = SQR(d.x[0] - cc.center.x[0]) + SQR(d.x[1] - cc.center.x[1]); 
 
 	return SQR(cc.radius) - dist_sqr;
 }
