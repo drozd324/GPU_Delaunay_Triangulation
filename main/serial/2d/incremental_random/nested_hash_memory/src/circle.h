@@ -25,8 +25,8 @@ Circle circumcircle(Point a, Point b, Point c) {
 	real ctr0, ctr1, rad; // center0, center1, radius
 	real det; 
 
-	ba0 = a.x[0] - b.x[0];
-	ba1 = a.x[1] - b.x[1];
+	ba0 = b.x[0] - a.x[0];
+	ba1 = b.x[1] - a.x[1];
 	ca0 = c.x[0] - a.x[0];
 	ca1 = c.x[1] - a.x[1];
 
@@ -40,14 +40,14 @@ Circle circumcircle(Point a, Point b, Point c) {
 	csq = SQR(ca0) + SQR(ca1);
 	ctr0 = det*(asq*ca1 - csq*ba1);
 	ctr1 = det*(csq*ba0 - asq*ca0);
-	rad = sqrt(SQR(ctr0 - a.x[0]) + SQR(ctr1 - a.x[1]));
+	rad = sqrt(SQR(ctr0) + SQR(ctr1));
 
 	return Circle(Point(ctr0 + a.x[0], ctr1 + a.x[1]), rad);
 }
 
 real incircle(Point d, Point a, Point b, Point c){
-	// Return positive, zero, or negative value if point d is respectively inside, on, or outside the circle
-	// through points a, b, and c.
+	// Return positive, zero, or negative value if point d is respectively
+	// inside, on, or outside the circle  through points a, b, and c.
 
 	Circle cc = circumcircle(a, b, c);
 	// distance from center to d

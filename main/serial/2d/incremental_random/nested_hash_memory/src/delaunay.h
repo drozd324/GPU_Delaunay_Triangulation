@@ -13,6 +13,8 @@
 #include "macros.h"
 #include "types.h"
 
+int counter = 0;
+
 struct Triel {
 	Point *pts;
 	int p[3]; // indexes of points
@@ -143,7 +145,7 @@ Delaunay::Delaunay(vector<Point> &pvec, int options) :
 //		}
 
 		insertapoint(j); 
-		savetofile(j);
+		//savetofile(j);
 	}
 
 //	for (j=0; j<ntree; j++) {	// Delete the huge root triangle and all of its con-necting edges.
@@ -183,7 +185,7 @@ void Delaunay::insertapoint(int r) {
 
 	for (j=0; j<3; j++) { // Find triangle containing point. Fuzz if it lies on an edge.
 		tno = whichcontainspt(pts[r]);
-		std::cout << "tno : " << tno << "\n";
+		//std::cout << "tno : " << tno << "\n";
 		
 		if (tno >= 0) // The desired result: Point is OK. 
 			break; 
@@ -200,30 +202,38 @@ void Delaunay::insertapoint(int r) {
 
 	// Create three triangles and queue them for legal edge tests.
 	d0 = storetriangle(r, i, j);
-	taski[++ntask] = i; taskj[ntask] = j;
+	tasks[++ntask] = r; taski[ntask] = i; taskj[ntask] = j;
 	d1 = storetriangle(r, j, k);
-	taski[++ntask] = j; taskj[ntask] = k;
+	tasks[++ntask] = r; taski[ntask] = j; taskj[ntask] = k;
 	d2 = storetriangle(r, k, i);
-	taski[++ntask] = k; taskj[ntask] = i;
+	tasks[++ntask] = r; taski[ntask] = k; taskj[ntask] = i;
 
 	erasetriangle(i, j, k, d0, d1, d2); // Erase the old triangle and init the 3 new daughters
 
 	std::cout << "FLIPPING\n";
 	while (ntask) { // Legalize edges
-		i = taski[ntask]; j = taskj[ntask--];
+		savetofile(counter++);
+		s = tasks[ntask]; i = taski[ntask]; j = taskj[ntask--];
 		key = hashfn.int64(j) - hashfn.int64(i); //  Look up fourth point.
-		std::cout << "ntask: " << ntask << "| checking edge (" << i << ", " << j << ")\n";
+		std::cout << "ntask: " << ntask << "| checking (" << s << ", " << i << ", " << j << ")\n";
 
-		if ( ! linehash->get(key, l) )
-			std::cout << "NO TRIANGLE ON OTHER SID\n";
+		//std::cout << "incircle: " << (incircle(pts[l], pts[j], pts[s], pts[i]) > 0.0) << "\n";
+//		// CHECK THE CIRCUM CIRLE CACLULATION AGAIN!!!!! PRINT IT OUT HERE MAYBE
+		//Circle cc = circumcircle(j, s, i);
+//		std::cout << "circumcirle: (" << cc.center.x[0]  << "," << cc.center.x[1] << ") r=" << cc.radius << "\n";
+
+		if ( ! linehash->get(key, l) ) {
+			std::cout << "no triangle on other side\n";
 			continue; // Case of no triangle on other side.
+		} 
 
-		if (incircle(pts[l], pts[j], pts[r], pts[i]) >= 0.0) {
+		if (incircle(pts[l], pts[j], pts[s], pts[i]) > 0.0) {
+			std::cout << "INCIRCLE POSITIVE\n";
 			// Create two new triangles
-			d0 = storetriangle(r, l, j);
-			d1 = storetriangle(r, i, l);
+			d0 = storetriangle(s, l, j);
+			d1 = storetriangle(s, i, l);
 			// and erase old ones.
-			erasetriangle(r, i, j, d0, d1, -1);
+			erasetriangle(s, i, j, d0, d1, -1);
 			erasetriangle(l, j, i, d0, d1, -1);
 
 			// Erase line in both directions.
@@ -233,8 +243,8 @@ void Delaunay::insertapoint(int r) {
 			linehash->erase(key);
 			
 			// Two new edges now need checking:
-			taski[ntask] = l; taskj[ntask] = j;
-			taski[ntask] = i; taskj[ntask] = l;
+			tasks[++ntask] = s; taski[ntask] = l; taskj[ntask] = j;
+			tasks[++ntask] = s; taski[ntask] = i; taskj[ntask] = l;
 		}
 	}
 }
@@ -278,10 +288,12 @@ void Delaunay::erasetriangle(int a, int b, int c, int d0, int d1, int d2) {
 	key = hashfn.int64(a) ^ hashfn.int64(b) ^ hashfn.int64(c);
 	//std::cout << "key to find : " << key << "\n";
 
-	//std::cout << "ERASING| " << a << "," << b << ", " << c << "\n";
+	std::cout << "ERASING| " << a << "," << b << ", " << c << "\n";
 	//std::cout << "      ERASING: " << key << "\n";
-	if (trihash->get(key, j) == 0)
+	if (trihash->get(key, j) == 0) {
+		std::cout << "FAILED TO ERASE| " << a << "," << b << ", " << c << "\n";
 		throw("nonexistent triangle");
+	}
 
 	trihash->erase(key);
 
@@ -310,7 +322,7 @@ int Delaunay::storetriangle(int a, int b, int c) {
 	key = hashfn.int64(a) ^ hashfn.int64(b) ^ hashfn.int64(c);
 	trihash->set(key, ntree);
 	//std::cout << "STORING | key: " << key << "| ntree: " << ntree << "\n";
-	//std::cout << "STORING | " << a << "," << b << ", " << c << "\n";
+	std::cout << "STORING | " << a << "," << b << ", " << c << "\n";
 	
 	// save opposite points locations
 	key = hashfn.int64(b) - hashfn.int64(c);

@@ -6,13 +6,16 @@ OBJDIR := obj
 BINDIR := bin
 SRCDIR := src
 
-EXEC_NAMES := main	#test_circ
+EXEC_NAMES := main	test_circ
 EXECS := $(addprefix $(BINDIR)/, $(EXEC_NAMES))
 OBJS := $(addsuffix .o, $(addprefix $(OBJDIR)/, $(EXEC_NAMES)))
 
 all: $(EXECS)
 
 $(BINDIR)/main: main.cpp
+	$(CXX) -o $@ $^ $(DEBUG) $(CXXFLAGS)
+
+$(BINDIR)/test_circ: test_circ.cpp
 	$(CXX) -o $@ $^ $(DEBUG) $(CXXFLAGS)
 
 #$(BINDIR)/%: $(OBJDIR)/%.o | $(BINDIR)

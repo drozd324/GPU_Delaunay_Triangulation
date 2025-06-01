@@ -4,7 +4,9 @@ import matplotlib.pyplot as plt
 pts = np.loadtxt("./data/points.txt")
 num_pts = len(pts)
 
-for iter in range(num_pts-3):
+#for iter in range(num_pts-3):
+iter = 0
+while True:
 	plt.clf()
 
 	plt.scatter(pts[:,0 ], pts[:, 1], color="red")
@@ -22,5 +24,8 @@ for iter in range(num_pts-3):
 				
 			plt.plot([x0, x1], [y0, y1], color="black")
 
+	plt.xlim(.5 - 2, .5 + 2)
+	plt.ylim(-1, 4)
 	plt.savefig(f"./data/triangles_iterations_plots/plot_{iter}", dpi=200)
+	iter += 1
 
