@@ -13,7 +13,6 @@
 #include "macros.h"
 #include "types.h"
 
-int counter = 0;
 
 /*
  * Data structure needed for Point instertion algorithm. Its main features are
@@ -22,10 +21,11 @@ int counter = 0;
  * which are represented as ints which belong to an array of all triangle elements and
  * whether this triangle is used in the trianglulation constructed so far.
  */
-struct Triel {
+struct Tri {
 	Point *pts;
 	int p[3]; // indexes of points
 	int d[3]; // indexes of daughter points
+	int nbr[3]; // neighbours of this triangle
 	int stat; // status
 
 	/*
@@ -89,7 +89,8 @@ struct Triel {
 struct Delaunay {
 	int npts, ntri, ntree, ntreemax;
 	vector<Point> pts;
-	vector<Triel> triList;
+	vector<Tri> triList;
+	std::ofstream saveFile;
 
 	Hash<unsigned long long, int, Nullhash> *linehash;
 	Hash<unsigned long long, int, Nullhash> *trihash;
@@ -104,13 +105,14 @@ struct Delaunay {
 	void erasetriangle(int a, int b, int c, int d0, int d1, int d2);
 
 	void initSuperTri(vector<Point> &pvec);
-	void savetofile(int iter);
+	void saveToFile(std::ofstream& file);
 
-	static unsigned int jran; // Random number counter.
+	static unsigned int jran; // Random number iter.
 	static const real fuzz;
 	static const real bigscale;
+	int iter = 0;
 };
-unsigned int Delaunay::jran = 69420; // Random number counter.
+unsigned int Delaunay::jran = 69420; // Random number iter.
 const real Delaunay::fuzz = 1.0e-6;
 const real Delaunay::bigscale = 2.0;
 
@@ -120,22 +122,30 @@ const real Delaunay::bigscale = 2.0;
  */
 Delaunay::Delaunay(vector<Point> &pvec) :
 		npts(pvec.size()), ntri(0), ntree(0), ntreemax(10*npts+1000), 
-		pts(npts+3), triList(ntreemax) 
+		pts(npts+3), triList(ntreemax)
 {
 	// Construct Delaunay triangulation from an array of points pvec. If bit 0 in options is nonzero, 
 	// hash memories used in the construction are deleted. (Some applications may want to use them
 	// and will set options to 1.)
- 
+
 	linehash = new Hash<unsigned long long, int, Nullhash>(6*npts+12, 6*npts+12);
 	trihash  = new Hash<unsigned long long, int, Nullhash>(2*npts+6, 2*npts+6);
 	perm     = new int[npts]; //Permutation for randomizing point order.
+	saveFile.open("./data/data.txt", std::ios_base::app);
 
 	for (int j=0; j<npts; j++) {
 		pts[j] = pvec[j];
 		perm[j] = j;
 	}
+
 //	shuffle(perm, npts);
 	initSuperTri(pvec);
+
+	saveFile << pts.size() << "\n";
+	for (int i=0; i<pts.size(); ++i) {
+		saveFile << pts[i].x[0] << " " << pts[i].x[1] << "\n";
+	}
+	saveFile << "\n"; 
 
 
 	for (int j=0; j<npts; j++) { 
@@ -152,8 +162,8 @@ Delaunay::Delaunay(vector<Point> &pvec) :
 		}
 	}
 
-	savetofile(counter++);
-
+	saveToFile(saveFile);
+	saveFile << iter;
 	delete[] perm;
 	delete   trihash;
 	delete   linehash;
@@ -168,7 +178,6 @@ void Delaunay::initSuperTri(vector<Point> &pvec) {
 		for (int j=i+1; j<npts-1; j++) {
 			for (int k=j+1; k<npts; k++) {
 				Circle cc = circumcircle(pvec[i], pvec[j], pvec[k]);
-				std::cout << i << " " << j << " " << k << "\n";
 			
 				if (cc.center.x[0] - cc.radius < x_low)
 					x_low  = cc.center.x[0] - cc.radius; 
@@ -182,43 +191,15 @@ void Delaunay::initSuperTri(vector<Point> &pvec) {
 		}
 	}
 
-
-
 	real center_x = (x_high + x_low) / 2;
 	real center_y = (y_high + y_low) / 2;
 	real radius = sqrt( SQR(center_x - x_high) + SQR(center_y - y_high) );
 			
-	std::cout << x_low << " " << x_high << " " << y_low << " " << y_high << "\n";
-	std::cout << center_x << " " << center_y << "\n";
-	std::cout << radius << "\n";
-
 	pts[npts]   = Point(center_x, center_y + 2*radius);
 	pts[npts+1] = Point(center_x - radius*sqrt(3), center_y - radius);
 	pts[npts+2] = Point(center_x + radius*sqrt(3), center_y - radius);
 
 	storetriangle(npts, npts+1, npts+2);
-
-//	real xl, xh, yl, yh;
-//	// Copy points to local store and calculate their bounding box.
-//
-//	for (int j=0; j<npts; j++) {
-//
-//		if (pvec[j].x[0] < xl) xl = pvec[j].x[0];
-//		if (pvec[j].x[0] > xh) xh = pvec[j].x[0];
-//		if (pvec[j].x[1] < yl) yl = pvec[j].x[1];
-//		if (pvec[j].x[1] > yh) yh = pvec[j].x[1];
-//	}
-//	
-//	// Store bounding box dimensions,  then construct
-//	// the three fictitious points and store them.
-//	real delx = xh - xl; 
-//	real dely = yh - yl;	
-//
-//	pts[npts]   = Point(0.5*(xl + xh), yh + bigscale*dely);
-//	pts[npts+1] = Point(xl - 0.5*bigscale*delx, yl - 0.5*bigscale*dely);
-//	pts[npts+2] = Point(xh + 0.5*bigscale*delx, yl - 0.5*bigscale*dely);
-//
-//	storetriangle(npts, npts+1, npts+2);
 }
 
 
@@ -230,14 +211,11 @@ void Delaunay::insertapoint(int r) {
 
 	for (j=0; j<3; j++) { // Find triangle containing point. Fuzz if it lies on an edge.
 		tno = whichcontainspt(pts[r]);
-		
 		if (tno >= 0) // The desired result: Point is OK. 
 			break; 
-//		pts[r].x[0] += fuzz * delx * (hashfn.doub(jran++)-0.5);
-//		pts[r].x[1] += fuzz * dely * (hashfn.doub(jran++)-0.5);
 	}
 
-	// store index of points of mother Triel
+	// store index of points of mother Tri
 	i = triList[tno].p[0];
 	j = triList[tno].p[1];
 	k = triList[tno].p[2];
@@ -255,7 +233,7 @@ void Delaunay::insertapoint(int r) {
 	erasetriangle(i, j, k, d0, d1, d2); // Erase the old triangle and init the 3 new daughters
 
 	while (ntask) { // Legalize edges
-		savetofile(counter++);
+		saveToFile(saveFile);
 		i = taski[ntask]; j = taskj[ntask--];
 		key = hashfn.int64(j) - hashfn.int64(i); //  Look up fourth point.
 		std::cout << "ntask: " << ntask << "| checking (" << r << ", " << i << ", " << j << ")\n";
@@ -297,7 +275,6 @@ int Delaunay::whichcontainspt(const Point &p) {
 	// loop through dead triangles
 	int count = 0;
 	//std::cout << "while in whichcontainspt" << "\n";
-	// loop is never entered wtf
 	
 	while (triList[k].stat <= 0) { 
 		//std::cout << "count while in whichcontainspt: " << count++ << "\n";
@@ -357,7 +334,7 @@ int Delaunay::storetriangle(int a, int b, int c) {
 	unsigned long long key;
 	triList[ntree].setme(a, b, c, &pts[0]);
 	
-	// save Triel location
+	// save Tri location
 	key = hashfn.int64(a) ^ hashfn.int64(b) ^ hashfn.int64(c);
 	trihash->set(key, ntree);
 	//std::cout << "STORING | key: " << key << "| ntree: " << ntree << "\n";
@@ -378,29 +355,21 @@ int Delaunay::storetriangle(int a, int b, int c) {
 	return (ntree - 1);
 }
 
-void Delaunay::savetofile(int iter=0) {
-	std::string tri_fname = std::format("./data/triangles_iterations/triangles_{}.txt", iter);
-	std::string pts_fname = std::format("./data/points.txt", iter);
+void Delaunay::saveToFile(std::ofstream& file) {
 
-	std::ofstream triFile(tri_fname);
-	std::ofstream ptsFile(pts_fname);
-
+	file << iter << " " << ntri << "\n";
 	for (int i=0; i<triList.size(); ++i) {
 		if (triList[i].stat == 1) {
 			// return triangles
 			for (int j=0; j<3; ++j) {
-				triFile << triList[i].p[j] << " "; 
+				file << triList[i].p[j] << " "; 
 			} 
-			triFile << "\n"; 
+			file << "\n"; 
 		}
 	}
-	
-	for (int i=0; i<pts.size(); ++i) {
-		ptsFile << pts[i].x[0] << " " << pts[i].x[1] << "\n";
-	}
 
-	triFile.close();
-	ptsFile.close();
+	file << "\n"; 
+	iter++;
 }
 
 #endif
