@@ -163,7 +163,6 @@ Delaunay::Delaunay(vector<Point> &pvec) :
 	}
 
 	saveToFile(saveFile);
-	saveFile << iter;
 	delete[] perm;
 	delete   trihash;
 	delete   linehash;

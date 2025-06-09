@@ -1,10 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+line_num = 0
+line_count = 0
+with open("./data/data.txt") as data:
+	line_count = len(data.readlines())
+
 with open("./data/data.txt") as data:
 	line_num = 0
-	#file = data.read()
-	#line_count = file.count('\n')
 	
 	num_pts = int(data.readline())
 	line_num += 1
@@ -13,8 +16,7 @@ with open("./data/data.txt") as data:
 		pts[i] = np.fromstring(data.readline(), sep=" ", dtype=float) 
 		line_num += 1
 
-	#while line_num < line_count:
-	while True:
+	while line_num <= line_count-2:
 		data.readline()
 		line_num += 1
 		plt.clf()
@@ -45,3 +47,6 @@ with open("./data/data.txt") as data:
 	
 		plt.title(f"incircle check {iter}") 
 		plt.savefig(f"./data/plots/plot_{iter}", dpi=200)
+		print(f"Line number: {line_num} out of {line_count}", end='\r')
+
+	print(f"Line number: {line_count} out of {line_count}")
