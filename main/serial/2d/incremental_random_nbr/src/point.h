@@ -1,8 +1,9 @@
 #ifndef POINT_H
 #define POINT_H
 
-#include "types.h"
 #include <cmath>
+#include "macros.h"
+#include "types.h"
 
 /* 
  * Basic 2d point stucture. 
@@ -17,8 +18,6 @@ struct Point {
 	}
 };
 
-real dist(Point a, Point b) {
-	reuturn sqrt( SQR(a.x[0] - b.x[0]) SQR(a.x[1] - b.x[1]) );
-}
+real dist(Point a, Point b);
 
 #endif

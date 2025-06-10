@@ -1,27 +1,26 @@
-#include "src/delaunay.h"
-#include "src/vector.h"
-#include "src/ran.h"
+#include "delaunay.h"
+#include "ran.h"
 
 int main(){
 
 	Ran ran(1234);
 	int n = 20;
-	vector<Point> points(n);
+	Point* points = new Point[n];
 	for (int i=0; i<n; ++i) {
 		points[i].x[0] = ran.doub();
 		points[i].x[1] = ran.doub();
 	}
 	
 	try {
-		Delaunay delaunay(points);
+		Delaunay delaunay(points, n);
 	} 
 	catch (const char* msg) {
 		std::cerr << "CAUGHT: " << msg << "\n";
 	}
 
-					
+
 //	int side = 4;
-//	vector<Point> square(side*side);
+//	Point* square = new Point[side*side];
 //	for (int i=0; i<side; ++i) {
 //		for (int j=0; j<side; ++j) {
 //			square[i*side + j].x[0] = (double)i/(double)side;
@@ -35,7 +34,7 @@ int main(){
 //	std::cout << "\n"; 
 //	
 //	try {
-//	  Delaunay delaunay(square);
+//	  Delaunay delaunay(square, side*side);
 //	} 
 //	catch (const char* msg) {
 //		std::cerr << "CAUGHT: " << msg << "\n";

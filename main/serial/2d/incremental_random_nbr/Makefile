@@ -6,28 +6,23 @@ OBJDIR := obj
 BINDIR := bin
 SRCDIR := src
 
-EXEC_NAMES := main test_circ
+EXEC_NAMES := main
 EXECS := $(addprefix $(BINDIR)/, $(EXEC_NAMES))
-OBJS := $(addsuffix .o, $(addprefix $(OBJDIR)/, $(EXEC_NAMES)))
+
+CPP_SOURCES := main.cpp math.cpp point.cpp circle.cpp tri.cpp delaunay.cpp
+ALL_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.cpp, %.o, $(CPP_SOURCES)))
 
 all: $(EXECS)
 
-$(BINDIR)/main: main.cpp
-	$(CXX) -o $@ $^ $(DEBUG) $(CXXFLAGS)
+$(BINDIR)/main: $(ALL_OBJS) | $(BINDIR)
+	$(CXX) -o $@ $^ $(DEBUG) $(CXXFLAGS) -lm
 
-$(BINDIR)/test_circ: test_circ.cpp
-	$(CXX) -o $@ $^ $(DEBUG) $(CXXFLAGS)
-
-#$(BINDIR)/%: $(OBJDIR)/%.o | $(BINDIR)
-#	$(CXX) -o $@ $^ $(DEBUG) $(CXXFLAGS)
-
-$(OBJDIR)/%.o: $(SRCDIR)/%.h | $(OBJDIR)
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
-$(OBJDIR) $(BINDIR):
-	mkdir -p $@
+$(OBJDIR)/tri.o: $(SRCDIR)/tri.cpp $(OBJDIR)/point.o $(OBJDIR)/circle.o
+$(OBJDIR)/delaunay.o: $(SRCDIR)/delaunay.cpp $(OBJDIR)/math.o $(OBJDIR)/point.o $(OBJDIR)/circle.o $(OBJDIR)/tri.o
 
-# Clean target
 .PHONY: clean
 clean:
 	rm -f $(OBJDIR)/*.o $(EXECS)

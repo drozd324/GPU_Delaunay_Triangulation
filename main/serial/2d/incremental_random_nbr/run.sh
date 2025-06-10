@@ -1,7 +1,7 @@
 #!/bin/bash
 cd "${0%/*}" || exit # Run from this directory
 
-make clean
+#make clean
 rm ./data/data.txt
 rm ./data/plots/*.png
 
