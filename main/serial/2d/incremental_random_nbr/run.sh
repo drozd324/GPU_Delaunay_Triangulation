@@ -7,4 +7,4 @@ rm ./data/plots/*.png
 
 make
 ./bin/main
-python3 plot.py	
+python3 plot.py

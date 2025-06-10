@@ -3,8 +3,8 @@
 
 int main(){
 
-	Ran ran(1234);
-	int n = 20;
+	Ran ran(123);
+	int n = 10;
 	Point* points = new Point[n];
 	for (int i=0; i<n; ++i) {
 		points[i].x[0] = ran.doub();
@@ -18,6 +18,7 @@ int main(){
 		std::cerr << "CAUGHT: " << msg << "\n";
 	}
 
+	delete[] points;
 
 //	int side = 4;
 //	Point* square = new Point[side*side];

@@ -1,41 +1,43 @@
 #include "tri.h"
 
-/*
- * Data structure needed for Point instertion algorithm. Its main features are
- * that it holds a pointer to an array of points which will be used for the triangulation,
- * the index of those points as ints which form this triangle, its daughter triangles 
- * which are represented as ints which belong to an array of all triangle elements and
- * whether this triangle is used in the trianglulation constructed so far.
- */
-void Tri::get_ptsInside() {
-	int idx_in = 0;
-	for (int k=0; k<npts; ++k) {
+// if there is not center reutrn -1 else reutrn the index to pts list
+int Tri::get_center() {
+	
+	// calculute actual center of circumcircle for comparison
+	Circle cc = circumcircle(pts[p[0]], pts[p[1]], pts[p[2]]);
+	Point true_center = cc.center;
+
+	center = -1;
+	int npts_inside = 0;
+
+	// loop through all points
+	for (int k=0; k<npts; ++k) { 
+		real area;
+		
+		// check if point is inside this triangle
 		for (int i=0; i<3; ++i) {
 			int j = (i+1) % 3;
-			real area = (pts[p[j]].x[0] - pts[p[i]].x[0])*(pts[k].x[1] - pts[p[i]].x[1]) - 
-						(pts[p[j]].x[1] - pts[p[i]].x[1])*(pts[k].x[0] - pts[p[i]].x[0]);
+			area = (pts[p[j]].x[0] - pts[p[i]].x[0])*(pts[k].x[1] - pts[p[i]].x[1]) - 
+			        (pts[p[j]].x[1] - pts[p[i]].x[1])*(pts[k].x[0] - pts[p[i]].x[0]);
 
-			if (area < 0) {
+			if (area <= 0) {
 				break;
 			}
 		}
-		
-		ptsInside[idx_in++] = k;
-	}
 
-	get_Center();
-}
+		// if this is true then point is not inside triangle 
+		if (area <= 0) {
+			continue;
+		}
 
-int Tri::get_Center() {
-	Circle cc = circumcircle(p[0], p[1], p[2]);
-	Point true_center = cc.center;
-	center = 0;
+		npts_inside++;
 
-	//for (int i=1; i<nptsInside; ++i) {
-	for (int i=1; i<npts; ++i) {
-		//if (dist(ptsInside[i], true_center) < dist(center, true_center)) {
-		if (dist(pts[i], true_center) < dist(pts[center], true_center)) {
-			center = i;
+		if (npts_inside == 1) {
+			center = k;
+		}
+		else if (dist(pts[k], true_center) < dist(pts[center], true_center)) {
+			// check if its closer to the center than prevoius point
+			center = k;
 		}
 	}
 

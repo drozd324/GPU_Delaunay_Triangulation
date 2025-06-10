@@ -20,8 +20,11 @@ Circle circumcircle(Point a, Point b, Point c) {
 
 	det = ba0*ca1 - ca0*ba1;
 
-	if (det == 0.0)
+	if (det == 0.0) {
+		std::cout << "points ((" << a.x[0]  << "," << a.x[1] << "), (" << b.x[0] << "," << b.x[1] << "), (" << c.x[0] << "," << c.x[1] << ")" << " | "
+				  << ba0 << "," << ca1 << "," << ca0 << "," << ba1 << "\n";
 		throw("no circle thru colinear points");
+	}
 
 	det = 0.5 / det;
 	asq = SQR(ba0) + SQR(ba1);

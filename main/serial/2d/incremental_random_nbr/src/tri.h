@@ -18,7 +18,6 @@
  */
 struct Tri {
 	Point* pts; int npts;
-	int* ptsInside; int nptsInside=npts;
 
 	int p[3]; // indexes of points
 	int np[3]; // indexes of points corresponding to same point in neighbour triangles
@@ -28,8 +27,7 @@ struct Tri {
 	int center = -1;
 	int status = -1;
 
-	void get_ptsInside();
-	int get_Center();
+	int get_center();
 
 	void print();
 

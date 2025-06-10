@@ -16,15 +16,20 @@
  * Struct for creating a delaunay triangulation from a given vector of points. Consists of 
  */
 struct Delaunay {
-	Point* pts      ; int npts;
-	Tri*   triList  ; int nTri; 
-	int*   activeTri; int nActiveTri; 
+	int npts;
+	Point* pts;
+
+	int nTri; 
+	int nTriMax; 
+	int nActiveTri; 
+	Tri* triList; 
+
 	std::ofstream saveFile;
 
 	Delaunay(Point* points, int n);
 	
-	void insert();
-	void storeTriangle(int triPts[3], int triNeighbours[3], int triOpposite[3]);
+	int insert();
+	void storeTriangle(int index, int triPts[3], int triNeighbours[3], int triOpposite[3]);
 
 	void initSuperTri(Point* points);
 	void saveToFile(std::ofstream& file);

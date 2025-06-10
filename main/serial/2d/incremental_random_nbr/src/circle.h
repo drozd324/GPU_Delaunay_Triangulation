@@ -2,6 +2,7 @@
 #define CIRCLE_H
 
 #include <cmath>
+#include <iostream>
 #include "point.h" 
 #include "macros.h"
 #include "types.h"
