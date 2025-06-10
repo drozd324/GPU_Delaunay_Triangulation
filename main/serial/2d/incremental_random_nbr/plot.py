@@ -11,6 +11,9 @@ def get_type(input_data):
 line_num = 0
 line_count = 0
 
+print("")
+print("==========[INITIALISING PLOT]==========")
+
 def read_line(data):
 	global line_num
 	line_num += 1
@@ -83,6 +86,7 @@ with open("./data/data.txt", "r") as data:
 		for i in range(num_tri):
 			tris[i] = np.fromstring(read_line(data), sep=" ", dtype=float) 
 
+		print("TRIANGLES PLOTTED")
 		for tri in list(tris):
 			for i in range(3):
 				x0 = pts[tri[int((i  ) % 3)]][0]
@@ -91,6 +95,8 @@ with open("./data/data.txt", "r") as data:
 				y1 = pts[tri[int((i+1) % 3)]][1]
 					
 				plt.plot([x0, x1], [y0, y1], color="black")
+
+			print(tri[0], tri[1], tri[2])
 
 		plt.scatter(pts[:,0 ], pts[:, 1], color="red")
 		if num_pts < 20:
@@ -113,7 +119,7 @@ with open("./data/data.txt", "r") as data:
 				print(f"INVALID INDEX: must be in [0, {len(iter_line_num)-1}]")
 
 		elif entered == "+":
-			if iter_idx == 6:
+			if iter_idx == len(iter_line_num)-1:
 				print(f"INVALID INDEX: must be in [0, {len(iter_line_num)-1}]")
 			else:
 				iter_idx += 1

@@ -6,5 +6,5 @@ rm ./data/data.txt
 rm ./data/plots/*.png
 
 make
-./bin/main
+./bin/test $@
 python3 plot.py

@@ -21,17 +21,17 @@ struct Delaunay {
 
 	int nTri; 
 	int nTriMax; 
-	int nActiveTri; 
 	Tri* triList; 
 
 	std::ofstream saveFile;
 
 	Delaunay(Point* points, int n);
+	~Delaunay();
 	
 	int insert();
-	void storeTriangle(int index, int triPts[3], int triNeighbours[3], int triOpposite[3]);
+	void storeTriangle(int index, int tag, int triPts[3], int triNeighbours[3], int triOpposite[3]);
 
-	void initSuperTri(Point* points);
+	void initSuperTri();
 	void saveToFile(std::ofstream& file);
 
 	int iter = 0;

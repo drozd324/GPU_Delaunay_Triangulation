@@ -45,10 +45,8 @@ int Tri::get_center() {
 }
 
 void Tri::print() {
-	std::cout << "| stat      : " << status
-			  << "| points    : " << p[0] << ", " << p[1] << ", " << p[2]
-			  << "| daughters : " << d[0] << ", " << d[1] << ", " << d[2]
+	std::cout << "| points    : " << p[0] << ", " << p[1] << ", " << p[2]
+			  << "| neighbours: " << n[0] << ", " << n[1] << ", " << n[2]
 			  << "| opposite  : " << o[0] << ", " << o[1] << ", " << o[2]
-			  << "| neighbours: " << o[0] << ", " << o[1] << ", " << o[2]
 			  << "\n";
 }

@@ -1,10 +1,20 @@
+#include <unistd.h>
 #include "delaunay.h"
 #include "ran.h"
 
-int main(){
+int main(int argc, char *argv[]) {
+
+	int option;
+	int n = 10;
+    while ((option = getopt(argc, argv, "n:")) != -1) {
+        switch (option) {
+            case 'n': // set num cols m of matrix
+	            n = atoi(optarg);
+				break;
+        }
+    }
 
 	Ran ran(123);
-	int n = 10;
 	Point* points = new Point[n];
 	for (int i=0; i<n; ++i) {
 		points[i].x[0] = ran.doub();
@@ -20,12 +30,12 @@ int main(){
 
 	delete[] points;
 
-//	int side = 4;
-//	Point* square = new Point[side*side];
-//	for (int i=0; i<side; ++i) {
-//		for (int j=0; j<side; ++j) {
-//			square[i*side + j].x[0] = (double)i/(double)side;
-//			square[i*side + j].x[1] = (double)j/(double)side;
+//	int n = 4;
+//	Point* square = new Point[n*n];
+//	for (int i=0; i<n; ++i) {
+//		for (int j=0; j<n; ++j) {
+//			square[i*n + j].x[0] = (double)i/(double)n;
+//			square[i*n + j].x[1] = (double)j/(double)n;
 //		}
 //	}
 //
@@ -35,7 +45,7 @@ int main(){
 //	std::cout << "\n"; 
 //	
 //	try {
-//	  Delaunay delaunay(square, side*side);
+//	  Delaunay delaunay(square, n*n);
 //	} 
 //	catch (const char* msg) {
 //		std::cerr << "CAUGHT: " << msg << "\n";

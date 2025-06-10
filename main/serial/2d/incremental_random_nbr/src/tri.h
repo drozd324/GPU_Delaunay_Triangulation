@@ -26,6 +26,7 @@ struct Tri {
 	int d[3]; // indexes of daughter points
 	int center = -1;
 	int status = -1;
+	int tag = -1;
 
 	int get_center();
 

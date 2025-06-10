@@ -1,20 +1,20 @@
 CXX := g++
 CXXFLAGS := -Wall -Wextra -std=c++23
-DEBUG :=   -g -fsanitize=address -lefence
+DEBUG := -fsanitize=address  -lefence #-g
 
 OBJDIR := obj
 BINDIR := bin
 SRCDIR := src
 
-EXEC_NAMES := main
+EXEC_NAMES := test
 EXECS := $(addprefix $(BINDIR)/, $(EXEC_NAMES))
 
-CPP_SOURCES := main.cpp math.cpp point.cpp circle.cpp tri.cpp delaunay.cpp ran.cpp
+CPP_SOURCES := test.cpp math.cpp point.cpp circle.cpp tri.cpp delaunay.cpp ran.cpp
 ALL_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.cpp, %.o, $(CPP_SOURCES)))
 
 all: $(EXECS)
 
-$(BINDIR)/main: $(ALL_OBJS) | $(BINDIR)
+$(BINDIR)/test: $(ALL_OBJS) | $(BINDIR)
 	$(CXX) -o $@ $^ $(DEBUG) $(CXXFLAGS) -lm
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
