@@ -19,11 +19,9 @@
 struct Tri {
 	Point* pts; int npts;
 
-	int p[3]; // indexes of points
-	int np[3]; // indexes of points corresponding to same point in neighbour triangles
-	int o[3]; // indexes of pts of this triangle
+	int p[3]; // indexes of points in pts list
 	int n[3]; // idx to Tri neighbours of this triangle
-	int d[3]; // indexes of daughter points
+	int o[3]; // index in the Tri noted by the int n[i] of opposite point of current Tri
 	int center = -1;
 	int status = -1;
 	int tag = -1;

@@ -23,7 +23,6 @@ Circle circumcircle(Point a, Point b, Point c) {
 	if (det == 0.0) {
 		std::cout << "points ((" << a.x[0]  << "," << a.x[1] << "), (" << b.x[0] << "," << b.x[1] << "), (" << c.x[0] << "," << c.x[1] << ")" << " | "
 				  << ba0 << "," << ca1 << "," << ca0 << "," << ba1 << "\n";
-		throw("no circle thru colinear points");
 	}
 
 	det = 0.5 / det;
@@ -40,8 +39,9 @@ Circle circumcircle(Point a, Point b, Point c) {
  *	
  */
 real incircle(Point d, Point a, Point b, Point c){
-	// Return positive, zero, or negative value if point d is respectively
-	// inside, on, or outside the circle  through points a, b, and c.
+	// +: inside  | flip
+	// 0: on      |
+	// -: outside | dont flip
 
 	Circle cc = circumcircle(a, b, c);
 	// distance from center to d

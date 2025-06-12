@@ -1,11 +1,11 @@
 #include "delaunay.h"
 
 /*
- * Constructor which creates the delaunay triagulation from a vector of points
+ * Constructor which creates the delaunay triagulation from an array of 'points' and its lenght 'n'.
  */
 Delaunay::Delaunay(Point* points, int n) :
 	npts(n), pts(new Point[npts + 3]),
-	nTri(0), nTriMax(2*npts - 2 - 3), triList(new Tri[nTriMax]),
+	nTri(0), nTriMax(2*(npts+3) - 2 - 3), triList(new Tri[nTriMax]),
 	saveFile("./data/data.txt", std::ios_base::app)
 {
 	std::cout << "[ALLOCATING] \n";
@@ -26,7 +26,7 @@ Delaunay::Delaunay(Point* points, int n) :
 	}
 	saveFile << "\n"; 
 
-	saveToFile(saveFile);
+	saveToFile();
 
 	for (int i=0; i<npts; ++i) { 
 		std::cout << "============ ITER " << i << "============ \n"; 
@@ -41,92 +41,194 @@ Delaunay::Delaunay(Point* points, int n) :
 		if (inserted == 0) {
 			break; 
 		}
-		saveToFile(saveFile);
+
+		saveToFile();
 	}
 
+	std::cout << "\nTESTING FLIPPING\n";
+	triList[nTri-1].print();
+	std::cout << "FLIPPED: " << flip(nTri-1, 1) << "\n";
 }
 
+/*
+ * Basic destructor.
+ */
 Delaunay::~Delaunay() {
 	delete[] pts;
 	delete[] triList; 
 }
 
 
+/*
+ * Performs a flip operation on a triangle 'a' and one of its neighbours denoted by
+ * index 0, 1 or 2. Returns 0 if the flip was performed, reuturns -1 if no flip was 
+ * performed.
+ * 
+ * @param a   Index in triList of chosen triangle
+ * @param nbr Index in chosen triangle of neighbour. This is an int in 0, 1 or 2.
+ * @out Index in chosen triangle of neighbour. This is an int in 0, 1 or 2.
+ */
+int Delaunay::flip(int a, int nbr) {
+	int i = nbr;
+
+	int b = triList[a].n[i]; // index in triList of nei
+	if (b == -1) {
+		return -1;
+	}
+
+	int opp_idx = triList[a].o[i]; 
+
+	// check if we should flip
+	if (0 <= incircle(pts[triList[b].p[opp_idx]],
+				      pts[triList[a].p[0]],
+				      pts[triList[a].p[1]],
+				      pts[triList[a].p[2]])) 
+	{
+		return -1;
+	}
+
+	// temporary qaud "struct" data  just to make it readable
+	int p[4] = {triList[a].p[(i-1)%3], triList[a].p[i], triList[b].p[opp_idx], triList[a].p[(i+1)%3]};
+
+	int n[4] = {triList[a].n[(i-1)%3], triList[b].n[(opp_idx-1)%3],
+				triList[b].n[opp_idx], triList[a].n[(i+1)%3]}; 
+
+	int o[4] = {triList[a].o[(i-1)%3], triList[b].o[(opp_idx-1)%3],
+				triList[b].o[opp_idx], triList[a].o[(i+1)%3]}; 
+
+	int ap[3] = {p[0], p[1], p[2]};
+	int an[3] = {n[0], n[1], b};
+	int ao[3] = {o[0], o[1], 1};
+
+	int bp[3] = {p[2], p[3], p[0]};
+	int bn[3] = {n[2], n[3], a};
+	int bo[3] = {o[2], o[3], 1};
+
+	writeTri(a, ap, an, ao);
+	writeTri(b, bp, bn, bo);
+
+	if (n[0] >= 0) {
+		triList[n[0]].n[(o[0]+1)%3] = a;	
+		triList[n[0]].o[(o[0]+1)%3] = 2;	
+	}
+
+	if (n[1] >= 0) {
+		triList[n[1]].n[(o[1]+1)%3] = a;	
+		triList[n[1]].o[(o[1]+1)%3] = 0;	
+	}
+
+	if (n[2] >= 0) {
+		triList[n[2]].n[(o[2]+1)%3] = b;	
+		triList[n[2]].o[(o[2]+1)%3] = 2;	
+	}
+
+	if (n[3] >= 0) {
+		triList[n[3]].n[(o[3]+1)%3] = b;	
+		triList[n[3]].o[(o[3]+1)%3] = 0;	
+	}
+
+	saveToFile();
+	return 0;
+}
+
+/*
+ * Function to legalize a given triangle in triList with index 'a', with edge 'e'.
+ */
+void Delaunay::legalize(int a, int e) {
+
+	if (flip(a, e) == -1) {
+		return;
+	}
+
+//	legalize(a, 1);
+//	legalize(triList[a].n[2], 0);
+}
+
+/*
+ * Function to legalize a given triangle in triList with index a.
+ */
+int Delaunay::legalize() {
+	for (int i=0; i<nTri; ++i) {
+		for (int j=0; j<3; ++j) {
+			legalize(i, j);
+		}
+	}
+
+	return 0;
+}
+
+/*
+ * Inserts a point into triangles which contain points inside of them. The point is 
+ * chosen to be the closest to the circumcenter of this triangle if available. This 
+ * function also reutrns the number of triangles added into the triangulation.
+ */
 int Delaunay::insert() {
-//	int p[3]; // points of root triangle
-//	int n[3]; // neighbours of root triangle as index in triList
-//	int o[3]; // index in the Tri noted by the int n[i] of opposite point of current Tri
 	int num_inserted_tri = 0;
 
 	int max = nTri;
 	for (int i=0; i<max; ++i) {
 		int center = triList[i].get_center();
-		std::cout << "center=" << center << "\n";
-		std::cout << i;
+		//std::cout << "center=" << center << "\n";
+		//std::cout << i;
 		triList[i].print();
 
 		if (center == -1) { // if center doesnt exist, continue
 			continue;
 		}
 		
-		for (int j=2; j>=0; --j) {
-			std::cout << "j=" << j << "\n";
-			int p[3] = {center,
-						triList[i].p[j % 3],
-						triList[i].p[(j+1) % 3]};
+		int j;
 
-			int n[3] = {triList[i].n[j],
-						nTri+1 + ((j+1) % 3),
-						nTri+1 + ((j+2) % 3)};
+		j=1;
+		int p1[3] = {center,
+					triList[i].p[j % 3],
+					triList[i].p[(j+1) % 3]};
 
-			int o[3] = {triList[i].o[j], 2, 1};		
+		int n1[3] = {i, triList[i].n[j], nTri+1};
+		int o1[3] = {1, triList[i].o[j+1], 2};
 
-			std::cout << "i=" << i << " |j=" << j << " |p: {" << p[0] << "," << p[1] << "," << p[2] << "}\n";
-			std::cout << "i=" << i << " |j=" << j << " |n: {" << n[0] << "," << n[1] << "," << n[2] << "}\n";
-			std::cout << "i=" << i << " |j=" << j << " |o: {" << o[0] << "," << o[1] << "," << o[2] << "}\n";
+		j=2;
+		int p2[3] = {center,
+					triList[i].p[j % 3],
+					triList[i].p[(j+1) % 3]};
 
-			int index = j==0 ? i : nTri+j-1;
-			std::cout << "index=" << index << "\n";
-			storeTriangle(index, nTri+j, p, n, o);
+		int n2[3] = {nTri, triList[i].n[j], i};
+		int o2[3] = {1, triList[i].o[j+1], 2};
 
-			// updates neighbour points opposite point
-			triList[n[0]].o[(triList[i].o[0] + 1) % 3] = 0;
-			// try to make some ascii art diagrams maybe good for explenation
-		}
+		j=0;
+		int p0[3] = {center,
+					triList[i].p[j % 3],
+					triList[i].p[(j+1) % 3]};
+
+		int n0[3] = {nTri+1, triList[i].n[j], nTri};
+		int o0[3] = {1, triList[i].o[j+1], 2};
+
+
+		writeTri(nTri, p1, n1, o1);
+		writeTri(nTri+1, p2, n2, o2);
+		writeTri(i     , p0, n0, o0);
+
+		// updates neighbour points opposite point
+		//[ nbr tri  ]  [                          ]
+		triList[n1[1]].o[(triList[i].o[1] + 1) % 3] = 0;
+		triList[n2[1]].o[(triList[i].o[1] + 1) % 3] = 0;
+		triList[n0[1]].o[(triList[i].o[1] + 1) % 3] = 0;
+
+		triList[n1[1]].n[(triList[i].o[1] + 1) % 3] = nTri;
+		triList[n2[1]].n[(triList[i].o[1] + 1) % 3] = nTri+1;
+		//triList[n0[1]].n[(triList[i].o[1] + 1) % 3] = i;
+		// try to make some ascii art diagrams maybe good for explenation
 
 		nTri += 2;		
 		num_inserted_tri += 2;
+
+		saveToFile();
+
 	}
 
 	return num_inserted_tri;
 }
 
 void Delaunay::initSuperTri() {
-//	real x_low, y_low, x_high, y_high;
-//	x_low = x_high = pts[0].x[0]; 
-//	y_low = y_high = pts[0].x[1];
-
-//
-//	for (int i=0; i<npts-2; i++) {
-//		for (int j=i+1; j<npts-1; j++) {
-//			for (int k=j+1; k<npts; k++) {
-//				std::cout << "(i,j,k) = (" << i << "," << j << "," << k << ")\n";c
-//				//std::cout << "(i,j,k) = (" << points[i] << "," << points[j] << "," << points[k] << ")\n";
-//
-//				Circle cc = circumcircle(points[i], points[j], points[k]);
-//			
-//				if (cc.center.x[0] - cc.radius < x_low)
-//					x_low  = cc.center.x[0] - cc.radius; 
-//				if (cc.center.x[0] + cc.radius > x_high)
-//					x_high = cc.center.x[0] + cc.radius; 
-//				if (cc.center.x[1] - cc.radius < y_low)
-//					y_low  = cc.center.x[1] - cc.radius; 
-//				if (cc.center.x[1] + cc.radius > y_high)
-//					y_high = cc.center.x[1] + cc.radius; 
-//			}
-//		}
-//	}
-//
 	Point avg; 
 	for (int i=0; i<npts; ++i) {
 		for (int k=0; k<2; ++k) {
@@ -148,18 +250,9 @@ void Delaunay::initSuperTri() {
 		}
 	}
 
-//	x_low = 0;
-//	x_high = 1;
-//	y_low = 0;
-//	y_high = 1;
-//
-//	real center_x = (x_high + x_low) / 2;
-//	real center_y = (y_high + y_low) / 2;
-//	real radius = sqrt( SQR(center_x - x_high) + SQR(center_y - y_high) );
-			
 	real center_x = avg.x[0];
 	real center_y = avg.x[1];
-	real radius = 2*largest_dist;
+	real radius = largest_dist;
 
 	pts[npts    ] = Point(center_x + radius*sqrt(3), center_y - radius  );
 	pts[npts + 1] = Point(center_x                 , center_y + 2*radius);
@@ -168,11 +261,11 @@ void Delaunay::initSuperTri() {
 	int p[3] = {npts, npts+1, npts+2};
 	int n[3] = {-1, -1, -1}; 
 	int o[3] = {-1, -1, -1}; 
-	storeTriangle(nTri, nTri, p, n, o);
+	writeTri(nTri, p, n, o);
 	nTri++;
 }
 
-void Delaunay::storeTriangle(int index, int tag, int triPts[3], int triNeighbours[3], int triOpposite[3]) {
+void Delaunay::writeTri(int index, int triPts[3], int triNeighbours[3], int triOpposite[3]) {
 	triList[index].pts = pts;
 	triList[index].npts = npts;
 
@@ -183,30 +276,24 @@ void Delaunay::storeTriangle(int index, int tag, int triPts[3], int triNeighbour
 	}
 
 	triList[index].status = 1;
-	triList[index].tag = tag;
+	triList[index].tag = tag_num++;
 }
 
-
-void Delaunay::saveToFile(std::ofstream& file) {
-//	file << iter << " " << nTri << "\n";
-//	for (int i=0; i<nTriMax; ++i) {
-//		if (triList[i].status == 1) {
-//			// return triangles
-//			for (int j=0; j<3; ++j) {
-//				file << triList[i].p[j] << " "; 
-//			} 
-//			file << "\n"; 
-//		}
-//	}
-
-	file << iter << " " << nTri << "\n";
+void Delaunay::saveToFile() {
+	saveFile << iter << " " << nTri << "\n";
 	for (int i=0; i<nTri; ++i) {
 		for (int j=0; j<3; ++j) {
-			file << triList[i].p[j] << " "; 
+			saveFile << triList[i].p[j] << " "; 
 		} 
-		file << "\n"; 
+		for (int j=0; j<3; ++j) {
+			saveFile << triList[i].n[j] << " "; 
+		} 
+		for (int j=0; j<3; ++j) {
+			saveFile << triList[i].o[j] << " "; 
+		} 
+		saveFile << "\n"; 
 	}
 
-	file << "\n"; 
+	saveFile << "\n"; 
 	iter++;
 }

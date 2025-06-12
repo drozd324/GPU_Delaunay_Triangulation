@@ -5,7 +5,7 @@
 int main(int argc, char *argv[]) {
 
 	int option;
-	int n = 10;
+	int n = 3;
     while ((option = getopt(argc, argv, "n:")) != -1) {
         switch (option) {
             case 'n': // set num cols m of matrix
@@ -21,12 +21,7 @@ int main(int argc, char *argv[]) {
 		points[i].x[1] = ran.doub();
 	}
 	
-	try {
-		Delaunay delaunay(points, n);
-	} 
-	catch (const char* msg) {
-		std::cerr << "CAUGHT: " << msg << "\n";
-	}
+	Delaunay delaunay(points, n);
 
 	delete[] points;
 
@@ -44,12 +39,7 @@ int main(int argc, char *argv[]) {
 //	}
 //	std::cout << "\n"; 
 //	
-//	try {
-//	  Delaunay delaunay(square, n*n);
-//	} 
-//	catch (const char* msg) {
-//		std::cerr << "CAUGHT: " << msg << "\n";
-//	}
+//	Delaunay delaunay(square, n*n);
 
 	return 0;	
 }

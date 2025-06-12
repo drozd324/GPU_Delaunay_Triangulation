@@ -29,12 +29,16 @@ struct Delaunay {
 	~Delaunay();
 	
 	int insert();
-	void storeTriangle(int index, int tag, int triPts[3], int triNeighbours[3], int triOpposite[3]);
+	int flip(int a, int nbr);
+	void legalize(int a, int e);
+	int legalize();
+	void writeTri(int index, int triPts[3], int triNeighbours[3], int triOpposite[3]);
 
 	void initSuperTri();
-	void saveToFile(std::ofstream& file);
+	void saveToFile();
 
 	int iter = 0;
+	int tag_num = 0;
 };
 
 #endif
