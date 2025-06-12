@@ -106,8 +106,15 @@ with open("./data/data.txt", "r") as data:
 					tri_nbr_avg = (np.mean(tri_nbr_pts[:, 0]), np.mean(tri_nbr_pts[:, 1]))
 
 					plt.plot([tri_k_avg[0], tri_nbr_avg[0]], [tri_k_avg[1], tri_nbr_avg[1]], color="green")
-					
 
+					# plotting opposite points
+					opp_idx = tri[6+i]
+					opp_pt = pts[tris[nbr_idx][opp_idx]]
+					
+					plt.plot([tri_k_avg[0], opp_pt[0]], [tri_k_avg[1], opp_pt[1]], color="blue")
+
+
+		# plots points in triangulation
 		plt.scatter(pts[:,0 ], pts[:, 1], color="red")
 		if num_pts < 20:
 			for i, x, y in zip(range(num_pts), pts[:, 0], pts[:, 1]):
@@ -121,6 +128,7 @@ with open("./data/data.txt", "r") as data:
 		plt.draw()
 		plt.pause(.00001)
 
+		# user input
 		entered = input("> ")
 		if get_type(entered) == int:
 			if int(entered) < len(iter_line_num) and int(entered) >= 0:
@@ -146,8 +154,11 @@ with open("./data/data.txt", "r") as data:
 			for i, tri in enumerate(list(tris)):
 				print(i, "|", tri[0], tri[1], tri[2], " ", tri[3], tri[4], tri[5] , " ", tri[6], tri[7], tri[8])
 
-		elif entered == "n":
+		elif entered == "nn":
 			show_nbr = int(input("tri: "))
+
+		elif entered == "n":
+			show_nbr = (show_nbr + 1) % len(tris)
 
 		elif entered == "q" or entered == "quit" or entered == "^C":
 			run = False

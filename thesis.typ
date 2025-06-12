@@ -1,5 +1,17 @@
-#import "@preview/algorithmic:1.0.0"
-#import algorithmic: algorithm
+#import "@preview/lovelace:0.3.0": *
+#import "@preview/ctheorems:1.1.3": *
+#show: thmrules.with(qed-symbol: $square$)
+
+//#set page(width: 16cm, height: auto, margin: 1.5cm)
+//#set heading(numbering: "1.1.")
+//
+#let definition = thmbox("definition", "Definition", inset: (x: 1.2em, top: 1em))
+#let theorem = thmplain( "theorem", "Theorem", titlefmt: strong)
+#let proof = thmproof("proof", "Proof")
+#let corollary = thmplain( "corollary", "Corollary", base: "theorem", titlefmt: strong)
+#let example = thmplain("example", "Example").with(numbering: none)
+
+//==================================== DOC START =========================================
 
 #align(center, text(17pt)[
   *Delaunay Triangulations on the GPU*
@@ -25,9 +37,6 @@
 //  caption: [I like this font],
 //)
 
-// TODO
-// I would like a good mathematical foundation of references, starting with lawsons papers
-
 #pagebreak()
 
 #set heading(numbering: "1.")
@@ -40,6 +49,13 @@
 
 = Serial Algorithms
 == Lawsons algorithm
+
+#theorem[
+	Given any two triangulations of a set of points S, T' and T'', there exist
+	a finite sequence of exchanges by which T' can be transformed to T''.
+]
+
+
 === implementation
 == Incremental Point Insertion 
 === implementation
@@ -51,40 +67,24 @@
 === implementation
 
 
+#figure(
+  kind: "algorithm",
+  supplement: [Algorithm],
 
+  pseudocode-list(booktabs: true, numbered-title: [My cool algorithm])[
+    + do something
+    + *while* still something to do
+      + do even more
+      + *if* not done yet *then*
+        + wait a bit
+        + resume working
+      + *else*
+        + go home
+      + *end*
+    + *end*
+  ]
+)
 
-
-#algorithm({
-  import algorithmic: *
-  Procedure(
-    "Binary-Search",
-    ("A", "n", "v"),
-    {
-      //Comment[Initialize the search range]
-      Assign[$l$][$1$]
-      Assign[$r$][$n$]
-      LineBreak
-      While(
-        $l <= r$,
-        {
-          Assign([mid], FnInline[floor][$(l + r) / 2$])
-          IfElseChain(
-            $A ["mid"] < v$,
-            {
-              Assign[$l$][$m + 1$]
-            },
-            [$A ["mid"] > v$],
-            {
-              Assign[$r$][$m - 1$]
-            },
-            Return[$m$],
-          )
-        },
-      )
-      Return[*null*]
-    },
-  )
-})
 
 text in here and funny thing to @NumericalRecipies
 text in here and funny thing to @devadoss2011

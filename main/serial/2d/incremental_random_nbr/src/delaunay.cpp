@@ -29,7 +29,7 @@ Delaunay::Delaunay(Point* points, int n) :
 	saveToFile();
 
 	for (int i=0; i<npts; ++i) { 
-		std::cout << "============ ITER " << i << "============ \n"; 
+		std::cout << "============  PASS " << i << "============ \n"; 
 		int inserted = insert();
 		std::cout << "inserted: " << inserted << "\n";
 		std::cout << "nTri " << nTri << "/" << nTriMax << "\n";
@@ -175,47 +175,54 @@ int Delaunay::insert() {
 		if (center == -1) { // if center doesnt exist, continue
 			continue;
 		}
-		
-		int j;
 
-		j=1;
-		int p1[3] = {center,
-					triList[i].p[j % 3],
-					triList[i].p[(j+1) % 3]};
+		int p[3] = {triList[i].p[0],
+					triList[i].p[1],
+					triList[i].p[2]};
 
-		int n1[3] = {i, triList[i].n[j], nTri+1};
-		int o1[3] = {1, triList[i].o[j+1], 2};
+		int n[3] = {triList[i].n[0],
+					triList[i].n[1],
+					triList[i].n[2]};
 
-		j=2;
-		int p2[3] = {center,
-					triList[i].p[j % 3],
-					triList[i].p[(j+1) % 3]};
+		int o[3] = {triList[i].o[0],
+					triList[i].o[1],
+					triList[i].o[2]};
 
-		int n2[3] = {nTri, triList[i].n[j], i};
-		int o2[3] = {1, triList[i].o[j+1], 2};
+		int p0[3] = {center, p[0], p[1]};
+		int n0[3] = {nTri+1, n[0], nTri};
+		int o0[3] = {1, o[0], 2};
 
-		j=0;
-		int p0[3] = {center,
-					triList[i].p[j % 3],
-					triList[i].p[(j+1) % 3]};
+		int p1[3] = {center, p[1], p[2]};
+		int n1[3] = {i, n[1], nTri+1};
+		int o1[3] = {1, o[1], 2};
 
-		int n0[3] = {nTri+1, triList[i].n[j], nTri};
-		int o0[3] = {1, triList[i].o[j+1], 2};
+		int p2[3] = {center, p[2], p[0]};
+		int n2[3] = {nTri, n[2], i};
+		int o2[3] = {1, o[2], 2};
 
 
 		writeTri(nTri, p1, n1, o1);
 		writeTri(nTri+1, p2, n2, o2);
 		writeTri(i     , p0, n0, o0);
 
-		// updates neighbour points opposite point
+		// updates neighbour points opposite point if they exist
 		//[ nbr tri  ]  [                          ]
-		triList[n1[1]].o[(triList[i].o[1] + 1) % 3] = 0;
-		triList[n2[1]].o[(triList[i].o[1] + 1) % 3] = 0;
-		triList[n0[1]].o[(triList[i].o[1] + 1) % 3] = 0;
+		if (n[0] >= 0) {
+			triList[n[0]].o[(o[0]+1) % 3] = 0;
+			triList[n[0]].n[(o[0]+1) % 3] = i;
+		}
 
-		triList[n1[1]].n[(triList[i].o[1] + 1) % 3] = nTri;
-		triList[n2[1]].n[(triList[i].o[1] + 1) % 3] = nTri+1;
-		//triList[n0[1]].n[(triList[i].o[1] + 1) % 3] = i;
+		if (n[1] >= 0) {
+			triList[n[1]].o[(o[1]+1) % 3] = 0;
+			triList[n[1]].n[(o[1]+1) % 3] = nTri;
+		}
+
+		if (n[2] >= 0) {
+			triList[n[2]].o[(o[2]+1) % 3] = 0;
+			triList[n[2]].n[(o[2]+1) % 3] = nTri+1;
+		}
+
+
 		// try to make some ascii art diagrams maybe good for explenation
 
 		nTri += 2;		
