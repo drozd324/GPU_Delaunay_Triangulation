@@ -49,9 +49,10 @@ with open("./data/data.txt", "r") as data:
 			read_line(data)
 
 	# interactive plot loop
-	iter_idx = 1# len(iter_line_num) - 1
+	iter_idx = len(iter_line_num) - 1
 	run = True
 	show_nbr = -1
+	play = -1
 	while run:
 		goto_line(iter_line_num[iter_idx], data)
 		plt.clf()
@@ -81,8 +82,9 @@ with open("./data/data.txt", "r") as data:
 
 			# scatter mean of triangles points to represent the triangle
 			tri_k_avg = (np.mean(tri_pts[:, 0]), np.mean(tri_pts[:, 1]))
-			plt.scatter(tri_k_avg[0], tri_k_avg[1], color="green", s=1)
-			plt.annotate(str(f"t{k}"), (tri_k_avg[0], tri_k_avg[1]))
+			if num_pts < 20:
+				plt.scatter(tri_k_avg[0], tri_k_avg[1], color="green", s=1)
+				plt.annotate(str(f"t{k}"), (tri_k_avg[0], tri_k_avg[1]))
 
 			if (show_nbr == k):
 				# scatter mean of triangles points to represent the triangle
@@ -115,8 +117,8 @@ with open("./data/data.txt", "r") as data:
 
 
 		# plots points in triangulation
-		plt.scatter(pts[:,0 ], pts[:, 1], color="red")
 		if num_pts < 20:
+			plt.scatter(pts[:,0 ], pts[:, 1], color="red")
 			for i, x, y in zip(range(num_pts), pts[:, 0], pts[:, 1]):
 				plt.annotate(str(i), (x, y))
 
@@ -124,13 +126,27 @@ with open("./data/data.txt", "r") as data:
 		#plt.xlim(0, 1)
 		#plt.ylim(0, 1)
 
-		plt.title(f"{num_pts} points, iter: {iter}") 
+		plt.title(f"{num_pts} points, triangles: {len(tris)}, iter: {iter}/{len(iter_line_num) - 1}") 
 		plt.draw()
 		plt.pause(.00001)
 
+			
+		if play >= 0:
+			if play == len(iter_line_num)-1:
+				play = -1
+			else: 
+				plt.pause(4/(len(iter_line_num)-1))
+				play += 1
+				iter_idx += 1
+			continue
+
 		# user input
 		entered = input("> ")
-		if get_type(entered) == int:
+		if entered == "play":
+			play = 0
+			iter_idx = 0
+
+		elif get_type(entered) == int:
 			if int(entered) < len(iter_line_num) and int(entered) >= 0:
 				iter_idx = int(entered)
 			else:
@@ -160,6 +176,7 @@ with open("./data/data.txt", "r") as data:
 		elif entered == "n":
 			show_nbr = (show_nbr + 1) % len(tris)
 
+
 		elif entered == "q" or entered == "quit" or entered == "^C":
 			run = False
 		elif entered == "h" or entered == "help":
@@ -170,6 +187,7 @@ with open("./data/data.txt", "r") as data:
 			print("| e: goes to the end of the seqence") 
 			print("| t: prints traingles plotted") 
 			print("| n: prints neighbours of chosen triangle") 
+			print("| play: loops through all iterations") 
 			print("| q: quit this session") 
 			print("| h: prints this user guide") 
 		else:

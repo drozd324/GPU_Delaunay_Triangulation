@@ -29,7 +29,7 @@ struct Delaunay {
 	~Delaunay();
 	
 	int insert();
-	int flip(int a, int nbr);
+	int flip(int a, int edge);
 	void legalize(int a, int e);
 	int legalize();
 	void writeTri(int index, int triPts[3], int triNeighbours[3], int triOpposite[3]);

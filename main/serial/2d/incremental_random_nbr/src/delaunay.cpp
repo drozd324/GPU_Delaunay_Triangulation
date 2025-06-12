@@ -45,9 +45,7 @@ Delaunay::Delaunay(Point* points, int n) :
 		saveToFile();
 	}
 
-	std::cout << "\nTESTING FLIPPING\n";
-	triList[nTri-1].print();
-	std::cout << "FLIPPED: " << flip(nTri-1, 1) << "\n";
+	legalize();
 }
 
 /*
@@ -68,8 +66,8 @@ Delaunay::~Delaunay() {
  * @param nbr Index in chosen triangle of neighbour. This is an int in 0, 1 or 2.
  * @out Index in chosen triangle of neighbour. This is an int in 0, 1 or 2.
  */
-int Delaunay::flip(int a, int nbr) {
-	int i = nbr;
+int Delaunay::flip(int a, int edge) {
+	int i = edge;
 
 	int b = triList[a].n[i]; // index in triList of nei
 	if (b == -1) {
@@ -79,7 +77,7 @@ int Delaunay::flip(int a, int nbr) {
 	int opp_idx = triList[a].o[i]; 
 
 	// check if we should flip
-	if (0 <= incircle(pts[triList[b].p[opp_idx]],
+	if (0 > incircle(pts[triList[b].p[opp_idx]],
 				      pts[triList[a].p[0]],
 				      pts[triList[a].p[1]],
 				      pts[triList[a].p[2]])) 
@@ -87,14 +85,31 @@ int Delaunay::flip(int a, int nbr) {
 		return -1;
 	}
 
-	// temporary qaud "struct" data  just to make it readable
-	int p[4] = {triList[a].p[(i-1)%3], triList[a].p[i], triList[b].p[opp_idx], triList[a].p[(i+1)%3]};
+	std::cout << "Flipping triangle: " << a << ", egde: " << i << "\n"; 
 
-	int n[4] = {triList[a].n[(i-1)%3], triList[b].n[(opp_idx-1)%3],
+	std::cout << "t" << a << " ";
+	triList[a].print();
+
+	std::cout << "idk | ";
+	for (int k=0; k<5; ++k) {
+		std::cout << triList[a].p[(k-1)%3] << " ";
+	}
+	std::cout << "\n";
+
+	// temporary qaud "struct" data  just to make it readable
+	int p[4] = {triList[a].p[(i-1 + 3)%3], triList[a].p[i], triList[b].p[opp_idx], triList[a].p[(i+1)%3]};
+
+	int n[4] = {triList[a].n[(i-1 + 3)%3], triList[b].n[(opp_idx-1 + 3)%3],
 				triList[b].n[opp_idx], triList[a].n[(i+1)%3]}; 
 
-	int o[4] = {triList[a].o[(i-1)%3], triList[b].o[(opp_idx-1)%3],
+	int o[4] = {triList[a].o[(i-1 + 3)%3], triList[b].o[(opp_idx-1 + 3)%3],
 				triList[b].o[opp_idx], triList[a].o[(i+1)%3]}; 
+
+	std::cout << "QUAD STRUCT: "; 
+	for (int k=0; k<4; ++k) {
+		std::cout << p[k] << " "; 
+	}
+	std::cout << "\n"; 
 
 	int ap[3] = {p[0], p[1], p[2]};
 	int an[3] = {n[0], n[1], b};
@@ -103,6 +118,28 @@ int Delaunay::flip(int a, int nbr) {
 	int bp[3] = {p[2], p[3], p[0]};
 	int bn[3] = {n[2], n[3], a};
 	int bo[3] = {o[2], o[3], 1};
+
+	std::cout << "OVERWRITING: a "; 
+	for (int k=0; k<3; ++k) {
+		std::cout << triList[a].p[k] << " "; 
+	}
+	std::cout << "\n"; 
+	std::cout << "OVERWRITING: b "; 
+	for (int k=0; k<3; ++k) {
+		std::cout << triList[b].p[k] << " "; 
+	}
+	std::cout << "\n"; 
+
+	std::cout << "WRITING: a "; 
+	for (int k=0; k<3; ++k) {
+		std::cout << ap[k] << " "; 
+	}
+	std::cout << "\n"; 
+	std::cout << "WRITING: b "; 
+	for (int k=0; k<3; ++k) {
+		std::cout << bp[k] << " "; 
+	}
+	std::cout << "\n"; 
 
 	writeTri(a, ap, an, ao);
 	writeTri(b, bp, bn, bo);
@@ -127,6 +164,7 @@ int Delaunay::flip(int a, int nbr) {
 		triList[n[3]].o[(o[3]+1)%3] = 0;	
 	}
 
+	std::cout << "COMPLETE\n";
 	saveToFile();
 	return 0;
 }
@@ -135,13 +173,12 @@ int Delaunay::flip(int a, int nbr) {
  * Function to legalize a given triangle in triList with index 'a', with edge 'e'.
  */
 void Delaunay::legalize(int a, int e) {
-
 	if (flip(a, e) == -1) {
 		return;
 	}
 
-//	legalize(a, 1);
-//	legalize(triList[a].n[2], 0);
+	legalize(a, 1);
+	legalize(triList[a].n[2], 0);
 }
 
 /*
@@ -228,7 +265,7 @@ int Delaunay::insert() {
 		nTri += 2;		
 		num_inserted_tri += 2;
 
-		saveToFile();
+		//saveToFile();
 
 	}
 
