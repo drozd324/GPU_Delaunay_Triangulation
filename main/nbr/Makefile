@@ -23,6 +23,9 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
 $(OBJDIR)/tri.o: $(SRCDIR)/tri.cpp $(OBJDIR)/point.o $(OBJDIR)/circle.o
 $(OBJDIR)/delaunay.o: $(SRCDIR)/delaunay.cpp $(OBJDIR)/math.o $(OBJDIR)/point.o $(OBJDIR)/circle.o $(OBJDIR)/tri.o
 
+$(OBJDIR) $(BINDIR):
+	mkdir -p $@
+
 .PHONY: clean
 clean:
 	rm -f $(OBJDIR)/*.o $(EXECS) ./data/data.txt
