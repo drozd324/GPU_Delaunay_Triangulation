@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[]) {
 
-	int n = 3;
+	int n = 10;
 	int seed = 69420;
 	
 	int option;

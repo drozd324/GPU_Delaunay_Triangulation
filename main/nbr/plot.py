@@ -83,11 +83,11 @@ with open("./data/data.txt", "r") as data:
 			# scatter mean of triangles points to represent the triangle
 			tri_k_avg = (np.mean(tri_pts[:, 0]), np.mean(tri_pts[:, 1]))
 			if num_pts < 20:
-				plt.scatter(tri_k_avg[0], tri_k_avg[1], color="green", s=1)
+				#plt.scatter(tri_k_avg[0], tri_k_avg[1], color="green", s=1)
 				plt.annotate(str(f"t{k}"), (tri_k_avg[0], tri_k_avg[1]))
 
 			# show data about triangle k
-			if (show_nbr == k and k <= num_tri):
+			if show_nbr == k and iter_idx != (len(iter_line_num) - 1):
 
 				# scatter mean of triangles points to represent the triangle
 				tri_k_avg = (np.mean(tri_pts[:, 0]), np.mean(tri_pts[:, 1]))
@@ -99,6 +99,7 @@ with open("./data/data.txt", "r") as data:
 					nbr_idx = tri[3+i]
 					if nbr_idx == -1:
 						continue
+					nbr_idx = nbr_idx % len(tris)
 
 					# caclulate neighbours center
 					tri_nbr_pts = np.zeros((3,2))			
@@ -119,14 +120,17 @@ with open("./data/data.txt", "r") as data:
 
 
 		# plots points in triangulation
-		if num_pts < 20:
-			plt.scatter(pts[:,0 ], pts[:, 1], color="red")
-			for i, x, y in zip(range(num_pts), pts[:, 0], pts[:, 1]):
-				plt.annotate(str(i), (x, y))
+		if num_pts < 20 and iter_idx != (len(iter_line_num) - 1):
+			if iter_idx == len(iter_line_num) - 1:
+				plt.scatter(pts[:-3,0 ], pts[:-3, 1], color="red")
+				for i, x, y in zip(range(num_pts), pts[:-3, 0], pts[:-3, 1]):
+					plt.annotate(str(i), (x, y))
+			else:
+				plt.scatter(pts[:,0 ], pts[:, 1], color="red")
+				for i, x, y in zip(range(num_pts), pts[:, 0], pts[:, 1]):
+					plt.annotate(str(i), (x, y))
 
 		plt.axis('square')
-		#plt.xlim(0, 1)
-		#plt.ylim(0, 1)
 
 		plt.title(f"{num_pts} points, triangles: {len(tris)}, iter: {iter}/{len(iter_line_num) - 1}") 
 		plt.draw()

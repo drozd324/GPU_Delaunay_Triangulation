@@ -1,6 +1,6 @@
 CXX := g++
 CXXFLAGS := -Og -Wall -Wextra -std=c++23
-DEBUG := # -fsanitize=address  -lefence #-g
+DEBUG :=  -fsanitize=address  -lefence -g
 
 OBJDIR := obj
 BINDIR := bin
@@ -25,4 +25,4 @@ $(OBJDIR)/delaunay.o: $(SRCDIR)/delaunay.cpp $(OBJDIR)/math.o $(OBJDIR)/point.o 
 
 .PHONY: clean
 clean:
-	rm -f $(OBJDIR)/*.o $(EXECS)
+	rm -f $(OBJDIR)/*.o $(EXECS) ./data/data.txt

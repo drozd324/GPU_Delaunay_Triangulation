@@ -35,8 +35,8 @@ struct Delaunay {
 	void writeTri(int index, int triPts[3], int triNeighbours[3], int triOpposite[3]);
 
 	void initSuperTri();
-	//void saveToFile(bool end=false);
-	void saveToFile();
+	void saveToFile(bool end=false);
+	//void saveToFile();
 
 	int iter = 0;
 	int tag_num = 0;

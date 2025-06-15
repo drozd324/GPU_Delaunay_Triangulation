@@ -1,7 +1,8 @@
 #include "delaunay.h"
 
 /*
- * Constructor which creates the delaunay triagulation from an array of 'points' and its lenght 'n'.
+ * Constructor which creates the delaunay triagulation from an array of 'points'
+ * and its lenght 'n'.
  */
 Delaunay::Delaunay(Point* points, int n) :
 	npts(n), pts(new Point[npts + 3]),
@@ -29,15 +30,10 @@ Delaunay::Delaunay(Point* points, int n) :
 	saveToFile();
 
 	for (int i=0; i<npts; ++i) { 
-		std::cout << "============  PASS " << i << "============ \n"; 
+		std::cout << "============[PASS " << i << "]============ \n"; 
 		int inserted = insert();
 		std::cout << "inserted: " << inserted << "\n";
 		std::cout << "nTri " << nTri << "/" << nTriMax << "\n";
-
-//		for (int k=0; k<nTri; ++k) {
-//			std::cout << k;
-//			triList[k].print();
-//		}
 		
 		if (inserted == 0) {
 			break; 
@@ -49,13 +45,10 @@ Delaunay::Delaunay(Point* points, int n) :
 	int nflips = -1;
 	while (nflips != 0) {
 		nflips = legalize();
-		std::cout << "Performed	" << nflips  << " flips\n"; 
+		std::cout << "Performed	" << nflips  << " additional flips\n"; 
 	}
 
-	saveToFile();
-
-
-
+	saveToFile(true);
 }
 
 /*
@@ -88,22 +81,17 @@ int Delaunay::flip(int a, int edge) {
 
 	// check if we should flip
 	if (0 > incircle(pts[triList[b].p[opp_idx]],
-				      pts[triList[a].p[0]],
-				      pts[triList[a].p[1]],
-				      pts[triList[a].p[2]])) 
+				     pts[triList[a].p[0]],
+				     pts[triList[a].p[1]],
+				     pts[triList[a].p[2]])) 
 	{
 		return -1;
 	}
-
-
-	// temporary qaud "struct" data  just to make it readable
+ 
+ 	// temporary qaud "struct" data  just to make it readable
 	int p[4] = {triList[a].p[(i-1 + 3)%3], triList[a].p[i], triList[b].p[opp_idx], triList[a].p[(i+1)%3]};
-
-	int n[4] = {triList[a].n[(i-1 + 3)%3], triList[b].n[(opp_idx-1 + 3)%3],
-				triList[b].n[opp_idx], triList[a].n[(i+1)%3]}; 
-
-	int o[4] = {triList[a].o[(i-1 + 3)%3], triList[b].o[(opp_idx-1 + 3)%3],
-				triList[b].o[opp_idx], triList[a].o[(i+1)%3]}; 
+	int n[4] = {triList[a].n[(i-1 + 3)%3], triList[b].n[(opp_idx-1 + 3)%3], triList[b].n[opp_idx], triList[a].n[(i+1)%3]}; 
+	int o[4] = {triList[a].o[(i-1 + 3)%3], triList[b].o[(opp_idx-1 + 3)%3], triList[b].o[opp_idx], triList[a].o[(i+1)%3]}; 
 
 	int ap[3] = {p[0], p[1], p[2]};
 	int an[3] = {n[0], n[1], b};
@@ -119,24 +107,36 @@ int Delaunay::flip(int a, int edge) {
 	if (n[0] >= 0) {
 		triList[n[0]].n[(o[0]+1)%3] = a;	
 		triList[n[0]].o[(o[0]+1)%3] = 2;	
+	} else {
+		triList[n[0]].n[(o[0]+1)%3] = -1;	
+		triList[n[0]].o[(o[0]+1)%3] = -1;	
 	}
 
 	if (n[1] >= 0) {
 		triList[n[1]].n[(o[1]+1)%3] = a;	
 		triList[n[1]].o[(o[1]+1)%3] = 0;	
+	} else {
+		triList[n[1]].n[(o[1]+1)%3] = -1;	
+		triList[n[1]].o[(o[1]+1)%3] = -1;	
 	}
 
 	if (n[2] >= 0) {
 		triList[n[2]].n[(o[2]+1)%3] = b;	
 		triList[n[2]].o[(o[2]+1)%3] = 2;	
+	} else {
+		triList[n[2]].n[(o[2]+1)%3] = -1;	
+		triList[n[2]].o[(o[2]+1)%3] = -1;	
 	}
 
 	if (n[3] >= 0) {
 		triList[n[3]].n[(o[3]+1)%3] = b;	
 		triList[n[3]].o[(o[3]+1)%3] = 0;	
+	} else {
+		triList[n[3]].n[(o[3]+1)%3] = -1;	
+		triList[n[3]].o[(o[3]+1)%3] = -1;	
 	}
 
-	//saveToFile();
+	saveToFile();
 	return 0;
 }
 
@@ -144,12 +144,11 @@ int Delaunay::flip(int a, int edge) {
  * Function to legalize a given triangle in triList with index 'a', with edge 'e'.
  */
 int Delaunay::legalize(int a, int e) {
-	int nflips = 0;
 	if (flip(a, e) == -1) {
 		return 0;
 	}
 
-	nflips++;
+	int nflips = 1;
 	nflips += legalize(a, 1);
 	nflips += legalize(triList[a].n[2], 0);
 
@@ -165,6 +164,8 @@ int Delaunay::legalize() {
 		for (int j=0; j<3; ++j) {
 			nflips += legalize(i, j);
 		}
+
+		//saveToFile();
 	}
 
 	return nflips;
@@ -181,9 +182,6 @@ int Delaunay::insert() {
 	int max = nTri;
 	for (int i=0; i<max; ++i) {
 		int center = triList[i].get_center();
-		//std::cout << "center=" << center << "\n";
-		//std::cout << i;
-		//triList[i].print();
 
 		if (center == -1) { // if center doesnt exist, continue
 			continue;
@@ -222,34 +220,41 @@ int Delaunay::insert() {
 		if (n[0] >= 0) {
 			triList[n[0]].o[(o[0]+1) % 3] = 0;
 			triList[n[0]].n[(o[0]+1) % 3] = i;
+		} else {
+			triList[n[0]].o[(o[0]+1) % 3] = -1;
+			triList[n[0]].n[(o[0]+1) % 3] = -1;
 		}
 
 		if (n[1] >= 0) {
 			triList[n[1]].o[(o[1]+1) % 3] = 0;
 			triList[n[1]].n[(o[1]+1) % 3] = nTri;
+		} else {
+			triList[n[1]].o[(o[1]+1) % 3] = -1;
+			triList[n[1]].n[(o[1]+1) % 3] = -1;
 		}
 
 		if (n[2] >= 0) {
 			triList[n[2]].o[(o[2]+1) % 3] = 0;
 			triList[n[2]].n[(o[2]+1) % 3] = nTri+1;
+		} else {
+			triList[n[2]].o[(o[2]+1) % 3] = -1;
+			triList[n[2]].n[(o[2]+1) % 3] = -1;
 		}
 		
-
-		legalize(i, 1);
-		legalize(nTri, 1);
-		legalize(nTri+1, 1);
-
-		//saveToFile();
-
-		// try to make some ascii art diagrams maybe good for explenation
-
 		nTri += 2;		
 		num_inserted_tri += 2;
 
+		legalize(i, 1);
+		legalize(nTri-2, 1);
+		legalize(nTri-1, 1);
+
+		// try to make some ascii art diagrams maybe good for explenation
+		saveToFile();
 	}
 
 	return num_inserted_tri;
 }
+
 
 void Delaunay::initSuperTri() {
 	Point avg; 
@@ -302,9 +307,9 @@ void Delaunay::writeTri(int index, int triPts[3], int triNeighbours[3], int triO
 	triList[index].tag = tag_num++;
 }
 
-void Delaunay::saveToFile() {
+void Delaunay::saveToFile(bool end) {
 
-//	if (end == false) {
+	if (end == false) {
 		saveFile << iter << " " << nTri << "\n";
 		for (int i=0; i<nTri; ++i) {
 			for (int j=0; j<3; ++j) {
@@ -321,57 +326,57 @@ void Delaunay::saveToFile() {
 
 		saveFile << "\n"; 
 		iter++;
-//	}
-//	else {
-//		int nTriFinal = 0;	
-//		// save triangulation with super triangle points removed
-//		for (int i=0; i<nTri; ++i) {
-//			// if any point in this triangle is on the boundary dont save
-//			int cont = 0;
-//			for (int k=0; k<3; ++k) {
-//				for (int l=0; l<3; ++l) {
-//					if (triList[i].p[k] == (npts + l)) {
-//						cont = -1;
-//					}
-//				}
-//			}
-//	
-//			if (cont == -1) {
-//				continue;
-//			}
-//	
-//			nTriFinal++;	
-//		}
-//	
-//		saveFile << iter << " " << nTriFinal << "\n";
-//		for (int i=0; i<nTri; ++i) {
-//			// if any point in this triangle is on the boundary dont save
-//			int cont = 0;
-//			for (int k=0; k<3; ++k) {
-//				for (int l=0; l<3; ++l) {
-//					if (triList[i].p[k] == (npts + l)) {
-//						cont = -1;
-//					}
-//				}
-//			}
-//	
-//			if (cont == -1) {
-//				continue;
-//			}
-//	
-//			for (int j=0; j<3; ++j) {
-//				saveFile << triList[i].p[j] << " "; 
-//			} 
-//			for (int j=0; j<3; ++j) {
-//				saveFile << triList[i].n[j] << " "; 
-//			} 
-//			for (int j=0; j<3; ++j) {
-//				saveFile << triList[i].o[j] << " "; 
-//			} 
-//			saveFile << "\n"; 
-//		}
-//	
-//		saveFile << "\n"; 
-//		iter++;
-//	}
+	}
+	else {
+		int nTriFinal = 0;	
+		// save triangulation with super triangle points removed
+		for (int i=0; i<nTri; ++i) {
+			// if any point in this triangle is on the boundary dont save
+			int cont = 0;
+			for (int k=0; k<3; ++k) {
+				for (int l=0; l<3; ++l) {
+					if (triList[i].p[k] == (npts + l)) {
+						cont = -1;
+					}
+				}
+			}
+	
+			if (cont == -1) {
+				continue;
+			}
+	
+			nTriFinal++;	
+		}
+	
+		saveFile << iter << " " << nTriFinal << "\n";
+		for (int i=0; i<nTri; ++i) {
+			// if any point in this triangle is on the boundary dont save
+			int cont = 0;
+			for (int k=0; k<3; ++k) {
+				for (int l=0; l<3; ++l) {
+					if (triList[i].p[k] == (npts + l)) {
+						cont = -1;
+					}
+				}
+			}
+	
+			if (cont == -1) {
+				continue;
+			}
+	
+			for (int j=0; j<3; ++j) {
+				saveFile << triList[i].p[j] << " "; 
+			} 
+			for (int j=0; j<3; ++j) {
+				saveFile << triList[i].n[j] << " "; 
+			} 
+			for (int j=0; j<3; ++j) {
+				saveFile << triList[i].o[j] << " "; 
+			} 
+			saveFile << "\n"; 
+		}
+	
+		saveFile << "\n"; 
+		iter++;
+	}
 }
