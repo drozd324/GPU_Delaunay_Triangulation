@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <format>
 
 #include "types.h"
 #include "point.h" 
@@ -17,24 +16,26 @@
  * whether this triangle is used in the trianglulation constructed so far.
  */
 struct Tri {
-	int npts;  Point* pts; 
-	int nlpts; int* lpts;
+	//Point* pts; int npts;
+	Point* lpts; int nlpts;
+	bool isAllocated_lpts = false; 
 
-	int p[3]; // indexes of points in pts list
+	Point p[3]; // indexes of points in pts list
 	int n[3]; // idx to Tri neighbours of this triangle
 	int o[3]; // index in the Tri noted by the int n[i] of opposite point of current Tri
 	int center = -1;
-	int tag = -1;
+	int tag = 0;
 
-//	Tri() : nlpts(1), lpts(new int[nlpts]) {}
-//	~Tri() { delete[] lpts; }
+	Tri() {}
+	~Tri() {
+		if (isAllocated_lpts == true) {
+			delete[] lpts;
+		}
+	}
 
-	void writeTri(Point* gpts, int ngpts, int triPts[3], int triNeighbours[3], int triOpposite[3]);
-
-	void find_pts_inside(int* spts, int nspts);
-	void write_pts_inside(int* spts, int nspts);
+	void writeTri(Point* pts, int npts, Point triPts[3], int triNeighbours[3], int triOpposite[3]);
+	void find_pts_inside(Point* pts_to_check, int npts);
 	int get_center();
-
 	void print();
 
 };

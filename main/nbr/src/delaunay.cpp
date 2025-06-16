@@ -42,7 +42,8 @@ Delaunay::Delaunay(Point* points, int n) :
 		saveToFile();
 	}
 
-	int nflips = -1;
+	int nflips = 0;
+	//int nflips = -1;
 	while (nflips != 0) {
 		nflips = legalize();
 		std::cout << "Performed	" << nflips  << " additional flips\n"; 
@@ -55,8 +56,8 @@ Delaunay::Delaunay(Point* points, int n) :
  * Basic destructor.
  */
 Delaunay::~Delaunay() {
-	delete[] pts;
 	delete[] triList; 
+	delete[] pts;
 }
 
 
@@ -101,8 +102,8 @@ int Delaunay::flip(int a, int edge) {
 	int bn[3] = {n[2], n[3], a};
 	int bo[3] = {o[2], o[3], 1};
 
-	writeTri(a, ap, an, ao);
-	writeTri(b, bp, bn, bo);
+	triList[a].writeTri(pts, npts, ap, an, ao);
+	triList[b].writeTri(pts, npts, bp, bn, bo);
 
 	if (n[0] >= 0) {
 		triList[n[0]].n[(o[0]+1)%3] = a;	
@@ -172,6 +173,85 @@ int Delaunay::legalize() {
 }
 
 /*
+ * Inserts a point into triangle indexed by 'i' (splits the triangle into 3 creating 
+ * two new triangles) if possible. Returns the number of a new triangles created.
+ *
+ * @param i Index of triangle in the array triList.
+ */
+int Delaunay::insert(int i) {
+	int center = triList[i].get_center();
+
+	if (center == -1) { // if no points inside this triangle, continue
+		return 0;
+	}
+
+	int p[3] = {triList[i].p[0],
+				triList[i].p[1],
+				triList[i].p[2]};
+
+	int n[3] = {triList[i].n[0],
+				triList[i].n[1],
+				triList[i].n[2]};
+
+	int o[3] = {triList[i].o[0],
+				triList[i].o[1],
+				triList[i].o[2]};
+
+	int p0[3] = {center, p[0], p[1]};
+	int n0[3] = {nTri+1, n[0], nTri};
+	int o0[3] = {1, o[0], 2};
+
+	int p1[3] = {center, p[1], p[2]};
+	int n1[3] = {i, n[1], nTri+1};
+	int o1[3] = {1, o[1], 2};
+
+	int p2[3] = {center, p[2], p[0]};
+	int n2[3] = {nTri, n[2], i};
+	int o2[3] = {1, o[2], 2};
+
+
+	triList[nTri  ].writeTri(pts, npts, p1, n1, o1);
+	triList[nTri+1].writeTri(pts, npts, p2, n2, o2);
+	triList[i     ].writeTri(pts, npts, p0, n0, o0);
+
+	// updates neighbour points opposite point if they exist
+	if (n[0] >= 0) {
+		triList[n[0]].o[(o[0]+1) % 3] = 0;
+		triList[n[0]].n[(o[0]+1) % 3] = i;
+	} else {
+		triList[n[0]].o[(o[0]+1) % 3] = -1;
+		triList[n[0]].n[(o[0]+1) % 3] = -1;
+	}
+
+	if (n[1] >= 0) {
+		triList[n[1]].o[(o[1]+1) % 3] = 0;
+		triList[n[1]].n[(o[1]+1) % 3] = nTri;
+	} else {
+		triList[n[1]].o[(o[1]+1) % 3] = -1;
+		triList[n[1]].n[(o[1]+1) % 3] = -1;
+	}
+
+	if (n[2] >= 0) {
+		triList[n[2]].o[(o[2]+1) % 3] = 0;
+		triList[n[2]].n[(o[2]+1) % 3] = nTri+1;
+	} else {
+		triList[n[2]].o[(o[2]+1) % 3] = -1;
+		triList[n[2]].n[(o[2]+1) % 3] = -1;
+	}
+	
+	nTri += 2;		
+
+//	legalize(i, 1);
+//	legalize(nTri-2, 1);
+//	legalize(nTri-1, 1);
+
+	// try to make some ascii art diagrams maybe good for explenation
+	saveToFile();
+
+	return 2;
+}
+
+/*
  * Inserts a point into triangles which contain points inside of them. The point is 
  * chosen to be the closest to the circumcenter of this triangle if available. This 
  * function also reutrns the number of triangles added into the triangulation.
@@ -181,75 +261,7 @@ int Delaunay::insert() {
 
 	int max = nTri;
 	for (int i=0; i<max; ++i) {
-		int center = triList[i].get_center();
-
-		if (center == -1) { // if center doesnt exist, continue
-			continue;
-		}
-
-		int p[3] = {triList[i].p[0],
-					triList[i].p[1],
-					triList[i].p[2]};
-
-		int n[3] = {triList[i].n[0],
-					triList[i].n[1],
-					triList[i].n[2]};
-
-		int o[3] = {triList[i].o[0],
-					triList[i].o[1],
-					triList[i].o[2]};
-
-		int p0[3] = {center, p[0], p[1]};
-		int n0[3] = {nTri+1, n[0], nTri};
-		int o0[3] = {1, o[0], 2};
-
-		int p1[3] = {center, p[1], p[2]};
-		int n1[3] = {i, n[1], nTri+1};
-		int o1[3] = {1, o[1], 2};
-
-		int p2[3] = {center, p[2], p[0]};
-		int n2[3] = {nTri, n[2], i};
-		int o2[3] = {1, o[2], 2};
-
-
-		writeTri(nTri, p1, n1, o1);
-		writeTri(nTri+1, p2, n2, o2);
-		writeTri(i     , p0, n0, o0);
-
-		// updates neighbour points opposite point if they exist
-		if (n[0] >= 0) {
-			triList[n[0]].o[(o[0]+1) % 3] = 0;
-			triList[n[0]].n[(o[0]+1) % 3] = i;
-		} else {
-			triList[n[0]].o[(o[0]+1) % 3] = -1;
-			triList[n[0]].n[(o[0]+1) % 3] = -1;
-		}
-
-		if (n[1] >= 0) {
-			triList[n[1]].o[(o[1]+1) % 3] = 0;
-			triList[n[1]].n[(o[1]+1) % 3] = nTri;
-		} else {
-			triList[n[1]].o[(o[1]+1) % 3] = -1;
-			triList[n[1]].n[(o[1]+1) % 3] = -1;
-		}
-
-		if (n[2] >= 0) {
-			triList[n[2]].o[(o[2]+1) % 3] = 0;
-			triList[n[2]].n[(o[2]+1) % 3] = nTri+1;
-		} else {
-			triList[n[2]].o[(o[2]+1) % 3] = -1;
-			triList[n[2]].n[(o[2]+1) % 3] = -1;
-		}
-		
-		nTri += 2;		
-		num_inserted_tri += 2;
-
-		legalize(i, 1);
-		legalize(nTri-2, 1);
-		legalize(nTri-1, 1);
-
-		// try to make some ascii art diagrams maybe good for explenation
-		saveToFile();
+		num_inserted_tri += insert(i);
 	}
 
 	return num_inserted_tri;
@@ -289,27 +301,14 @@ void Delaunay::initSuperTri() {
 	int p[3] = {npts, npts+1, npts+2};
 	int n[3] = {-1, -1, -1}; 
 	int o[3] = {-1, -1, -1}; 
-	writeTri(nTri, p, n, o);
+	triList[nTri].writeTri(pts, npts, p, n, o);
 	nTri++;
-}
-
-void Delaunay::writeTri(int index, int triPts[3], int triNeighbours[3], int triOpposite[3]) {
-	triList[index].pts = pts;
-	triList[index].npts = npts;
-
-	for (int i=0; i<3; ++i) {
-		triList[index].p[i] = triPts[i];
-		triList[index].n[i] = triNeighbours[i];
-		triList[index].o[i] = triOpposite[i];
-	}
-
-	triList[index].status = 1;
-	triList[index].tag = tag_num++;
 }
 
 void Delaunay::saveToFile(bool end) {
 
-	if (end == false) {
+	if (end == false) { // save all triangles
+
 		saveFile << iter << " " << nTri << "\n";
 		for (int i=0; i<nTri; ++i) {
 			for (int j=0; j<3; ++j) {
@@ -327,9 +326,11 @@ void Delaunay::saveToFile(bool end) {
 		saveFile << "\n"; 
 		iter++;
 	}
-	else {
+
+	else { // save triangulation with super triangle points removed
+
+		// count number of triangles which do not contain the supertriangle points
 		int nTriFinal = 0;	
-		// save triangulation with super triangle points removed
 		for (int i=0; i<nTri; ++i) {
 			// if any point in this triangle is on the boundary dont save
 			int cont = 0;
@@ -348,6 +349,7 @@ void Delaunay::saveToFile(bool end) {
 			nTriFinal++;	
 		}
 	
+		// save
 		saveFile << iter << " " << nTriFinal << "\n";
 		for (int i=0; i<nTri; ++i) {
 			// if any point in this triangle is on the boundary dont save

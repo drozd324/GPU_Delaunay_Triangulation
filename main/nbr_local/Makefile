@@ -1,6 +1,6 @@
 CXX := g++
-CXXFLAGS := -O3 -Wall -Wextra -std=c++23
-DEBUG :=  -fsanitize=address  -lefence -g
+CXXFLAGS := -Og -Wall -Wextra -std=c++23
+DEBUG :=  #-fsanitize=address  -lefence -g
 
 OBJDIR := obj
 BINDIR := bin
