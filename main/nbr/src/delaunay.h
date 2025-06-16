@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <format>
 
 #include "macros.h"
 #include "types.h"

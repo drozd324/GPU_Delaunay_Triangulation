@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <format>
 
 #include "types.h"
 #include "point.h" 
