@@ -46,7 +46,6 @@ Delaunay::Delaunay(Point* points, int n) :
 		saveToFile();
 	}
 
-	//int nflips = 0;
 	int nflips = -1;
 	while (nflips != 0) {
 		nflips = legalize();
@@ -106,8 +105,19 @@ int Delaunay::flip(int a, int edge) {
 	int bn[3] = {n[2], n[3], a};
 	int bo[3] = {o[2], o[3], 1};
 
-	triList[a].writeTri(pts, npts, ap, an, ao);
-	triList[b].writeTri(pts, npts, bp, bn, bo);
+	int nspts = triList[a].nlpts + triList[b].nlpts;
+	int* spts = new int[nspts];
+	for (int k=0; k<triList[a].nlpts; ++k) {
+		spts[k] = triList[a].lpts[k];
+	}
+	for (int k=0; k<triList[b].nlpts; ++k) {
+		spts[triList[a].nlpts + k] = triList[b].lpts[k];
+	}
+
+	triList[a].writeTri(pts, npts, spts, nspts, ap, an, ao);
+	triList[b].writeTri(pts, npts, spts, nspts, bp, bn, bo);
+
+	delete[] spts;
 
 	if (n[0] >= 0) {
 		triList[n[0]].n[(o[0]+1)%3] = a;	
@@ -184,8 +194,8 @@ int Delaunay::legalize() {
  */
 int Delaunay::insert(int i) {
 
-	int center = triList[i].get_center();
-	//int center = triList[i].center;
+	//int center = triList[i].get_center();
+	int center = triList[i].center;
 
 	if (center == -1) { // if no points inside this triangle, continue
 		return 0;
@@ -215,10 +225,17 @@ int Delaunay::insert(int i) {
 	int n2[3] = {nTri, n[2], i};
 	int o2[3] = {1, o[2], 2};
 
+	int nspts = triList[i].nlpts;
+	int* spts = new int[nspts];
+	for (int k=0; k<nspts; ++k) {
+		spts[k] = triList[i].lpts[k];
+	}
 
-	triList[nTri  ].writeTri(pts, npts, p1, n1, o1);
-	triList[nTri+1].writeTri(pts, npts, p2, n2, o2);
-	triList[i     ].writeTri(pts, npts, p0, n0, o0);
+	triList[nTri  ].writeTri(pts, npts, spts, nspts, p1, n1, o1);
+	triList[nTri+1].writeTri(pts, npts, spts, nspts, p2, n2, o2);
+	triList[i     ].writeTri(pts, npts, spts, nspts, p0, n0, o0);
+
+	delete[] spts;
 
 	// updates neighbour points opposite point if they exist
 	if (n[0] >= 0) {
@@ -298,7 +315,16 @@ void Delaunay::initSuperTri() {
 	int p[3] = {npts, npts+1, npts+2};
 	int n[3] = {-1, -1, -1}; 
 	int o[3] = {-1, -1, -1}; 
-	triList[nTri].writeTri(pts, npts, p, n, o);
+
+	int nspts = npts;
+	int* spts = new int[nspts];
+	for (int k=0; k<npts; ++k) {
+		spts[k] = k;
+	}
+
+	triList[nTri].writeTri(pts, npts, spts, nspts, p, n, o);
+
+	delete[] spts;
 	nTri++;
 }
 

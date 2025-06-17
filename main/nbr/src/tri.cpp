@@ -9,7 +9,7 @@
  * @param triNeighbours 
  * @param triOpposite
  */
-void Tri::writeTri(Point* gpts, int ngpts, int triPts[3], int triNeighbours[3], int triOpposite[3]) {
+void Tri::writeTri(Point* gpts, int ngpts, int* spts, int nspts, int triPts[3], int triNeighbours[3], int triOpposite[3]) {
 	pts = gpts;
 	npts = ngpts;
 	
@@ -21,6 +21,23 @@ void Tri::writeTri(Point* gpts, int ngpts, int triPts[3], int triNeighbours[3], 
 
 	tag++;
 
+//	// search points
+//	int nspts = npts;
+//	int* spts = new int[nspts];
+//	for (int i=0; i<nspts; ++i) {
+//		spts[i] = i;
+//	}
+	
+	if (lpts_alloc == true) {
+		delete[] lpts;
+		lpts_alloc = false;
+	}
+
+
+	find_pts_inside(spts, nspts);
+	//delete[] spts;
+
+	get_center();
 }
 
 /* 
@@ -76,6 +93,8 @@ void Tri::find_pts_inside(int* spts, int nspts) {
 	}
 
 	lpts = new int[nlpts];
+	lpts_alloc = true;
+
 	for (int i=0; i<nlpts; ++i) {
 		lpts[i] = temp_lpts[i];
 	}
@@ -87,16 +106,6 @@ void Tri::find_pts_inside(int* spts, int nspts) {
 
 int Tri::get_center() {
 
-	// search points
-	int nspts = npts;
-	int* spts = new int[nspts];
-	for (int i=0; i<nspts; ++i) {
-		spts[i] = i;
-	}
-
-	find_pts_inside(spts, nspts);
-
-	delete[] spts;
 
 	// calculute actual center of circumcircle for comparison
 	Circle cc = circumcircle(pts[p[0]], pts[p[1]], pts[p[2]]);
@@ -110,7 +119,7 @@ int Tri::get_center() {
 		}
 	}
 
-	delete[] lpts;
+	//delete[] lpts;
 	return center;
 }
 
