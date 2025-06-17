@@ -13,9 +13,6 @@ void Tri::writeTri(Point* gpts, int ngpts, int triPts[3], int triNeighbours[3], 
 	pts = gpts;
 	npts = ngpts;
 	
-//	lpts = gpts;
-//	nlpts = ngpts;
-
 	for (int i=0; i<3; ++i) {
 		p[i] = triPts[i];
 		n[i] = triNeighbours[i];
@@ -24,7 +21,6 @@ void Tri::writeTri(Point* gpts, int ngpts, int triPts[3], int triNeighbours[3], 
 
 	tag++;
 
-	//get_center();
 }
 
 /* 
@@ -65,31 +61,26 @@ int Tri::contains(Point point) {
  */
 void Tri::find_pts_inside(int* spts, int nspts) {
 	
-	//if (lpts) delete[] lpts;
-	//int* temp_lpts = new int[nspts];
+	nlpts = 0;
+	int* temp_lpts = new int[nspts];
 
 	// loop through all points
-	std::cout << "pt inside: ";
 	for (int k=0; k<nspts; ++k) { 
 		// if this is true then point is not inside triangle 
 		if (contains(pts[spts[k]]) <= 0) {
 			continue;
 		}
 
-		std::cout << spts[k] << ", ";
-
-		//temp_lpts[nlpts] = spts[k];
-		lpts[nlpts] = spts[k];
+		temp_lpts[nlpts] = spts[k];
 		nlpts++;
 	}
 
-	std::cout << "\n";
+	lpts = new int[nlpts];
+	for (int i=0; i<nlpts; ++i) {
+		lpts[i] = temp_lpts[i];
+	}
 
-//	for (int i=0; i<nlpts; ++i) {
-//		lpts[i] = temp_lpts[i];
-//	}
-//
-//	delete[] temp_lpts;
+	delete[] temp_lpts;
 }
 
 
@@ -103,8 +94,6 @@ int Tri::get_center() {
 		spts[i] = i;
 	}
 
-	nlpts = 0;
-	lpts = new int[nspts];
 	find_pts_inside(spts, nspts);
 
 	delete[] spts;
@@ -112,83 +101,18 @@ int Tri::get_center() {
 	// calculute actual center of circumcircle for comparison
 	Circle cc = circumcircle(pts[p[0]], pts[p[1]], pts[p[2]]);
 	Point true_center = cc.center;
-	std::cout << "true center: " << true_center.x[0] << ", " << true_center.x[1] << ")\n";
-
 
 	center = -1;
-	//lpts = new int[nlpts];
-	std::cout << "looping for center: ";
 	for (int k=0; k<nlpts; ++k) { 
 		if (k == 0 || (dist(pts[lpts[k]], true_center) < dist(pts[center], true_center)) ) {
 			// check if its closer to the center than prevoius point
 			center = lpts[k];
-			std::cout << "(k=" << k << ", c=" << center << "), ";
 		}
 	}
-	std::cout << "\n";
 
 	delete[] lpts;
 	return center;
 }
-
-
-//int Tri::get_center() {
-//	
-//	// search points
-//	int nspts = npts;
-//	int* spts = new int[nspts];
-//	for (int i=0; i<nspts; ++i) {
-//		spts[i] = i;
-//	}
-//	
-//	nlpts = 0;
-//	delete[] lpts;
-//	lpts = new int[nspts];
-//
-//	////// write local pts
-//	// loop through all points
-//	for (int k=0; k<nspts; ++k) { 
-//		real area;
-//		
-//		// check if point is inside this triangle
-//		for (int i=0; i<3; ++i) {
-//			int j = (i+1) % 3;
-//			area = (pts[p[j]].x[0] - pts[p[i]].x[0])*(pts[spts[k]].x[1] - pts[p[i]].x[1]) - 
-//			       (pts[p[j]].x[1] - pts[p[i]].x[1])*(pts[spts[k]].x[0] - pts[p[i]].x[0]);
-//
-//			if (area <= 0) {
-//				break;
-//			}
-//		}
-//
-//		// if this is true then point is not inside triangle 
-//		if (area <= 0) {
-//			continue;
-//		}
-//
-//		lpts[nlpts] = spts[k];
-//		nlpts++;
-//	}
-//
-//	delete[] spts;
-//	////// get center
-//	// calculute actual center of circumcircle for comparison
-//	Circle cc = circumcircle(pts[p[0]], pts[p[1]], pts[p[2]]);
-//	Point true_center = cc.center;
-//
-//	center = -1;
-//	//lpts = new int[nlpts];
-//	for (int k=0; k<nlpts; ++k) { 
-//		if (k == 0 || (dist(pts[lpts[k]], true_center) < dist(pts[center], true_center)) ) {
-//			// check if its closer to the center than prevoius point
-//			center = lpts[k];
-//		}
-//	}
-//
-//	delete[] lpts;
-//	return center;
-//}
-//
 
 void Tri::print() {
 	std::cout << "| points    : " << p[0] << ", " << p[1] << ", " << p[2]

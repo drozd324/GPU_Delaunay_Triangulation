@@ -187,7 +187,6 @@ int Delaunay::insert(int i) {
 	int center = triList[i].get_center();
 	//int center = triList[i].center;
 
-	std::cout << "center: " << center << "\n";
 	if (center == -1) { // if no points inside this triangle, continue
 		return 0;
 	}
@@ -225,26 +224,17 @@ int Delaunay::insert(int i) {
 	if (n[0] >= 0) {
 		triList[n[0]].o[(o[0]+1) % 3] = 0;
 		triList[n[0]].n[(o[0]+1) % 3] = i;
-	}// else {
-//		triList[n[0]].o[(o[0]+1) % 3] = -1;
-//		triList[n[0]].n[(o[0]+1) % 3] = -1;
-//	}
+	}
 
 	if (n[1] >= 0) {
 		triList[n[1]].o[(o[1]+1) % 3] = 0;
 		triList[n[1]].n[(o[1]+1) % 3] = nTri;
-	} //else {
-//		triList[n[1]].o[(o[1]+1) % 3] = -1;
-//		triList[n[1]].n[(o[1]+1) % 3] = -1;
-//	}
+	}
 
 	if (n[2] >= 0) {
 		triList[n[2]].o[(o[2]+1) % 3] = 0;
 		triList[n[2]].n[(o[2]+1) % 3] = nTri+1;
-	} //else {
-//		triList[n[2]].o[(o[2]+1) % 3] = -1;
-//		triList[n[2]].n[(o[2]+1) % 3] = -1;
-//	}
+	}
 	
 	nTri += 2;		
 
