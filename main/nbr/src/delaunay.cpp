@@ -7,7 +7,7 @@
 Delaunay::Delaunay(Point* points, int n) :
 	npts(n), pts(new Point[npts + 3]),
 	nTri(0), nTriMax(2*(npts+3) - 2 - 3), triList(new Tri[nTriMax]),
-	saveFile("./data/data.txt", std::ios_base::app) //|  std::ios::trunc)
+	saveFile("./data/data.txt", std::ios_base::app) 
 {
 	std::cout << "[ALLOCATING] \n";
 	std::cout << "npts + 3     = " << npts + 3 << "\n";
