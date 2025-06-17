@@ -6,8 +6,8 @@
  */
 Delaunay::Delaunay(Point* points, int n) :
 	npts(n), pts(new Point[npts + 3]),
-	nTri(0), nTriMax(2*(npts+3) - 2 - 3), triList(new Tri[nTriMax]),
-	saveFile("./data/data.txt", std::ios_base::app)
+	nTri(0), nTriMax(2*(npts+3) - 2 - 3), triList(new Tri[nTriMax])
+	//saveFile("./data/data.txt", std::ios_base::app) //|  std::ios::trunc)
 {
 	std::cout << "[ALLOCATING] \n";
 	std::cout << "npts + 3     = " << npts + 3 << "\n";
@@ -20,16 +20,20 @@ Delaunay::Delaunay(Point* points, int n) :
 	std::cout << "INITSUPERTRIANGLE\n";
 	initSuperTri();
 
+	std::ofstream saveFile0("./data/data.txt", std::ios_base::app);
 	// save points data to file
-	saveFile << npts+3 << "\n";
+	saveFile0 << npts+3 << "\n";
 	for (int i=0; i<npts+3; ++i) {
-		saveFile << pts[i].x[0] << " " << pts[i].x[1] << "\n";
+		saveFile0 << pts[i].x[0] << " " << pts[i].x[1] << "\n";
 	}
-	saveFile << "\n"; 
+	saveFile0 << "\n"; 
+	saveFile0.close();
 
 	saveToFile();
 
+
 	for (int i=0; i<npts; ++i) { 
+	//for (int i=0; i<2; ++i) { 
 		std::cout << "============[PASS " << i << "]============ \n"; 
 		int inserted = insert();
 		std::cout << "inserted: " << inserted << "\n";
@@ -42,11 +46,11 @@ Delaunay::Delaunay(Point* points, int n) :
 		saveToFile();
 	}
 
-	int nflips = 0;
-	//int nflips = -1;
+	//int nflips = 0;
+	int nflips = -1;
 	while (nflips != 0) {
 		nflips = legalize();
-		std::cout << "Performed	" << nflips  << " additional flips\n"; 
+		std::cout << "Performed	" << nflips+1  << " additional flips\n"; 
 	}
 
 	saveToFile(true);
@@ -179,8 +183,11 @@ int Delaunay::legalize() {
  * @param i Index of triangle in the array triList.
  */
 int Delaunay::insert(int i) {
-	int center = triList[i].get_center();
 
+	int center = triList[i].get_center();
+	//int center = triList[i].center;
+
+	std::cout << "center: " << center << "\n";
 	if (center == -1) { // if no points inside this triangle, continue
 		return 0;
 	}
@@ -218,32 +225,32 @@ int Delaunay::insert(int i) {
 	if (n[0] >= 0) {
 		triList[n[0]].o[(o[0]+1) % 3] = 0;
 		triList[n[0]].n[(o[0]+1) % 3] = i;
-	} else {
-		triList[n[0]].o[(o[0]+1) % 3] = -1;
-		triList[n[0]].n[(o[0]+1) % 3] = -1;
-	}
+	}// else {
+//		triList[n[0]].o[(o[0]+1) % 3] = -1;
+//		triList[n[0]].n[(o[0]+1) % 3] = -1;
+//	}
 
 	if (n[1] >= 0) {
 		triList[n[1]].o[(o[1]+1) % 3] = 0;
 		triList[n[1]].n[(o[1]+1) % 3] = nTri;
-	} else {
-		triList[n[1]].o[(o[1]+1) % 3] = -1;
-		triList[n[1]].n[(o[1]+1) % 3] = -1;
-	}
+	} //else {
+//		triList[n[1]].o[(o[1]+1) % 3] = -1;
+//		triList[n[1]].n[(o[1]+1) % 3] = -1;
+//	}
 
 	if (n[2] >= 0) {
 		triList[n[2]].o[(o[2]+1) % 3] = 0;
 		triList[n[2]].n[(o[2]+1) % 3] = nTri+1;
-	} else {
-		triList[n[2]].o[(o[2]+1) % 3] = -1;
-		triList[n[2]].n[(o[2]+1) % 3] = -1;
-	}
+	} //else {
+//		triList[n[2]].o[(o[2]+1) % 3] = -1;
+//		triList[n[2]].n[(o[2]+1) % 3] = -1;
+//	}
 	
 	nTri += 2;		
 
-//	legalize(i, 1);
-//	legalize(nTri-2, 1);
-//	legalize(nTri-1, 1);
+	legalize(i, 1);
+	legalize(nTri-2, 1);
+	legalize(nTri-1, 1);
 
 	// try to make some ascii art diagrams maybe good for explenation
 	saveToFile();
@@ -307,23 +314,24 @@ void Delaunay::initSuperTri() {
 
 void Delaunay::saveToFile(bool end) {
 
+	std::ofstream saveFile0("./data/data.txt", std::ios_base::app);
 	if (end == false) { // save all triangles
 
-		saveFile << iter << " " << nTri << "\n";
+		saveFile0 << iter << " " << nTri << "\n";
 		for (int i=0; i<nTri; ++i) {
 			for (int j=0; j<3; ++j) {
-				saveFile << triList[i].p[j] << " "; 
+				saveFile0 << triList[i].p[j] << " "; 
 			} 
 			for (int j=0; j<3; ++j) {
-				saveFile << triList[i].n[j] << " "; 
+				saveFile0 << triList[i].n[j] << " "; 
 			} 
 			for (int j=0; j<3; ++j) {
-				saveFile << triList[i].o[j] << " "; 
+				saveFile0 << triList[i].o[j] << " "; 
 			} 
-			saveFile << "\n"; 
+			saveFile0 << "\n"; 
 		}
 
-		saveFile << "\n"; 
+		saveFile0 << "\n"; 
 		iter++;
 	}
 
@@ -350,7 +358,7 @@ void Delaunay::saveToFile(bool end) {
 		}
 	
 		// save
-		saveFile << iter << " " << nTriFinal << "\n";
+		saveFile0 << iter << " " << nTriFinal << "\n";
 		for (int i=0; i<nTri; ++i) {
 			// if any point in this triangle is on the boundary dont save
 			int cont = 0;
@@ -367,18 +375,19 @@ void Delaunay::saveToFile(bool end) {
 			}
 	
 			for (int j=0; j<3; ++j) {
-				saveFile << triList[i].p[j] << " "; 
+				saveFile0 << triList[i].p[j] << " "; 
 			} 
 			for (int j=0; j<3; ++j) {
-				saveFile << triList[i].n[j] << " "; 
+				saveFile0 << triList[i].n[j] << " "; 
 			} 
 			for (int j=0; j<3; ++j) {
-				saveFile << triList[i].o[j] << " "; 
+				saveFile0 << triList[i].o[j] << " "; 
 			} 
-			saveFile << "\n"; 
+			saveFile0 << "\n"; 
 		}
 	
-		saveFile << "\n"; 
+		saveFile0 << "\n"; 
 		iter++;
 	}
+	saveFile0.close();
 }

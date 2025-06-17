@@ -30,6 +30,7 @@ struct Tri {
 
 	void writeTri(Point* gpts, int ngpts, int triPts[3], int triNeighbours[3], int triOpposite[3]);
 
+	int contains(Point point);
 	void find_pts_inside(int* spts, int nspts);
 	void write_pts_inside(int* spts, int nspts);
 	int get_center();

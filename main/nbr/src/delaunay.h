@@ -6,7 +6,7 @@
 
 #include "macros.h"
 #include "types.h"
-#include "math.h"
+#include "mymath.h"
 #include "point.h" 
 #include "circle.h"
 #include "tri.h"
