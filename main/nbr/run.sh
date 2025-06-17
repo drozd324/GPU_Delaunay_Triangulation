@@ -7,4 +7,4 @@ rm ./data/data.txt
 
 make
 ./bin/test $@
-python3 plot.py
+#python3 plot.py
