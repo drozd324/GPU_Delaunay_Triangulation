@@ -33,7 +33,9 @@ Delaunay::Delaunay(Point* points, int n) :
 	for (int i=0; i<npts; ++i) { 
 	//for (int i=0; i<2; ++i) { 
 		std::cout << "============[PASS " << i << "]============ \n"; 
+		//int toinsert = checkInsert();
 		int inserted = insert();
+		//std::cout << "points to insert: " << toinsert << "\n";
 		std::cout << "inserted: " << inserted << "\n";
 		std::cout << "nTri " << nTri << "/" << nTriMax << "\n";
 		
@@ -43,14 +45,14 @@ Delaunay::Delaunay(Point* points, int n) :
 
 		saveToFile();
 	}
-
-	int nflips = -1;
-	while (nflips != 0) {
-		nflips = legalize();
-		std::cout << "Performed	" << nflips  << " additional flips\n"; 
-	}
-
-	std::cout << "Triangluation is Delaunay\n";
+//
+//	int nflips = -1;
+//	while (nflips != 0) {
+//		nflips = legalize();
+//		std::cout << "Performed	" << nflips  << " additional flips\n"; 
+//	}
+//
+//	std::cout << "Triangluation is Delaunay\n";
 
 	saveToFile(true);
 }
@@ -118,6 +120,12 @@ int Delaunay::flip(int a, int edge) {
 	triList[b].writeTri(pts, npts, spts, nspts, bp, bn, bo);
 
 	delete[] spts;
+
+//	triList[a].find_pts_inside();
+//	triList[b].find_pts_inside();
+	triList[a].get_center();
+	triList[b].get_center();
+
 
 	if (n[0] >= 0) {
 		triList[n[0]].n[(o[0]+1)%3] = a;	
@@ -193,8 +201,6 @@ int Delaunay::legalize() {
  * @param i Index of triangle in the array triList.
  */
 int Delaunay::insert(int i) {
-
-	//int center = triList[i].get_center();
 	int center = triList[i].center;
 
 	if (center == -1) { // if no points inside this triangle, continue
@@ -237,6 +243,15 @@ int Delaunay::insert(int i) {
 
 	delete[] spts;
 
+//	triList[nTri].find_pts_inside();
+//	triList[nTri+1].find_pts_inside();
+//	triList[i].find_pts_inside();
+
+	triList[nTri+1].get_center();
+	triList[nTri].get_center();
+	triList[i].get_center();
+
+
 	// updates neighbour points opposite point if they exist
 	if (n[0] >= 0) {
 		triList[n[0]].o[(o[0]+1) % 3] = 0;
@@ -255,9 +270,9 @@ int Delaunay::insert(int i) {
 	
 	nTri += 2;		
 
-	legalize(i, 1);
-	legalize(nTri-2, 1);
-	legalize(nTri-1, 1);
+//	legalize(i, 1);
+//	legalize(nTri-2, 1);
+//	legalize(nTri-1, 1);
 
 	// try to make some ascii art diagrams maybe good for explenation
 	saveToFile();
@@ -281,6 +296,18 @@ int Delaunay::insert() {
 	return num_inserted_tri;
 }
 
+/*
+ *
+ */
+int Delaunay::checkInsert() {
+	int num_to_insert = 0;
+	for (int i=0; i<nTri; ++i) {
+		triList[i].find_pts_inside();
+		triList[i].get_center();
+	}
+
+	return num_to_insert;
+}
 
 void Delaunay::initSuperTri() {
 	Point avg; 
@@ -323,8 +350,11 @@ void Delaunay::initSuperTri() {
 	}
 
 	triList[nTri].writeTri(pts, npts, spts, nspts, p, n, o);
-
 	delete[] spts;
+
+	//triList[nTri].find_pts_inside();
+	triList[nTri].get_center();
+
 	nTri++;
 }
 

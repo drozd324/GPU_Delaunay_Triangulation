@@ -59,8 +59,7 @@ with open("./data/data.txt", "r") as data:
 
 		# collect triangle info in per iteration
 		iter, num_tri = np.fromstring(read_line(data), sep=" ", dtype=int) 
-		#tris = np.zeros((num_tri, 9), dtype=int)
-		tris = np.zeros((num_tri, 12), dtype=int)
+		tris = np.zeros((num_tri, 9), dtype=int)
 		for i in range(num_tri):
 			tris[i] = np.fromstring(read_line(data), sep=" ", dtype=float) 
 
@@ -70,19 +69,14 @@ with open("./data/data.txt", "r") as data:
 
 			# plot edges of triangle
 			for i in range(3):
-#				x0 = pts[tri[int((i  ) % 3)]][0]
-#				x1 = pts[tri[int((i+1) % 3)]][0]
-#				y0 = pts[tri[int((i  ) % 3)]][1]
-#				y1 = pts[tri[int((i+1) % 3)]][1]
-
-				x0 = tri[int( (i*2    )      % 6)]
-				x1 = tri[int( (i*2    ) + 2  % 6)]
-				y0 = tri[int(((i*2 + 1)    ) % 6)]
-				y1 = tri[int(((i*2 + 1) + 2) % 6)]
+				x0 = pts[tri[int((i  ) % 3)]][0]
+				x1 = pts[tri[int((i+1) % 3)]][0]
+				y0 = pts[tri[int((i  ) % 3)]][1]
+				y1 = pts[tri[int((i+1) % 3)]][1]
 
 				tri_pts[i][0] = x0
 				tri_pts[i][1] = y0
-
+					
 				plt.plot([x0, x1], [y0, y1], color="black")
 
 
@@ -102,7 +96,7 @@ with open("./data/data.txt", "r") as data:
 
 				# plot lines to neighbours of triangle
 				for i in range(3):
-					nbr_idx = tri[3*2+i]
+					nbr_idx = tri[3+i]
 					if nbr_idx == -1:
 						continue
 					nbr_idx = nbr_idx % len(tris)
@@ -119,9 +113,8 @@ with open("./data/data.txt", "r") as data:
 					plt.plot([tri_k_avg[0], tri_nbr_avg[0]], [tri_k_avg[1], tri_nbr_avg[1]], color="green")
 
 					# plotting opposite points
-					opp_idx = tri[6*2+i]
-#					opp_pt = pts[tris[nbr_idx][opp_idx]]
-					opp_pt = tris[nbr_idx][opp_idx]
+					opp_idx = tri[6+i]
+					opp_pt = pts[tris[nbr_idx][opp_idx]]
 					
 					plt.plot([tri_k_avg[0], opp_pt[0]], [tri_k_avg[1], opp_pt[1]], color="blue")
 

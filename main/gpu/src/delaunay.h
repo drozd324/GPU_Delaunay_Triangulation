@@ -26,6 +26,7 @@ struct Delaunay {
 	Delaunay(Point* points, int n);
 	~Delaunay();
 	
+	void copyToHost();
 //	int insert(int i);
 //	int insert();
 

@@ -1,10 +1,10 @@
 #include <stdio.h>
 
-#define N 10
+int N = 10;
 
-__global__ void add_vectors(double* a, double* b, double* c) {
+__global__ void add_vectors(double* a, double* b, int n, double* c) {
     int id = blockDim.x * blockIdx.x + threadIdx.x;
-    if(id < N) { 
+    if(id < n) { 
 		c[id] = a[id] + b[id];
 	}
 }
@@ -23,12 +23,12 @@ struct VectorAdder {
     int size;
 
     VectorAdder(double* a, double* b, int n) :  size(n) {
-		cudaMalloc(&a_d, N * sizeof(double));
-		cudaMalloc(&b_d, N * sizeof(double));
-		cudaMalloc(&c_d, N * sizeof(double));
+		cudaMalloc(&a_d, size * sizeof(double));
+		cudaMalloc(&b_d, size * sizeof(double));
+		cudaMalloc(&c_d, size * sizeof(double));
 
-		cudaMemcpy(a_d, a, N * sizeof(double), cudaMemcpyHostToDevice);
-		cudaMemcpy(b_d, b, N * sizeof(double), cudaMemcpyHostToDevice);
+		cudaMemcpy(a_d, a, size * sizeof(double), cudaMemcpyHostToDevice);
+		cudaMemcpy(b_d, b, size * sizeof(double), cudaMemcpyHostToDevice);
 
 		compute();
     }
@@ -45,12 +45,12 @@ struct VectorAdder {
 		//      thr_per_blk: number of CUDA threads per grid block
 		//      blk_in_grid: number of blocks in grid
 		int thr_per_blk = 256;
-		int blk_in_grid = ceil( float(N) / thr_per_blk );
-		add_vectors<<<blk_in_grid, thr_per_blk>>>(a_d, b_d, c_d);
+		int blk_in_grid = ceil( float(size) / thr_per_blk );
+		add_vectors<<<blk_in_grid, thr_per_blk>>>(a_d, b_d, size, c_d);
     }
 
     void getResult(double* c) {
-		cudaMemcpy(c, c_d, N * sizeof(double), cudaMemcpyDeviceToHost);
+		cudaMemcpy(c, c_d, (size-2) * sizeof(double), cudaMemcpyDeviceToHost);
     }
 };
 

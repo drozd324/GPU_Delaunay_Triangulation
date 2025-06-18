@@ -9,7 +9,9 @@
  * @param triNeighbours 
  * @param triOpposite
  */
-void Tri::writeTri(Point* gpts, int ngpts, int* spts, int nspts, int triPts[3], int triNeighbours[3], int triOpposite[3]) {
+void Tri::writeTri(Point* gpts, int ngpts, int* spts, int nspts,
+			int triPts[3], int triNeighbours[3], int triOpposite[3])
+{
 	pts = gpts;
 	npts = ngpts;
 	
@@ -20,23 +22,8 @@ void Tri::writeTri(Point* gpts, int ngpts, int* spts, int nspts, int triPts[3], 
 	}
 
 	tag++;
-
-//	// search points
-//	int nspts = npts;
-//	int* spts = new int[nspts];
-//	for (int i=0; i<nspts; ++i) {
-//		spts[i] = i;
-//	}
 	
-	if (lpts_alloc == true) {
-		delete[] lpts;
-		lpts_alloc = false;
-	}
-
-
 	find_pts_inside(spts, nspts);
-	//delete[] spts;
-
 	get_center();
 }
 
@@ -77,6 +64,12 @@ int Tri::contains(Point point) {
  * @param nspts Lenght of array.
  */
 void Tri::find_pts_inside(int* spts, int nspts) {
+
+	if (lpts_alloc == true) {
+		delete[] lpts;
+		lpts_alloc = false;
+	}
+
 	
 	nlpts = 0;
 	int* temp_lpts = new int[nspts];

@@ -33,12 +33,13 @@ struct Tri {
 		}
 	}
 
-	void writeTri(Point* gpts, int ngpts, int* spts, int nspts, int triPts[3], int triNeighbours[3], int triOpposite[3]);
+	__host__ __device__ void writeTri(Point* gpts, int ngpts, int* spts, int nspts,
+			int triPts[3], int triNeighbours[3], int triOpposite[3]);
 
-	int contains(Point point);
-	void find_pts_inside(int* spts, int nspts);
-	void write_pts_inside(int* spts, int nspts);
-	int get_center();
+	__host__ __device__ int contains(Point point);
+	__host__ __device__ void find_pts_inside(int* spts, int nspts);
+	__host__ __device__ void write_pts_inside(int* spts, int nspts);
+	__host__ __device__ int get_center();
 
 	void print();
 
