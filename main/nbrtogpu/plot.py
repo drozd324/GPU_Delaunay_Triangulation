@@ -59,7 +59,7 @@ with open("./data/data.txt", "r") as data:
 
 		# collect triangle info in per iteration
 		iter, num_tri = np.fromstring(read_line(data), sep=" ", dtype=int) 
-		tris = np.zeros((num_tri, 9), dtype=int)
+		tris = np.zeros((num_tri, 10), dtype=int)
 		for i in range(num_tri):
 			tris[i] = np.fromstring(read_line(data), sep=" ", dtype=float) 
 
@@ -117,6 +117,14 @@ with open("./data/data.txt", "r") as data:
 					opp_pt = pts[tris[nbr_idx][opp_idx]]
 					
 					plt.plot([tri_k_avg[0], opp_pt[0]], [tri_k_avg[1], opp_pt[1]], color="blue")
+
+			# color triangles to be flipped and fatten edge
+			edge_to_flip = tri[9]
+			if edge_to_flip != -1:
+				flip_line = [tri_pts[edge_to_flip],
+							 tri_pts[(edge_to_flip+1) % 3] ]
+				plt.plot([flip_line[0][0], flip_line[1][0]], [flip_line[0][1], flip_line[1][1]], linewidth=3, color="orange")
+				 
 
 
 		# plots points in triangulation

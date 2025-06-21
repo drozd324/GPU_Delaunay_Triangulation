@@ -26,33 +26,19 @@ Delaunay::Delaunay(Point* points, int n) :
 		saveFile << pts[i].x[0] << " " << pts[i].x[1] << "\n";
 	}
 	saveFile << "\n"; 
-
 	saveToFile();
 
+	//bad_parallel();
+	incPtIns();
+	//myfirst();
 
-	for (int i=0; i<npts; ++i) { 
-	//for (int i=0; i<2; ++i) { 
-		std::cout << "============[PASS " << i << "]============ \n"; 
-		//int toinsert = checkInsert();
-		int inserted = insert();
-		//std::cout << "points to insert: " << toinsert << "\n";
-		std::cout << "inserted: " << inserted << "\n";
-		std::cout << "nTri " << nTri << "/" << nTriMax << "\n";
-		
-		if (inserted == 0) {
-			break; 
-		}
-
-		saveToFile();
+	int nflips = -1;
+	while (nflips != 0) {
+		nflips = legalize();
+		std::cout << "Performed	" << nflips  << " additional flips\n"; 
 	}
-//
-//	int nflips = -1;
-//	while (nflips != 0) {
-//		nflips = legalize();
-//		std::cout << "Performed	" << nflips  << " additional flips\n"; 
-//	}
-//
-//	std::cout << "Triangluation is Delaunay\n";
+
+	std::cout << "Triangluation is Delaunay\n";
 
 	saveToFile(true);
 }
@@ -65,25 +51,77 @@ Delaunay::~Delaunay() {
 	delete[] pts;
 }
 
+void Delaunay::incPtIns() {
+	std::cout << "====[INCREMENTAL POINT INSERTION]====\n\n" ;
+	for (int i=0; i<npts; ++i) {
+		std::cout << "\rNumber of points inserted: " << i+1 << "/" << npts;
+		insertPt(i);
+		
+		int nflips = -1;
+		while (nflips != 0) {
+			nflips = flip_after_insert();
+		}
+	}
+	std::cout << "\n" ;
+}
+
+void Delaunay::myfirst() {
+	for (int i=0; i<npts; ++i) { 
+		std::cout << "============[PASS " << i << "]============ \n"; 
+		int inserted = insert();
+		std::cout << "inserted: " << inserted << "\n";
+		std::cout << "nTri " << nTri << "/" << nTriMax << "\n";
+		
+		if (inserted == 0) {
+			break; 
+		}
+
+	}
+}
+
+void Delaunay::bad_parallel() {
+	for (int i=0; i<npts; ++i) { 
+		std::cout << "============[PASS " << i << "]============ \n"; 
+		
+		// search which tri have pts to insert
+		//checkInsert();
+
+		int inserted = insert();
+		std::cout << "inserted: " << inserted << "\n";
+
+		int num_flips = flip_after_insert();
+		std::cout << "num flips: " << num_flips << "\n";
+
+		std::cout << "nTri " << nTri << "/" << nTriMax << "\n";
+		
+		if (inserted == 0) {
+			break; 
+		}
+
+	}
+}
 
 /*
- * Performs a flip operation on a triangle 'a' and one of its neighbours denoted by
- * index 0, 1 or 2. Returns 0 if the flip was performed, reuturns -1 if no flip was 
+ * Performs a flip operation on a triangle 'a' and one of its edges/neighbours 'e' denoted by
+ * index 0, 1 or 2. Returns 1 if the flip was performed, reuturns -1 if no flip was 
  * performed.
  * 
- * @param a   Index in triList of chosen triangle
- * @param nbr Index in chosen triangle of neighbour. This is an int in 0, 1 or 2.
- * @out Index in chosen triangle of neighbour. This is an int in 0, 1 or 2.
+ * @param a Index in triList of chosen triangle
+ * @param e Index in chosen triangle of edge/neigbour. This is an int in 0, 1 or 2.
  */
-int Delaunay::flip(int a, int edge) {
-	int i = edge;
+int Delaunay::flip(int a, int e) {
 
-	int b = triList[a].n[i]; // index in triList of nei
-	if (b == -1) {
-		return -1;
+	if (e == -1) {
+		return 0;
 	}
 
-	int opp_idx = triList[a].o[i]; 
+	// if neighbour doesnt exist, then exit
+	int b = triList[a].n[e]; // index in triList of nei
+	if (b == -1) {
+		return 0;
+	}
+
+	int opp_idx = triList[a].o[e]; 
 
 	// check if we should flip
 	if (0 > incircle(pts[triList[b].p[opp_idx]],
@@ -91,13 +129,13 @@ int Delaunay::flip(int a, int edge) {
 				     pts[triList[a].p[1]],
 				     pts[triList[a].p[2]])) 
 	{
-		return -1;
+		return 0;
 	}
  
  	// temporary qaud "struct" data  just to make it readable
-	int p[4] = {triList[a].p[(i-1 + 3)%3], triList[a].p[i], triList[b].p[opp_idx], triList[a].p[(i+1)%3]};
-	int n[4] = {triList[a].n[(i-1 + 3)%3], triList[b].n[(opp_idx-1 + 3)%3], triList[b].n[opp_idx], triList[a].n[(i+1)%3]}; 
-	int o[4] = {triList[a].o[(i-1 + 3)%3], triList[b].o[(opp_idx-1 + 3)%3], triList[b].o[opp_idx], triList[a].o[(i+1)%3]}; 
+	int p[4] = {triList[a].p[(e-1 + 3)%3], triList[a].p[e]                , triList[b].p[opp_idx], triList[a].p[(e + 1)%3]};
+	int n[4] = {triList[a].n[(e-1 + 3)%3], triList[b].n[(opp_idx-1 + 3)%3], triList[b].n[opp_idx], triList[a].n[(e + 1)%3]}; 
+	int o[4] = {triList[a].o[(e-1 + 3)%3], triList[b].o[(opp_idx-1 + 3)%3], triList[b].o[opp_idx], triList[a].o[(e + 1)%3]}; 
 
 	int ap[3] = {p[0], p[1], p[2]};
 	int an[3] = {n[0], n[1], b};
@@ -121,53 +159,35 @@ int Delaunay::flip(int a, int edge) {
 
 	delete[] spts;
 
-//	triList[a].find_pts_inside();
-//	triList[b].find_pts_inside();
-	triList[a].get_center();
-	triList[b].get_center();
-
-
 	if (n[0] >= 0) {
 		triList[n[0]].n[(o[0]+1)%3] = a;	
 		triList[n[0]].o[(o[0]+1)%3] = 2;	
-	} else {
-		triList[n[0]].n[(o[0]+1)%3] = -1;	
-		triList[n[0]].o[(o[0]+1)%3] = -1;	
 	}
 
 	if (n[1] >= 0) {
 		triList[n[1]].n[(o[1]+1)%3] = a;	
 		triList[n[1]].o[(o[1]+1)%3] = 0;	
-	} else {
-		triList[n[1]].n[(o[1]+1)%3] = -1;	
-		triList[n[1]].o[(o[1]+1)%3] = -1;	
 	}
 
 	if (n[2] >= 0) {
 		triList[n[2]].n[(o[2]+1)%3] = b;	
 		triList[n[2]].o[(o[2]+1)%3] = 2;	
-	} else {
-		triList[n[2]].n[(o[2]+1)%3] = -1;	
-		triList[n[2]].o[(o[2]+1)%3] = -1;	
 	}
 
 	if (n[3] >= 0) {
 		triList[n[3]].n[(o[3]+1)%3] = b;	
 		triList[n[3]].o[(o[3]+1)%3] = 0;	
-	} else {
-		triList[n[3]].n[(o[3]+1)%3] = -1;	
-		triList[n[3]].o[(o[3]+1)%3] = -1;	
 	}
 
 	saveToFile();
-	return 0;
+	return 1;
 }
 
 /*
  * Function to legalize a given triangle in triList with index 'a', with edge 'e'.
  */
 int Delaunay::legalize(int a, int e) {
-	if (flip(a, e) == -1) {
+	if (flip(a, e) == 0) {
 		return 0;
 	}
 
@@ -179,7 +199,7 @@ int Delaunay::legalize(int a, int e) {
 }
 
 /*
- * Function to legalize a given triangle in triList with index a.
+ * Legalize the whole trianglulation by brute force.
  */
 int Delaunay::legalize() {
 	int nflips = 0;
@@ -194,18 +214,73 @@ int Delaunay::legalize() {
 	return nflips;
 }
 
+int Delaunay::flip_after_insert() {
+	int nflips = 0;
+	for (int i=0; i<nTri; ++i) {
+		if (flip(i, triList[i].flip) == 1) { 	// if flip succesfull, mark next two edges
+			nflips++;
+
+			triList[i].flip = 1;
+			triList[triList[i].n[2]].flip = 0;
+			saveToFile();
+		}
+		else {                                  // else mark for no flipping
+			triList[i].flip = -1;
+		}
+
+	}
+
+	return nflips;
+}
+
+/*
+ * Pick a triangle by index 'i' in triList and insert its center point.
+ * Returns the number of a new triangles created. 
+ */
+int Delaunay::insertInTri(int i) {
+	int r = triList[i].center;
+
+	if (r == -1) { // if no points inside this triangle, continue
+		return 0;
+	}
+
+	insertPtInTri(r, i);
+
+	return 2;
+}
+
+/*
+ * Pick a point by index 'r' in pts and insert it into a triangle which cointains it.
+ * Returns the number of a new triangles created. 
+ */
+int Delaunay::insertPt(int r) {
+	int i; //index of triangle in triList
+	for (int k=0; k<nTri; ++k) {
+		if (triList[k].contains(pts[r]) == 1) {
+			i = k;
+			break;
+		}
+
+		if (k == (nTri-1)) {
+			std::cout << "point not in any triangle\n";  
+			return 0;		
+		}
+	}
+
+	insertPtInTri(r, i);
+
+
+	return 2;
+}
 /*
  * Inserts a point into triangle indexed by 'i' (splits the triangle into 3 creating 
  * two new triangles) if possible. Returns the number of a new triangles created.
  *
  * @param i Index of triangle in the array triList.
  */
-int Delaunay::insert(int i) {
-	int center = triList[i].center;
+int Delaunay::insertPtInTri(int r, int i) {
 
-	if (center == -1) { // if no points inside this triangle, continue
-		return 0;
-	}
+	//std::cout << "[INSERTING] point: " << r << " in triangle: " << i << "\n";
 
 	int p[3] = {triList[i].p[0],
 				triList[i].p[1],
@@ -219,15 +294,15 @@ int Delaunay::insert(int i) {
 				triList[i].o[1],
 				triList[i].o[2]};
 
-	int p0[3] = {center, p[0], p[1]};
+	int p0[3] = {r, p[0], p[1]};
 	int n0[3] = {nTri+1, n[0], nTri};
 	int o0[3] = {1, o[0], 2};
 
-	int p1[3] = {center, p[1], p[2]};
+	int p1[3] = {r, p[1], p[2]};
 	int n1[3] = {i, n[1], nTri+1};
 	int o1[3] = {1, o[1], 2};
 
-	int p2[3] = {center, p[2], p[0]};
+	int p2[3] = {r, p[2], p[0]};
 	int n2[3] = {nTri, n[2], i};
 	int o2[3] = {1, o[2], 2};
 
@@ -241,16 +316,12 @@ int Delaunay::insert(int i) {
 	triList[nTri+1].writeTri(pts, npts, spts, nspts, p2, n2, o2);
 	triList[i     ].writeTri(pts, npts, spts, nspts, p0, n0, o0);
 
+	// marking edge for flipping
+	triList[nTri  ].flip = 1;
+	triList[nTri+1].flip = 1;
+	triList[i     ].flip = 1;
+
 	delete[] spts;
-
-//	triList[nTri].find_pts_inside();
-//	triList[nTri+1].find_pts_inside();
-//	triList[i].find_pts_inside();
-
-	triList[nTri+1].get_center();
-	triList[nTri].get_center();
-	triList[i].get_center();
-
 
 	// updates neighbour points opposite point if they exist
 	if (n[0] >= 0) {
@@ -290,7 +361,7 @@ int Delaunay::insert() {
 
 	int max = nTri;
 	for (int i=0; i<max; ++i) {
-		num_inserted_tri += insert(i);
+		num_inserted_tri += insertInTri(i);
 	}
 
 	return num_inserted_tri;
@@ -302,10 +373,11 @@ int Delaunay::insert() {
 int Delaunay::checkInsert() {
 	int num_to_insert = 0;
 	for (int i=0; i<nTri; ++i) {
-		triList[i].find_pts_inside();
-		triList[i].get_center();
+		if (triList[i].nspts > 0) {
+			triList[i].get_center();
+		}
 	}
-
+	
 	return num_to_insert;
 }
 
@@ -350,11 +422,8 @@ void Delaunay::initSuperTri() {
 	}
 
 	triList[nTri].writeTri(pts, npts, spts, nspts, p, n, o);
+
 	delete[] spts;
-
-	//triList[nTri].find_pts_inside();
-	triList[nTri].get_center();
-
 	nTri++;
 }
 
@@ -373,6 +442,8 @@ void Delaunay::saveToFile(bool end) {
 			for (int j=0; j<3; ++j) {
 				saveFile << triList[i].o[j] << " "; 
 			} 
+			saveFile << triList[i].flip << " "; 
+
 			saveFile << "\n"; 
 		}
 
@@ -428,6 +499,7 @@ void Delaunay::saveToFile(bool end) {
 			for (int j=0; j<3; ++j) {
 				saveFile << triList[i].o[j] << " "; 
 			} 
+			saveFile << triList[i].flip << " "; 
 			saveFile << "\n"; 
 		}
 	

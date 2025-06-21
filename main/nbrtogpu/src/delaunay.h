@@ -26,12 +26,21 @@ struct Delaunay {
 
 	Delaunay(Point* points, int n);
 	~Delaunay();
+
+	void incPtIns();
+	void myfirst();
+	void bad_parallel();
 	
+	int checkInsert();
 	int insert(int i);
 	int insert();
-	int checkInsert();
+
+	int insertInTri(int i);
+	int insertPt(int r);
+	int insertPtInTri(int r, int i);
 
 	int flip(int a, int edge);
+	int flip_after_insert();
 	int legalize(int a, int e);
 	int legalize();
 

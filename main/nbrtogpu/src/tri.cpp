@@ -9,7 +9,7 @@
  * @param triNeighbours 
  * @param triOpposite
  */
-void Tri::writeTri(Point* gpts, int ngpts, int* search_pts, int nsearch_pts,
+void Tri::writeTri(Point* gpts, int ngpts, int* searchpts, int nsearchpts,
 			int triPts[3], int triNeighbours[3], int triOpposite[3])
 {
 	pts = gpts;
@@ -21,14 +21,26 @@ void Tri::writeTri(Point* gpts, int ngpts, int* search_pts, int nsearch_pts,
 		o[i] = triOpposite[i];
 	}
 
-	spts = new int[nsearch_pts];
-	for (int i=0; i<nsearch_pts; ++i) {
-		spts[i] = search_pts[i];
-	}
-	nspts = nsearch_pts;
-	spts_alloc = true;
-
 	tag++;
+	flip = -1;
+
+	// needed for flipping
+	if (spts_alloc == true) {
+		delete[] spts;
+		nspts = 0;
+		spts_alloc = false;
+	}
+
+	if (nsearchpts > 0) { 
+		nspts = nsearchpts;
+		spts = new int[nsearchpts];
+		for (int i=0; i<nsearchpts; ++i) {
+			spts[i] = searchpts[i];
+		}
+		spts_alloc = true;
+	} 
+
+	get_center();
 }
 
 /* 
@@ -61,17 +73,67 @@ int Tri::contains(Point point) {
 	return (ztest? 0:1);
 }
 
-/*
- * Finds points inside this triangle from an array of intergers indexing points in the global array.
- * 
- * @param spts Array of 'search points'. We check whether these points are inside this triangle.
- * @param nspts Lenght of array.
- */
-void Tri::find_pts_inside() {
-
-//	if (spts_alloc == false) {
-//		return;
+///*
+// * Finds points inside this triangle from an array of intergers indexing points in the global array.
+// * 
+// * @param spts Array of 'search points'. We check whether these points are inside this triangle.
+// * @param nspts Lenght of array.
+// */
+//void Tri::find_pts_inside() {
+//
+//	if (lpts_alloc == true) {
+//		delete[] lpts;
+//		lpts_alloc = false;
 //	}
+//	
+//	nlpts = 0;
+//	int* temp_lpts = new int[nspts];
+//
+//	// loop through all points
+//	for (int k=0; k<nspts; ++k) { 
+//		// if this is true then point is not inside triangle 
+//		if (contains(pts[spts[k]]) <= 0) {
+//			continue;
+//		}
+//
+//		temp_lpts[nlpts] = spts[k];
+//		nlpts++;
+//	}
+//
+//	lpts = new int[nlpts];
+//	lpts_alloc = true;
+//
+//	for (int i=0; i<nlpts; ++i) {
+//		lpts[i] = temp_lpts[i];
+//	}
+//
+//	delete[] temp_lpts;
+//}
+//
+//
+//
+//int Tri::get_center() {
+//
+//	find_pts_inside();
+//
+//	// calculute actual center of circumcircle for comparison
+//	Circle cc = circumcircle(pts[p[0]], pts[p[1]], pts[p[2]]);
+//	Point true_center = cc.center;
+//
+//	center = -1;
+//	for (int k=0; k<nlpts; ++k) { 
+//		if (k == 0 || (dist(pts[lpts[k]], true_center) < dist(pts[center], true_center)) ) {
+//			// check if its closer to the center than prevoius point
+//			center = lpts[k];
+//		}
+//	}
+//
+//	//delete[] lpts;
+//	return center;
+//}
+
+
+int Tri::get_center() {
 
 	if (lpts_alloc == true) {
 		delete[] lpts;
@@ -79,7 +141,10 @@ void Tri::find_pts_inside() {
 	}
 	
 	nlpts = 0;
-	int* temp_lpts = new int[nspts];
+
+	if (spts_alloc == false) {
+		return -1;
+	}
 
 	// loop through all points
 	for (int k=0; k<nspts; ++k) { 
@@ -88,27 +153,17 @@ void Tri::find_pts_inside() {
 			continue;
 		}
 
-		temp_lpts[nlpts] = spts[k];
+		//temp_lpts[nlpts] = spts[k];
+		spts[nlpts] = spts[k];
 		nlpts++;
 	}
-
-	delete[] spts; spts_alloc = false;
 
 	lpts = new int[nlpts];
 	lpts_alloc = true;
 
 	for (int i=0; i<nlpts; ++i) {
-		lpts[i] = temp_lpts[i];
+		lpts[i] = spts[i];
 	}
-
-	delete[] temp_lpts;
-}
-
-
-
-int Tri::get_center() {
-
-	find_pts_inside();
 
 	// calculute actual center of circumcircle for comparison
 	Circle cc = circumcircle(pts[p[0]], pts[p[1]], pts[p[2]]);
@@ -125,6 +180,12 @@ int Tri::get_center() {
 	//delete[] lpts;
 	return center;
 }
+
+
+
+
+
+
 
 void Tri::print() {
 	std::cout << "| points    : " << p[0] << ", " << p[1] << ", " << p[2]
