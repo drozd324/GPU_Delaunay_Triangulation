@@ -59,9 +59,13 @@ struct VectorAdder {
 int main() {
     // Number of bytes to allocate for N doubles
 
-    double *a = (double*)malloc(N * sizeof(double));
-    double *b = (double*)malloc(N * sizeof(double));
-    double *c = (double*)malloc(N * sizeof(double));
+//    double *a = (double*)malloc(N * sizeof(double));
+//    double *b = (double*)malloc(N * sizeof(double));
+//    double *c = (double*)malloc(N * sizeof(double));
+
+    double *a = new double[N];
+    double *b = new double[N];
+    double *c = new double[N];
 
     // Fill host arrays A and B
     for(int i=0; i<N; i++) {
@@ -76,10 +80,14 @@ int main() {
     print_array(b, N);
 	print_array(c, N);
 
-    free(a);
-    free(b);
-    free(c);
+//    free(a);
+//    free(b);
+//    free(c);
 
+    delete[] a;
+    delete[] b;
+    delete[] c;
+		
     printf("\n---------------------------\n");
     printf("__SUCCESS__\n");
     printf("---------------------------\n");

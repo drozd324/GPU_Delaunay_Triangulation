@@ -27,6 +27,8 @@ struct Tri {
 	int flip = -1; // marks an edge to flip 0,1 or 2
 	int tag = -1;
 
+	int node; // index of node in nodes array
+
 //	Tri() : nlpts(1), lpts(new int[nlpts]) {}
 	~Tri() { 
 		if (lpts_alloc == true) { delete[] lpts; }
@@ -42,5 +44,12 @@ struct Tri {
 	void print();
 
 };
+
+struct Node {
+	// -1 if inactive, >=0 if active
+	int t;  // triangle (int indexing triangle in triList)
+	int d[3]; // indexes of daugnter nodes in nodes array
+};
+
 
 #endif

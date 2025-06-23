@@ -23,6 +23,7 @@ void Tri::writeTri(Point* gpts, int ngpts, int* searchpts, int nsearchpts,
 
 	tag++;
 	flip = -1;
+	
 
 	// needed for flipping
 	if (spts_alloc == true) {
@@ -33,6 +34,7 @@ void Tri::writeTri(Point* gpts, int ngpts, int* searchpts, int nsearchpts,
 
 	if (nsearchpts > 0) { 
 		nspts = nsearchpts;
+		//std::cout << "nsearchpts: " << nsearchpts << "\n";
 		spts = new int[nsearchpts];
 		for (int i=0; i<nsearchpts; ++i) {
 			spts[i] = searchpts[i];
@@ -158,6 +160,7 @@ int Tri::get_center() {
 		nlpts++;
 	}
 
+	//std::cout << "nlpts: " << nlpts << "\n";
 	lpts = new int[nlpts];
 	lpts_alloc = true;
 

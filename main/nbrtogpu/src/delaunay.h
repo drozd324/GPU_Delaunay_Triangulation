@@ -17,28 +17,35 @@
 struct Delaunay {
 	int npts;
 	Point* pts;
+	Point* pts_d;
 
 	int nTri; 
 	int nTriMax; 
 	Tri* triList; 
+	Tri* triList_d; 
+
+	//Node nodes[10000]; // big num figure out later
 
 	std::ofstream saveFile;
 
 	Delaunay(Point* points, int n);
 	~Delaunay();
 
+	// compute options
 	void incPtIns();
-	void myfirst();
-	void bad_parallel();
+	void onlyPointInsert();
+	void notparallel();
+	void gpu_compute();
 	
+	// point insertion functions
 	int checkInsert();
 	int insert(int i);
 	int insert();
-
 	int insertInTri(int i);
 	int insertPt(int r);
 	int insertPtInTri(int r, int i);
 
+	// flipping functions
 	int flip(int a, int edge);
 	int flip_after_insert();
 	int legalize(int a, int e);
