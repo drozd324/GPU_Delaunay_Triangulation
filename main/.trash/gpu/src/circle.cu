@@ -4,7 +4,7 @@
  * Contructs the circumcircle of a triangle from 3 given points
  * and returns a circle struct, which is the circumcircle.
  */	
-__host__ __device__ Circle circumcircle(Point a, Point b, Point c) {
+Circle circumcircle(Point a, Point b, Point c) {
 	// equation (21.3.7) in "Numerical Recipeies"
 	// equation (21.3.8)
 
@@ -21,9 +21,8 @@ __host__ __device__ Circle circumcircle(Point a, Point b, Point c) {
 	det = ba0*ca1 - ca0*ba1;
 
 	if (det == 0.0) {
-		//std::cout << "[ERROR][DET = 0] points ((" << a.x[0]  << "," << a.x[1] << "), (" << b.x[0] << "," << b.x[1] << "), (" << c.x[0] << "," << c.x[1] << ")" << " | "
-				  //<< ba0 << "," << ca1 << "," << ca0 << "," << ba1 << "\n";
-		printf("DET=0");
+		std::cout << "[ERROR][DET = 0] points ((" << a.x[0]  << "," << a.x[1] << "), (" << b.x[0] << "," << b.x[1] << "), (" << c.x[0] << "," << c.x[1] << ")" << " | "
+				  << ba0 << "," << ca1 << "," << ca0 << "," << ba1 << "\n";
 	}
 
 	det = 0.5 / det;
@@ -58,7 +57,7 @@ __host__ __device__ Circle circumcircle(Point a, Point b, Point c) {
 /*
  *	
  */
-__host__ __device__ real incircle(Point d, Point a, Point b, Point c){
+real incircle(Point d, Point a, Point b, Point c){
 	// +: inside  | flip
 	// 0: on      |
 	// -: outside | dont flip

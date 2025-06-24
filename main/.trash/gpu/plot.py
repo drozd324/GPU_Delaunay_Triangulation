@@ -52,7 +52,6 @@ with open("./data/data.txt", "r") as data:
 	iter_idx = len(iter_line_num) - 1
 	run = True
 	show_nbr = -1
-	show_edges_to_flip = False 
 	play = -1
 	while run:
 		goto_line(iter_line_num[iter_idx], data)
@@ -60,7 +59,7 @@ with open("./data/data.txt", "r") as data:
 
 		# collect triangle info in per iteration
 		iter, num_tri = np.fromstring(read_line(data), sep=" ", dtype=int) 
-		tris = np.zeros((num_tri, 10), dtype=int)
+		tris = np.zeros((num_tri, 9), dtype=int)
 		for i in range(num_tri):
 			tris[i] = np.fromstring(read_line(data), sep=" ", dtype=float) 
 
@@ -119,15 +118,6 @@ with open("./data/data.txt", "r") as data:
 					
 					plt.plot([tri_k_avg[0], opp_pt[0]], [tri_k_avg[1], opp_pt[1]], color="blue")
 
-			# color triangles to be flipped and fatten edge
-			if show_edges_to_flip == True:
-				edge_to_flip = tri[9]
-				if edge_to_flip != -1:
-					flip_line = [tri_pts[edge_to_flip],
-								 tri_pts[(edge_to_flip+1) % 3] ]
-					plt.plot([flip_line[0][0], flip_line[1][0]], [flip_line[0][1], flip_line[1][1]], linewidth=3, color="orange")
-				 
-
 
 		# plots points in triangulation
 		if num_pts < 20 and iter_idx != (len(iter_line_num) - 1):
@@ -163,8 +153,8 @@ with open("./data/data.txt", "r") as data:
 			iter_idx = 0
 
 		elif get_type(entered) == int:
-			if int(entered) < len(iter_line_num) and int(entered) >= -1:
-				iter_idx = int(entered) % len(iter_line_num)
+			if int(entered) < len(iter_line_num) and int(entered) >= 0:
+				iter_idx = int(entered)
 			else:
 				print(f"INVALID INDEX: must be in [0, {len(iter_line_num)-1}]")
 		elif entered == "f":
@@ -178,7 +168,7 @@ with open("./data/data.txt", "r") as data:
 			else:
 				iter_idx -= 1
 		elif entered == "e":
-			show_edges_to_flip = True
+			iter_idx = len(iter_line_num)-1
 		elif entered == "t":
 			for i, tri in enumerate(list(tris)):
 				print(i, "|", tri[0], tri[1], tri[2], " ", tri[3], tri[4], tri[5] , " ", tri[6], tri[7], tri[8])
@@ -191,10 +181,9 @@ with open("./data/data.txt", "r") as data:
 			print("| f: move forward one iteration") 
 			print("| b: move backward one iteration") 
 			print(f"| int in [0, {len(iter_line_num)-1}]: go to iteration with given number") 
-			print("| -1: goes to the end of the seqence") 
+			print("| e: goes to the end of the seqence") 
 			print("| t: prints traingles plotted") 
-			print("| n: displays neighbours of chosen triangle") 
-			print("| e: shows edges marked for flipping") 
+			print("| n: prints neighbours of chosen triangle") 
 			print("| play: loops through all iterations") 
 			print("| q: quit this session") 
 			print("| h: prints this user guide") 

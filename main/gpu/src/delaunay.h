@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <math.h>
 
 #include "macros.h"
 #include "types.h"
@@ -15,30 +16,38 @@
  * Struct for creating a delaunay triangulation from a given vector of points. Consists of 
  */
 struct Delaunay {
-	int npts; Point* pts;
-	int npts_d; Point* pts_d;
+	int    npts, npts_d;
+	Point* pts , pts_d;
 
-	int nTri; int nTriMax; Tri* triList; 
-	int nTri_d; int nTriMax_d; Tri* triList_d; 
+	int  nTri   , nTri_d; 
+	int  nTriMax, nTriMax_d; 
+	Tri* triList, triList_d; 
 
-	//std::ofstream saveFile;
+	int num_tris_to_insert, num_tris_to_insert_d;
+	Point avgPoint, avgPoint_d;
+
+	std::ofstream saveFile;
 
 	Delaunay(Point* points, int n);
 	~Delaunay();
+
+	// compute options
+	void gpu_compute();
 	
-	void copyToHost();
-//	int insert(int i);
-//	int insert();
+	__device__ void initSuperTri();
 
-//	int flip(int a, int edge);
-//	int legalize(int a, int e);
-//	int legalize();
-//
-//	void writeTri(int index, int triPts[3], int triNeighbours[3], int triOpposite[3]);
+	// point insertion functions
+	__device__ int checkInsert();
+	__device__ int insert(int i);
+	__device__ int insert();
+	__device__ int insertInTri(int i);
+	__device__ int insertPtInTri(int r, int i);
 
-	void initSuperTri();
-	//void saveToFile(bool end=false);
-	//void saveToFile();
+	// flipping functions
+	__device__ int flip(int a, int edge);
+	__device__ int flip_after_insert();
+
+	void saveToFile(bool end=false);
 
 	int iter = 0;
 	int tag_num = 0;

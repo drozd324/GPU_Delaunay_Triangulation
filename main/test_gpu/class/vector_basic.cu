@@ -39,13 +39,9 @@ int main() {
     cudaMemcpy(d_a, a, N * sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(d_b, b, N * sizeof(double), cudaMemcpyHostToDevice);
 
-    // Set execution configuration parameters
-    //      thr_per_blk: number of CUDA threads per grid block
-    //      blk_in_grid: number of blocks in grid
-    int thr_per_blk = 256;
-    int blk_in_grid = ceil( float(N) / thr_per_blk );
-
-    add_vectors<<<blk_in_grid, thr_per_blk >>>(d_a, d_b, d_c);
+	dim3 threadsPerBlock(32);
+    dim3 numBlocks(N/threadsPerBlock.x + (!(N % threadsPerBlock.x) ? 0:1));
+    add_vectors<<<numBlocks, threadsPerBlock>>>(d_a, d_b, d_c);
 
     cudaMemcpy(c, d_c, N * sizeof(double), cudaMemcpyDeviceToHost);
 
@@ -65,8 +61,8 @@ int main() {
     printf("__SUCCESS__\n");
     printf("---------------------------\n");
     printf("N                 = %d\n", N);
-    printf("Threads Per Block = %d\n", thr_per_blk);
-    printf("Blocks In Grid    = %d\n", blk_in_grid);
+    printf("Threads Per Block = %d\n", threadsPerBlock);
+    printf("Blocks In Grid    = %d\n", numBlocks);
     printf("---------------------------\n\n");
 
     return 0;

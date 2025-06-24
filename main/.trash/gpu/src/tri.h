@@ -17,39 +17,32 @@
  */
 struct Tri {
 	int npts;  Point* pts; 
-	int nlpts; int* lpts; bool lpts_alloc = false;
-	int nspts; int* spts; bool spts_alloc = false;
+	int nlpts; int* lpts;
+	bool lpts_alloc = false;
 
 	int p[3]; // indexes of points in pts list
 	int n[3]; // idx to Tri neighbours of this triangle
 	int o[3]; // index in the Tri noted by the int n[i] of opposite point of current Tri
 	int center = -1;
-	int flip = -1; // marks an edge to flip 0,1 or 2
 	int tag = -1;
 
-	int node; // index of node in nodes array
-
 //	Tri() : nlpts(1), lpts(new int[nlpts]) {}
-	__host__ __device__ ~Tri() { 
-		if (lpts_alloc == true) { delete[] lpts; }
-		if (spts_alloc == true) { delete[] spts; }
+	~Tri() { 
+		if (lpts_alloc == true) {
+			delete[] lpts;
+		}
 	}
 
-	__host__ __device__ void writeTri(Point* gpts, int ngpts, int* searchpts, int nsearchpts, int triPts[3], int triNeighbours[3], int triOpposite[3]);
+	__host__ __device__ void writeTri(Point* gpts, int ngpts, int* spts, int nspts,
+			int triPts[3], int triNeighbours[3], int triOpposite[3]);
 
 	__host__ __device__ int contains(Point point);
-	__host__ __device__ void find_pts_inside();
+	__host__ __device__ void find_pts_inside(int* spts, int nspts);
+	__host__ __device__ void write_pts_inside(int* spts, int nspts);
 	__host__ __device__ int get_center();
 
 	void print();
 
 };
-
-struct Node {
-	// -1 if inactive, >=0 if active
-	int t;  // triangle (int indexing triangle in triList)
-	int d[3]; // indexes of daugnter nodes in nodes array
-};
-
 
 #endif
