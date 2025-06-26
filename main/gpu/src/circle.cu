@@ -8,10 +8,10 @@ __host__ __device__ Circle circumcircle(Point a, Point b, Point c) {
 	// equation (21.3.7) in "Numerical Recipeies"
 	// equation (21.3.8)
 
-	real ba0, ba1, ca0, ca1;
-	real asq, csq;
-	real ctr0, ctr1, rad; // center0, center1, radius
-	real det; 
+	float ba0, ba1, ca0, ca1;
+	float asq, csq;
+	float ctr0, ctr1, rad; // center0, center1, radius
+	float det; 
 
 	ba0 = b.x[0] - a.x[0];
 	ba1 = b.x[1] - a.x[1];
@@ -40,7 +40,7 @@ __host__ __device__ Circle circumcircle(Point a, Point b, Point c) {
 }
 
 //Circle circumcircle(Point a, Point b, Point c) {
-//	real a0,a1,c0,c1,det,asq,csq,ctr0,ctr1,rad2;
+//	float a0,a1,c0,c1,det,asq,csq,ctr0,ctr1,rad2;
 //	a0 = a.x[0] - b.x[0]; a1 = a.x[1] - b.x[1];
 //	c0 = c.x[0] - b.x[0]; c1 = c.x[1] - b.x[1];
 //	det = a0*c1 - c0*a1;
@@ -58,15 +58,15 @@ __host__ __device__ Circle circumcircle(Point a, Point b, Point c) {
 /*
  *	
  */
-__host__ __device__ real incircle(Point d, Point a, Point b, Point c){
+__host__ __device__ float incircle(Point d, Point a, Point b, Point c){
 	// +: inside  | flip
 	// 0: on      |
 	// -: outside | dont flip
 
 	Circle cc = circumcircle(a, b, c);
 	// distance from center to d
-	//real dist_sqr = SQR(d.x[0] - cc.center.x[0]) + SQR(d.x[1] - cc.center.x[1]); 
-	real dist_sqr = (d.x[0] - cc.center.x[0])*(d.x[0] - cc.center.x[0]) 
+	//float dist_sqr = SQR(d.x[0] - cc.center.x[0]) + SQR(d.x[1] - cc.center.x[1]); 
+	float dist_sqr = (d.x[0] - cc.center.x[0])*(d.x[0] - cc.center.x[0]) 
 				  + (d.x[1] - cc.center.x[1])*(d.x[1] - cc.center.x[1]); 
 
 	//return SQR(cc.radius)- dist_sqr;

@@ -18,8 +18,8 @@ struct Ran {
 	}
 
 	unsigned long long int64();
-	double doub();
-	void circle(double& x, double& y);
+	float doub();
+	void circle(float& x, float& y);
 };
 
 void shuffle(int* array, int n, int seed);

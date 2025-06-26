@@ -9,7 +9,7 @@
  * @param triNeighbours 
  * @param triOpposite
  */
-__host__ __device__ void Tri::writeTri(Point* gpts, int ngpts, int* searchpts, int nsearchpts,
+void Tri::writeTri(Point* gpts, int ngpts, int* searchpts, int nsearchpts,
 			int triPts[3], int triNeighbours[3], int triOpposite[3])
 {
 	pts = gpts;
@@ -53,7 +53,7 @@ __host__ __device__ void Tri::writeTri(Point* gpts, int ngpts, int* searchpts, i
  * contained inside this triangle. Otherwise the point is on the boundary 
  * and returns 0 or outside and returns 1. 
  */
-__host__ __device__ int Tri::contains(Point point) {
+int Tri::contains(Point point) {
 	// Return 1 if point is in the triangle, 0 if on boundary, 1 if outside. (CCW triangle is assumed.)
 	real area;
 	int i, j, ztest=0;
@@ -135,7 +135,7 @@ __host__ __device__ int Tri::contains(Point point) {
 //}
 
 
-__host__ __device__ int Tri::get_center() {
+int Tri::get_center() {
 
 	if (lpts_alloc == true) {
 		delete[] lpts;
@@ -155,10 +155,12 @@ __host__ __device__ int Tri::get_center() {
 			continue;
 		}
 
+		//temp_lpts[nlpts] = spts[k];
 		spts[nlpts] = spts[k];
 		nlpts++;
 	}
 
+	//std::cout << "nlpts: " << nlpts << "\n";
 	lpts = new int[nlpts];
 	lpts_alloc = true;
 

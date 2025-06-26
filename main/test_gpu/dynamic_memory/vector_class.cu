@@ -4,14 +4,14 @@ int N = 10;
 
 
 
-__global__ void add_vectors(double* a, double* b, int n, double* c) {
+__global__ void add_vectors(int* a, int* b, int n, int* c) {
 	int id = blockDim.x * blockIdx.x + threadIdx.x;
 	if(id < n) { 
 		c[id] = a[id] + b[id];
 	}
 }
 
-void print_array(double* array, int n) {
+void print_array(int* array, int n) {
 	for (int i=0; i<n; ++i) {
 		printf("%lf ", array[i]);
 	}
@@ -20,16 +20,16 @@ void print_array(double* array, int n) {
 
 
 struct VectorAdder {
-    double *a_d, *b_d, *c_d;
+    int *a_d, *b_d, *c_d;
     int size;
 
-    VectorAdder(double* a, double* b, int n) :  size(n) {
-		cudaMalloc(&a_d, size * sizeof(double));
-		cudaMalloc(&b_d, size * sizeof(double));
-		cudaMalloc(&c_d, size * sizeof(double));
+    VectorAdder(int* a, int* b, int n) :  size(n) {
+		cudaMalloc(&a_d, size * sizeof(int));
+		cudaMalloc(&b_d, size * sizeof(int));
+		cudaMalloc(&c_d, size * sizeof(int));
 
-		cudaMemcpy(a_d, a, size * sizeof(double), cudaMemcpyHostToDevice);
-		cudaMemcpy(b_d, b, size * sizeof(double), cudaMemcpyHostToDevice);
+		cudaMemcpy(a_d, a, size * sizeof(int), cudaMemcpyHostToDevice);
+		cudaMemcpy(b_d, b, size * sizeof(int), cudaMemcpyHostToDevice);
 
 		compute();
     }
@@ -50,23 +50,18 @@ struct VectorAdder {
 		add_vectors<<<blk_in_grid, thr_per_blk>>>(a_d, b_d, size, c_d);
     }
 
-    void getResult(double* c) {
-		cudaMemcpy(c, c_d, (size-2) * sizeof(double), cudaMemcpyDeviceToHost);
+    void getResult(int* c) {
+		cudaMemcpy(c, c_d, (size-2) * sizeof(int), cudaMemcpyDeviceToHost);
     }
 };
 
 
 // Main program
 int main() {
-    // Number of bytes to allocate for N doubles
-
-//    double *a = (double*)malloc(N * sizeof(double));
-//    double *b = (double*)malloc(N * sizeof(double));
-//    double *c = (double*)malloc(N * sizeof(double));
-
-    double *a = new double[N];
-    double *b = new double[N];
-    double *c = new double[N];
+    // Number of bytes to allocate for N ints
+    int *a = new int[N];
+    int *b = new int[N];
+    int *c = new int[N];
 
     // Fill host arrays A and B
     for(int i=0; i<N; i++) {
@@ -80,10 +75,6 @@ int main() {
 	print_array(a, N);
     print_array(b, N);
 	print_array(c, N);
-
-//    free(a);
-//    free(b);
-//    free(c);
 
     delete[] a;
     delete[] b;

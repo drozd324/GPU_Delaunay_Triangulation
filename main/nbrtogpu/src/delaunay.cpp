@@ -466,11 +466,6 @@ void Delaunay::initSuperTri() {
 
 	triList[nTri].writeTri(pts, npts, spts, nspts, p, n, o);
 
-//	head_node.t = 0;
-//	head_node.n[0] = -1;
-//	head_node.n[1] = -1;
-//	head_node.n[2] = -1;
-
 	delete[] spts;
 	nTri++;
 }

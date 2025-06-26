@@ -12,12 +12,12 @@
  */
 struct Circle {
 	Point center;
-	real radius;
+	float radius;
 
-	__host__ __device__ Circle(const Point &cen, real rad) : center(cen), radius(rad) {};
+	__host__ __device__ Circle(const Point &cen, float rad) : center(cen), radius(rad) {};
 };
 
 __host__ __device__ Circle circumcircle(Point a, Point b, Point c);
-__host__ __device__ real incircle(Point d, Point a, Point b, Point c);
+__host__ __device__ float incircle(Point d, Point a, Point b, Point c);
 
 #endif
