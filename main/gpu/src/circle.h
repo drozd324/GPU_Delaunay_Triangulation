@@ -10,14 +10,15 @@
 /*
  * Basic circle struct.
  */
-struct Circle {
-	Point center;
-	float radius;
+//struct Circle {
+//	Point center;
+//	float radius;
+//};
 
-	__host__ __device__ Circle(const Point &cen, float rad) : center(cen), radius(rad) {};
-};
+__device__ void circumcircle(Point a, Point b, Point c, Point* center, float* r);
+__device__ float incircle(Point d, Point a, Point b, Point c);
 
-__host__ __device__ Circle circumcircle(Point a, Point b, Point c);
-__host__ __device__ float incircle(Point d, Point a, Point b, Point c);
+__device__ void circumcircle_rad(Point a, Point b, Point c, float* r);
+__device__ void circumcircle_center(Point a, Point b, Point c, Point* center);
 
 #endif

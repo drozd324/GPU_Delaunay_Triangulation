@@ -434,6 +434,8 @@ void Delaunay::initSuperTri() {
 		avg.x[k] = avg.x[k]/npts;
 	}
 
+	std::cout << "Avg point: (" << avg.x[0] << ", " << avg.x[1] << ")\n"; 
+
 	real largest_dist = 0;
 	real sample_dist;
 	for (int i=0; i<npts; ++i) {
@@ -444,6 +446,8 @@ void Delaunay::initSuperTri() {
 			}
 		}
 	}
+
+	std::cout << "largest_dist: " << largest_dist << "\n";
 
 	real center_x = avg.x[0];
 	real center_y = avg.x[1];

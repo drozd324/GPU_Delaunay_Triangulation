@@ -4,71 +4,95 @@
  * Contructs the circumcircle of a triangle from 3 given points
  * and returns a circle struct, which is the circumcircle.
  */	
-__host__ __device__ Circle circumcircle(Point a, Point b, Point c) {
-	// equation (21.3.7) in "Numerical Recipeies"
-	// equation (21.3.8)
 
-	float ba0, ba1, ca0, ca1;
-	float asq, csq;
-	float ctr0, ctr1, rad; // center0, center1, radius
-	float det; 
+__device__ void circumcircle(Point a, Point b, Point c, Point* center, float* r) {
 
-	ba0 = b.x[0] - a.x[0];
-	ba1 = b.x[1] - a.x[1];
-	ca0 = c.x[0] - a.x[0];
-	ca1 = c.x[1] - a.x[1];
+	float ba0 = b.x[0] - a.x[0];
+	float ba1 = b.x[1] - a.x[1];
+	float ca0 = c.x[0] - a.x[0];
+	float ca1 = c.x[1] - a.x[1];
 
-	det = ba0*ca1 - ca0*ba1;
+	float det = ba0*ca1 - ca0*ba1;
 
 	if (det == 0.0) {
-		//std::cout << "[ERROR][DET = 0] points ((" << a.x[0]  << "," << a.x[1] << "), (" << b.x[0] << "," << b.x[1] << "), (" << c.x[0] << "," << c.x[1] << ")" << " | "
-				  //<< ba0 << "," << ca1 << "," << ca0 << "," << ba1 << "\n";
 		printf("DET=0");
 	}
 
 	det = 0.5 / det;
-	//asq = SQR(ba0) + SQR(ba1);
-	asq = ba0*ba0 + ba1*ba1;
-	//csq = SQR(ca0) + SQR(ca1);
-	csq = ca0*ca0 + ca1*ca1;
-	ctr0 = det*(asq*ca1 - csq*ba1);
-	ctr1 = det*(csq*ba0 - asq*ca0);
-	//rad = sqrt(SQR(ctr0) + SQR(ctr1));
-	rad = sqrt(ctr0*ctr0 + ctr1*ctr1);
+	float asq = ba0*ba0 + ba1*ba1;
+	float csq = ca0*ca0 + ca1*ca1;
+	float ctr0 = det*(asq*ca1 - csq*ba1);
+	float ctr1 = det*(csq*ba0 - asq*ca0);
 
-	return Circle(Point(ctr0 + a.x[0], ctr1 + a.x[1]), rad);
+	*r = sqrt(ctr0*ctr0 + ctr1*ctr1);
+	center->x[0] = ctr0 + a.x[0];
+	center->x[1] = ctr1 + a.x[1];
 }
-
-//Circle circumcircle(Point a, Point b, Point c) {
-//	float a0,a1,c0,c1,det,asq,csq,ctr0,ctr1,rad2;
-//	a0 = a.x[0] - b.x[0]; a1 = a.x[1] - b.x[1];
-//	c0 = c.x[0] - b.x[0]; c1 = c.x[1] - b.x[1];
-//	det = a0*c1 - c0*a1;
-//	if (det == 0.0) { std::cout << "[ERROR][DET = 0]\n"; }
-//	det = 0.5/det;
-//	asq = a0*a0 + a1*a1;
-//	csq = c0*c0 + c1*c1;
-//	ctr0 = det*(asq*c1 - csq*a1);
-//	ctr1 = det*(csq*a0 - asq*c0);
-//	rad2 = ctr0*ctr0 + ctr1*ctr1;
-//	return Circle(Point(ctr0 + b.x[0], ctr1 + b.x[1]), sqrt(rad2));
-//}
-//
 
 /*
  *	
  */
-__host__ __device__ float incircle(Point d, Point a, Point b, Point c){
+__device__ float incircle(Point d, Point a, Point b, Point c){
 	// +: inside  | flip
 	// 0: on      |
 	// -: outside | dont flip
 
-	Circle cc = circumcircle(a, b, c);
+	Point center;
+	float rad;
+	circumcircle(a, b, c, &center, &rad);
+
 	// distance from center to d
 	//float dist_sqr = SQR(d.x[0] - cc.center.x[0]) + SQR(d.x[1] - cc.center.x[1]); 
-	float dist_sqr = (d.x[0] - cc.center.x[0])*(d.x[0] - cc.center.x[0]) 
-				  + (d.x[1] - cc.center.x[1])*(d.x[1] - cc.center.x[1]); 
+	float dist_sqr = (d.x[0] - center.x[0])*(d.x[0] - center.x[0]) 
+				   + (d.x[1] - center.x[1])*(d.x[1] - center.x[1]); 
 
 	//return SQR(cc.radius)- dist_sqr;
-	return (cc.radius*cc.radius - dist_sqr);
+	return (rad*rad - dist_sqr);
+}
+
+
+
+
+__device__ void circumcircle_rad(Point a, Point b, Point c, float* r) {
+
+	float ba0 = b.x[0] - a.x[0];
+	float ba1 = b.x[1] - a.x[1];
+	float ca0 = c.x[0] - a.x[0];
+	float ca1 = c.x[1] - a.x[1];
+
+	float det = ba0*ca1 - ca0*ba1;
+
+	if (det == 0.0) {
+		printf("DET=0");
+	}
+
+	det = 0.5 / det;
+	float asq = ba0*ba0 + ba1*ba1;
+	float csq = ca0*ca0 + ca1*ca1;
+	float ctr0 = det*(asq*ca1 - csq*ba1);
+	float ctr1 = det*(csq*ba0 - asq*ca0);
+	*r = sqrt(ctr0*ctr0 + ctr1*ctr1);
+}
+
+__device__ void circumcircle_center(Point a, Point b, Point c, Point* center) {
+
+	float ba0 = b.x[0] - a.x[0];
+	float ba1 = b.x[1] - a.x[1];
+	float ca0 = c.x[0] - a.x[0];
+	float ca1 = c.x[1] - a.x[1];
+
+	float det = ba0*ca1 - ca0*ba1;
+
+	if (det == 0.0) {
+		printf("DET=0");
+	}
+
+	det = 0.5 / det;
+	float asq = ba0*ba0 + ba1*ba1;
+	float csq = ca0*ca0 + ca1*ca1;
+	float ctr0 = det*(asq*ca1 - csq*ba1);
+	float ctr1 = det*(csq*ba0 - asq*ca0);
+
+	center->x[0] = ctr0 + a.x[0];
+	center->x[1] = ctr1 + a.x[1];
 }

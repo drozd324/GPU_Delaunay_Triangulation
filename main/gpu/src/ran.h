@@ -18,7 +18,9 @@ struct Ran {
 	}
 
 	unsigned long long int64();
-	float doub();
+	double doub();
+	float flot();
+	void circle(double& x, double& y);
 	void circle(float& x, float& y);
 };
 

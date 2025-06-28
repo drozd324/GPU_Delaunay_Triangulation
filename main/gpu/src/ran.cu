@@ -16,9 +16,23 @@ double Ran::doub() {
 	return 5.42101086242752217e-20 * int64();
 }
 
+float Ran::flot() {
+	// Return random double-precision floating value in the range 0. to 1.
+	return (float)(5.42101086242752217e-20 * int64());
+}
+
+
 void Ran::circle(double& x, double& y) {
 	double r = sqrt(doub()); 
 	double theta = doub() * 2 * M_PI; 
+	
+	x = r*cos(theta);
+	y = r*sin(theta);
+}
+
+void Ran::circle(float& x, float& y) {
+	float r = sqrt(flot()); 
+	float theta = flot() * 2 * M_PI; 
 	
 	x = r*cos(theta);
 	y = r*sin(theta);

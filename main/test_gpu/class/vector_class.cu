@@ -1,13 +1,22 @@
 #include <stdio.h>
+#include <math.h>
 
 int N = 10;
 
 
-
+//__global__ void vector_norm(double* a, int n, double* out) {
+//	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+//	
+//	if (idx < n) {
+//		atomicAdd(out, a[idx]*a[idx]);
+//	}
+//}
+//
 __global__ void add_vectors(double* a, double* b, int n, double* c) {
-	int id = blockDim.x * blockIdx.x + threadIdx.x;
-	if(id < n) { 
-		c[id] = a[id] + b[id];
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	if(idx < n) { 
+		//c[idx] = a[idx] + b[idx];
+		c[idx] = sqrt(a[idx] + b[idx]);
 	}
 }
 
