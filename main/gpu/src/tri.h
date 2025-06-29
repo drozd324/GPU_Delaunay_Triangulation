@@ -20,6 +20,7 @@ struct Tri {
 	int n[3]; // idx to Tri neighbours of this triangle
 	int o[3]; // index in the Tri noted by the int n[i] of opposite point of current Tri
 
+	bool insert = false;   
 	int insertPt;  
 	float insertPt_dist; 
 	Point circumcenter; 

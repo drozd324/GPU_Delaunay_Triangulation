@@ -21,7 +21,6 @@ float Ran::flot() {
 	return (float)(5.42101086242752217e-20 * int64());
 }
 
-
 void Ran::circle(double& x, double& y) {
 	double r = sqrt(doub()); 
 	double theta = doub() * 2 * M_PI; 
