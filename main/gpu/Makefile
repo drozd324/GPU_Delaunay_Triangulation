@@ -14,19 +14,20 @@ SRCDIR := src
 EXEC_NAMES := test
 EXECS := $(addprefix $(BINDIR)/, $(EXEC_NAMES))
 
-CU_SOURCES := test.cu mymath.cu point.cu circle.cu tri.cu delaunay.cu ran.cu #atomic.cu
+CU_SOURCES := test.cu mymath.cu point.cu circle.cu tri.cu delaunay.cu ran.cu atomic.cu
 ALL_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.cu, %.o, $(CU_SOURCES)))
 
 all: $(EXECS)
 
-$(BINDIR)/test: $(ALL_OBJS) | $(BINDIR)
+#$(BINDIR)/test: $(OBJDIR)/test.o $(OBJDIR)/delaunay.o $(OBJDIR)/point.o $(OBJDIR)/ran.o  | $(BINDIR)
+$(BINDIR)/test: $(ALL_OBJS)   | $(BINDIR)
 	$(NVCC) $(NVCCFLAGS) $(DEBUGNV) -o $@ $^ -lm
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cu | $(OBJDIR)
 	$(NVCC) $(NVCCFLAGS) $(DEBUGNV) -c $< -o $@ -lm
 
 $(OBJDIR)/tri.o: $(SRCDIR)/tri.cu $(OBJDIR)/mymath.o $(OBJDIR)/point.o $(OBJDIR)/circle.o
-$(OBJDIR)/delaunay.o: $(SRCDIR)/delaunay.cu $(OBJDIR)/mymath.o $(OBJDIR)/point.o $(OBJDIR)/circle.o $(OBJDIR)/tri.o
+$(OBJDIR)/delaunay.o: $(SRCDIR)/delaunay.cu $(OBJDIR)/mymath.o $(OBJDIR)/point.o $(OBJDIR)/circle.o $(OBJDIR)/tri.o $(OBJDIR)/atomic.o 
 
 $(OBJDIR) $(BINDIR):
 	mkdir -p $@

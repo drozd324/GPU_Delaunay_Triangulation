@@ -1,9 +1,12 @@
 #ifndef DELAUNAY_H
 #define DELAUNAY_H
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+
 #include <iostream>
 #include <fstream>
-#include <math.h>
 
 #include "macros.h"
 #include "types.h"
@@ -11,8 +14,7 @@
 #include "point.h" 
 #include "circle.h"
 #include "tri.h"
-
-//#include "atomic.h"
+#include "atomic.h"
 
 /*
  * Struct for creating a delaunay triangulation from a given vector of points. Consists of 
@@ -36,9 +38,11 @@ struct Delaunay {
 
 	int num_tris_to_insert; int* num_tris_to_insert_d;
 
-	std::ofstream saveFile;
+	//std::ofstream saveFile;
+	FILE* file;
 
 	Delaunay(Point* points, int n);
+	~Delaunay();
 
 	// compute options
 	//void gpu_compute();
@@ -47,41 +51,38 @@ struct Delaunay {
 	void prepForInsert();
 	void insert();
 
+	void printInfo();
+	void printTri();
+
+	void updatePointLocations();
 	void saveToFile();
-	void cpyToHost();
-
 };
-
 
 __host__ __device__ void writeTri(Tri* tri, int* p, int* n, int* o);
 
 /* INIT */
-__global__ void sumPoints(Point* pts, int npts, Point* avgPoint);
-__global__ void computeMaxDistPts(Point* pts, int npts, float* largest_dist);
+__global__ void sumPoints(Point* pts, int* npts, Point* avgPoint);
+__global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist);
 
 /* PREP FOR INSERT */
-__global__ void setInsertPtsDistance(Point* pts, int npts, Tri* triList, int* ptToTri);
-__global__ void setInsertPts        (Point* pts, int npts, Tri* triList, int* ptToTri);
+__global__ void setInsertPtsDistance(Point* pts, int* npts, Tri* triList, int* ptToTri);
+__global__ void setInsertPts        (Point* pts, int* npts, Tri* triList, int* ptToTri);
+__global__ void prepTriWithInsert(Tri* triList, int* nTri, int* triWithInsert, int* nTriWithInsert);
 
 /* INSERT */
-__global__ void insertKernel(Tri* triList, int nTri, int* triWithInsert, int nTriWithInsert);
+__global__ void insertKernel(Tri* triList, int* nTri, int* triWithInsert, int* nTriWithInsert);
 __device__ int insertInTri(int i, Tri* triList, int newTriIdx);
 __device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx);
 
-
-/* UPDATE */
-//__global__ void updatePointsTriangles();
-
-/* PRINTING */
-__global__ void printTri(Tri* triList, int nTriMax);
+/* UPDATE POINTS */
+__global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri);
+__device__ int contains(int t, int r, Tri* triList, Point* pts);
 
 /* MISC */
-__global__ void arrayAddVal(int* array, int val, int n);
+__global__ void arrayAddVal(int* array, int* val, int mult, int n);
 
-/* ATOMIC FUNCTIONS */
-__device__ float atomicAddFloat(float* address, float val);
-__device__ float atomicMaxFloat(float* address, float val);
-__device__ float atomicMinFloat(float* address, float val);
-
+//__device__ float atomicAddFloat(float* address, float val);
+//__device__ float atomicMaxFloat(float* address, float val);
+//__device__ float atomicMinFloat(float* address, float val);
 
 #endif

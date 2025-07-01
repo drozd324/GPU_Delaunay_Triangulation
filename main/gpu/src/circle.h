@@ -27,7 +27,7 @@
  * and returns a circle struct, which is the circumcircle.
  */	
 
-__host__ __device__ inline void circumcircle(Point a, Point b, Point c, Point* center, float* r) {
+__device__ inline void circumcircle(Point a, Point b, Point c, Point* center, float* r) {
 
 	float ba0 = b.x[0] - a.x[0];
 	float ba1 = b.x[1] - a.x[1];
@@ -54,7 +54,7 @@ __host__ __device__ inline void circumcircle(Point a, Point b, Point c, Point* c
 /*
  *	
  */
-__host__ __device__ inline float incircle(Point d, Point a, Point b, Point c){
+__device__ inline float incircle(Point d, Point a, Point b, Point c){
 	// +: inside  | flip
 	// 0: on      |
 	// -: outside | dont flip
@@ -72,7 +72,7 @@ __host__ __device__ inline float incircle(Point d, Point a, Point b, Point c){
 	return (rad*rad - dist_sqr);
 }
 
-__host__ __device__ inline void circumcircle_rad(Point a, Point b, Point c, float* r) {
+__device__ inline void circumcircle_rad(Point a, Point b, Point c, float* r) {
 
 	float ba0 = b.x[0] - a.x[0];
 	float ba1 = b.x[1] - a.x[1];
@@ -93,7 +93,7 @@ __host__ __device__ inline void circumcircle_rad(Point a, Point b, Point c, floa
 	*r = sqrt(ctr0*ctr0 + ctr1*ctr1);
 }
 
-__host__ __device__ inline void circumcircle_center(Point a, Point b, Point c, Point* center) {
+__device__ inline void circumcircle_center(Point a, Point b, Point c, Point* center) {
 
 	float ba0 = b.x[0] - a.x[0];
 	float ba1 = b.x[1] - a.x[1];
@@ -115,4 +115,5 @@ __host__ __device__ inline void circumcircle_center(Point a, Point b, Point c, P
 	center->x[0] = ctr0 + a.x[0];
 	center->x[1] = ctr1 + a.x[1];
 }
+
 #endif

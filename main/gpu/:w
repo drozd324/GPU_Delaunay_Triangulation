@@ -5,16 +5,16 @@
  * Constructor which creates the delaunay triagulation from an array of 'points'
  * and its lenght 'n'.
  */
-Delaunay::Delaunay(Point* points, int n) 
+Delaunay::Delaunay(Point* points, int n) : 
 	//saveFile("./data/data.txt", std::ios_base::app)
 {
 	// ============= init save file ============  
 	file = fopen("./data/data.txt", "w");
-	fclose(file);
+	file.close();
 	file = fopen("./data/data.txt", "a");
 
-    // ============= allocation on host ============  
-    // alloc points
+	// ============= allocation on host ============  
+	// alloc points
 	*npts = n;
 	pts = (Point*) malloc(((*npts) + 3) * sizeof(Point));
 
@@ -64,67 +64,55 @@ Delaunay::Delaunay(Point* points, int n)
 	initSuperTri();
 	cudaDeviceSynchronize();
 
-    // save points data to file
-	fprintf(file, "%d\n", (*npts) + 3);
+	// save points data to file
+	saveFile << (*npts) + 3 << "\n";
 	for (int i=0; i<(*npts) + 3; ++i) {
-		fprintf(file, "%f %f\n", pts[i].x[0], pts[i].x[1]);
+		saveFile << pts[i].x[0] << " " << pts[i].x[1] << "\n";
 	}
-	fprintf(file, "\n");
+	saveFile << "\n"; 
 
 	cudaMemcpy(triList, triList_d, (*nTriMax) * sizeof(Tri), cudaMemcpyDeviceToHost);
 	saveToFile();
 
-    // =============== Main compute loop ================ 
+	// =============== Main compute loop ================ 
 
-    //for (int i=0; i<(*npts); ++i) { 
-	//for (int i=0; i<2; ++i) {
-		//std::cout << "============[PASS " << i << "]============ \n"; 
+	//for (int i=0; i<*npts; ++i) { 
+	for (int i=0; i<1; ++i) {
+		std::cout << "============[PASS " << i << "]============ \n"; 
 
-		cudaDeviceSynchronize();
 		prepForInsert();
-
-//		printf("\nBEFORE INSERT\n");
-//		printTri();
+		cpyToHost();
 
 		cudaDeviceSynchronize();
+
+		printf("\nBEFORE INSERT\n");
+		printTri();
+
 		insert();
 
-//		printf("\nAFTER INSERT\n");
-//		printTri();
+		printf("\nAFTER INSERT\n");
+		printTri();
 
-		cudaDeviceSynchronize();
-		updatePointLocations();
-
-
-		cudaDeviceSynchronize();
-		prepForInsert();
-		printInfo();
+//		
+//		// ==== MARK TRIANGLES FOR INSERTION ====
+//		int num_to_insert  = checkInsert();
+//		std::cout << "num to insert: " << num_to_insert << "\n";
 //
-//		printf("\nBEFORE INSERT\n");
-//		printTri();
-
-//		cudaDeviceSynchronize();
-//		insert();
+//		cudaMemcpy(triList_d, triList, sizeof(Tri), cudaMemcpyDeviceToHost);
 //
-////		printf("\nAFTER INSERT\n");
-////		printTri();
+//		// ==== INSERT ====
+//		int num_inserted_tri = insert();
+//		std::cout << "number of inserted intrangles: " << num_inserted_tri << "\n";
 //
-//		cudaDeviceSynchronize();
-//		updatePointLocations();
-  //}
+//		if (num_inserted_tri == 0) {
+//			break; 
+//		}
 
-//	int nflips = -1;
-//	while (nflips != 0) {
-//		nflips = legalize();
-//		std::cout << "Performed	" << nflips  << " additional flips\n"; 
-//	}
-//
-//	std::cout << "Triangluation is Delaunay\n";
-	saveToFile();
-}
 
-Delaunay::~Delaunay() {
-	fclose(file);
+		std::cout << "nTri " << *nTri << "/" << *nTriMax << "\n";
+
+		//updatePointLocations();
+	}
 
 	cudaFree(pts_d);
 	cudaFree(npts_d);
@@ -140,8 +128,27 @@ Delaunay::~Delaunay() {
 	free(triList); 
 	free(pts);
 	free(ptToTri);
+
+//	int nflips = -1;
+//	while (nflips != 0) {
+//		nflips = legalize();
+//		std::cout << "Performed	" << nflips  << " additional flips\n"; 
+//	}
+//
+//	std::cout << "Triangluation is Delaunay\n";
+
+	saveToFile();
+	//saveToFile(true);
+	file.close();
 }
 
+/* ================================== COPY TO HOST ======================================== */
+
+void Delaunay::cpyToHost() {
+	cudaMemcpy(triList, triList_d, (*nTriMax) * sizeof(Tri), cudaMemcpyDeviceToHost);
+	cudaMemcpy(ptToTri, ptToTri_d, (*npts)    * sizeof(int), cudaMemcpyDeviceToHost);
+	cudaMemcpy(nTri   , nTri_d   ,              sizeof(int), cudaMemcpyDeviceToHost);
+}
 
 /* ================================== INIT SUPERTRIANGLE ======================================== */
 
@@ -159,7 +166,7 @@ void Delaunay::initSuperTri() {
 	cudaMalloc(&avgPoint_d, sizeof(Point));
 	cudaMemcpy(avgPoint_d, avgPoint, sizeof(Point), cudaMemcpyHostToDevice);
 
-//	printf("avgPoint before: (%f, %f)\n", avgPoint->x[0], avgPoint->x[1]);
+	printf("avgPoint before: (%f, %f)\n", avgPoint->x[0], avgPoint->x[1]);
 
 	//dim3 threadsPerBlock(warpSize);
 	int valsToAdd = 2*(*npts); 
@@ -173,7 +180,8 @@ void Delaunay::initSuperTri() {
 	avgPoint->x[0] /= npts[0];
 	avgPoint->x[1] /= npts[0];
 
-//	printf("avgPoint After: (%f, %f)\n", avgPoint->x[0], avgPoint->x[1]);
+	printf("avgPoint After: (%f, %f)\n", avgPoint->x[0],
+										 avgPoint->x[1]);
 
 	// computing the largest distance bewtween two points
 	*largest_dist = 0;
@@ -181,7 +189,7 @@ void Delaunay::initSuperTri() {
 	cudaMemcpy(largest_dist_d, largest_dist, sizeof(float), cudaMemcpyHostToDevice);
 	//cudaMemset(largest_dist_d, 0, sizeof(float));
 
-//	printf("before largest_dist: %f\n", *largest_dist);
+	printf("before largest_dist: %f\n", *largest_dist);
 
 	int ncomps = ((*npts)*((*npts) - 1)) / 2; //number of comparisons
 	dim3 threadsPerBlock2(32);
@@ -190,7 +198,7 @@ void Delaunay::initSuperTri() {
 
 	cudaMemcpy(largest_dist, largest_dist_d, sizeof(float), cudaMemcpyDeviceToHost);
 
-//	printf("after largest_dist: %f\n", *largest_dist);
+	printf("after largest_dist: %f\n", *largest_dist);
 
 	// writing supertriangle points to pts
 	float center_x = avgPoint->x[0];
@@ -220,7 +228,6 @@ void Delaunay::initSuperTri() {
 	writeTri(&(triList[0]), p, n, o);
 	triList[0].insert = true;
 	triList[0].insertPt_dist = *largest_dist;
-	triList[0].flip = -1;
 
 	//memset(ptToTri, 0, (*npts) * sizeof(int));
 	cudaMemset(ptToTri_d, 0, (*npts) * sizeof(int));
@@ -257,7 +264,7 @@ __global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist) {
 		i = (int)((2*(*npts) - 1 - sqrtf((2*(*npts) - 1) * (2*(*npts) - 1) - 8*idx)) / 2);
 		j = idx - (i*(2*(*npts) - i - 1) / 2) + i + 1;
 
-//		printf("index: %d | count: %d | i,j =(%d, %d)\n", idx, count, i, j);
+		printf("index: %d | count: %d | i,j =(%d, %d)\n", idx, count, i, j);
 
 		dist = sqrtf( (pts[i].x[0] - pts[j].x[0])*(pts[i].x[0] - pts[j].x[0]) +
 				      (pts[i].x[1] - pts[j].x[1])*(pts[i].x[1] - pts[j].x[1]));
@@ -270,9 +277,9 @@ __global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist) {
 
 __host__ __device__ void writeTri(Tri* tri, int* p, int* n, int* o) {
 	for (int i=0; i<3; i++) {
-//		printf("tri->p[%d] = p[%d]: %d\n", i, i, tri->p[i] = p[i]);
-//		printf("tri->n[%d] = n[%d]: %d\n", i, i, tri->n[i] = n[i]);
-//		printf("tri->o[%d] = o[%d]: %d\n", i, i, tri->o[i] = o[i]);
+		printf("tri->p[%d] = p[%d]: %d\n", i, i, tri->p[i] = p[i]);
+		printf("tri->n[%d] = n[%d]: %d\n", i, i, tri->n[i] = n[i]);
+		printf("tri->o[%d] = o[%d]: %d\n", i, i, tri->o[i] = o[i]);
 
 		tri->p[i] = p[i];
 		tri->n[i] = n[i];
@@ -428,8 +435,8 @@ __device__ int insertInTri(int i, Tri* triList, int newTriIdx) {
  */
 __device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx) {
 
-//	printf("====================================INSERT========================================\n");
-//	printf("i: %d\n", i);
+	printf("====================================INSERT========================================\n");
+	printf("i: %d\n", i);
 
 	int p[3] = {triList[i].p[0],
 				triList[i].p[1],
@@ -455,7 +462,7 @@ __device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx) {
 	int n2[3] = {newTriIdx, n[2], i};
 	int o2[3] = {1, o[2], 2};
 
-	writeTri(&(triList[i            ]), p0, n0, o0);
+	//writeTri(&(triList[i            ]), p0, n0, o0);
 	writeTri(&(triList[newTriIdx    ]), p1, n1, o1);
 	writeTri(&(triList[newTriIdx + 1]), p2, n2, o2);
 
@@ -464,36 +471,32 @@ __device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx) {
 	triList[newTriIdx    ].flip = 1;
 	triList[newTriIdx + 1].flip = 1;
 
-	triList[i            ].insert = true;
-	triList[newTriIdx    ].insert = true;
-	triList[newTriIdx + 1].insert = true;
-
-	// ==================== updates neighbour points opposite point if they exist ==================== 
-	int nbrnbr[3] = {i, newTriIdx, newTriIdx + 1};
-
-	for (int k=0; k<3; ++k) {
-		int mvInsNbr = (o[k] + 1) % 3;
-
-		if (n[k] >= 0) { // if nbr exist
-			//if (triList[n[k]].center != -1) { // if nbr was marked for insertion
-			if (triList[n[k]].insert == true) { // if nbr was marked for insertion
-				int idxNbr_k = n[k];
-
-				// move anticlockwise in the nbr tri which just was inserted into 
-				for (int i=0; i<mvInsNbr; ++i) {
-					idxNbr_k = triList[idxNbr_k].n[2];
-				}
-
-				triList[idxNbr_k].o[1] = 0;
-				triList[idxNbr_k].n[1] = nbrnbr[k];
-
-			} // else { 
-			if (triList[n[k]].insert == false) { // nbr was not marked for insertion and is the same from prev state
-				triList[n[k]].o[mvInsNbr] = 0;
-				triList[n[k]].n[mvInsNbr] = nbrnbr[k];
-			}
-		}
-	}
+//	// ==================== updates neighbour points opposite point if they exist ==================== 
+//	int nbrnbr[3] = {i, newTriIdx, newTriIdx + 1};
+//
+//	for (int k=0; k<3; ++k) {
+//		int mvInsNbr = (o[k] + 1) % 3;
+//
+//		if (n[k] >= 0) { // if nbr exist
+//			//if (triList[n[k]].center != -1) { // if nbr was marked for insertion
+//			if (triList[n[k]].insert == true) { // if nbr was marked for insertion
+//				int idxNbr_k = n[k];
+//
+//				// move anticlockwise in the nbr tri which just was inserted into 
+//				for (int i=0; i<mvInsNbr; ++i) {
+//					idxNbr_k = triList[idxNbr_k].n[2];
+//				}
+//
+//				triList[idxNbr_k].o[1] = 0;
+//				triList[idxNbr_k].n[1] = nbrnbr[k];
+//
+//			} // else { 
+//			if (triList[n[k]].insert == false) { // nbr was not marked for insertion and is the same from prev state
+//				triList[n[k]].o[mvInsNbr] = 0;
+//				triList[n[k]].n[mvInsNbr] = nbrnbr[k];
+//			}
+//		}
+//	}
 
 	return 0;
 }
@@ -505,7 +508,7 @@ void Delaunay::updatePointLocations() {
 	dim3 threadsPerBlock(32);
 	dim3 numBlocks(N/threadsPerBlock.x + (!(N % threadsPerBlock.x) ? 0:1));
 
-	updatePointLocationsKernel<<<numBlocks, threadsPerBlock>>>(pts_d, npts_d, triList_d, nTri_d, ptToTri_d);
+	//updatePointLocationsKernel<<<numBlocks, threadsPerBlock>>>(pts_d, npts_d, triList_d, nTri_d, ptToTri_d);
 }
 
 /*
@@ -526,6 +529,15 @@ __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, 
 			ptToTri[idx] += i*(contains(i, idx, triList, pts) == 1);
 		}
 	}
+
+//		int triIdx = 0;
+//		for (int i=0; i<nTri; ++i) {
+//			 if (contains(i, idx, triList, pts) == 1) {
+//				ptToTri[idx] = i;
+//				break;
+//			}
+//		}
+//	}
 }
 
 /*
@@ -571,21 +583,22 @@ void Delaunay::printInfo() {
 }
 
 void Delaunay::printTri() {
+	//cudaMemcpy(pts, pts_d, sizeof(Tri), cudaMemcpyDeviceToHost);
 	cudaMemcpy(triList, triList_d, (*nTriMax) * sizeof(Tri), cudaMemcpyDeviceToHost);
 	cudaMemcpy(nTri   , nTri_d   ,              sizeof(int), cudaMemcpyDeviceToHost);
 
 	for (int i=0; i<(*nTriMax); ++i) {
-		printf("triList[%d].p[0]: %d\n"  , i, triList[i].p[0]);
-		printf("triList[%d].p[1]: %d\n"  , i, triList[i].p[1]);
-		printf("triList[%d].p[2]: %d\n"  , i, triList[i].p[2]);
+		printf("triList[%d].p[0]: %d\n"       , i, triList[i].p[0]);
+		printf("triList[%d].p[1]: %d\n"       , i, triList[i].p[1]);
+		printf("triList[%d].p[2]: %d\n"       , i, triList[i].p[2]);
 
-		printf("triList[%d].n[0]: %d\n"  , i, triList[i].n[0]);
-		printf("triList[%d].n[1]: %d\n"  , i, triList[i].n[1]);
-		printf("triList[%d].n[2]: %d\n"  , i, triList[i].n[2]);
+		printf("triList[%d].n[0]: %d\n"       , i, triList[i].n[0]);
+		printf("triList[%d].n[1]: %d\n"       , i, triList[i].n[1]);
+		printf("triList[%d].n[2]: %d\n"       , i, triList[i].n[2]);
 
-		printf("triList[%d].o[0]: %d\n"  , i, triList[i].o[0]);
-		printf("triList[%d].o[1]: %d\n"  , i, triList[i].o[1]);
-		printf("triList[%d].o[2]: %d\n\n", i, triList[i].o[2]);
+		printf("triList[%d].o[0]: %d\n"       , i, triList[i].o[0]);
+		printf("triList[%d].o[1]: %d\n"       , i, triList[i].o[1]);
+		printf("triList[%d].o[2]: %d\n\n"       , i, triList[i].o[2]);
 	}
 }
 
@@ -604,23 +617,30 @@ __global__ void arrayAddVal(int* array, int* val, int mult, int n) {
 	}
 }
 
-
 /* ====================================== SAVE TO FILE ============================================= */
 
 void Delaunay::saveToFile() {
-	cudaMemcpy(nTri   , nTri_d   ,           sizeof(int), cudaMemcpyDeviceToHost);
-	cudaMemcpy(triList, triList_d, (*nTriMax) * sizeof(Tri), cudaMemcpyDeviceToHost);
 
-	fprintf(file, "%d %d\n", iter, *nTri);
-	for (int i=0; i<(*nTri); ++i) {
-		for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].p[j]); } 
-		for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].n[j]); } 
-		for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].o[j]); } 
-		fprintf(file, "%d ", triList[i].flip);
-		fprintf(file, "%d ", triList[i].insert);
+	saveFile << iter << " " << *nTri << "\n";
+	for (int i=0; i<(*nTriMax); ++i) {
+//		for (int j=0; j<3; ++j) { saveFile << triList[i].p[j] << " "; } 
+//		for (int j=0; j<3; ++j) { saveFile << triList[i].n[j] << " "; } 
+//		for (int j=0; j<3; ++j) { saveFile << triList[i].o[j] << " "; } 
+//		saveFile << triList[i].flip << " "; 
+//		saveFile << "\n"; 
+
+//		for (int j=0; j<3; ++j) { std::cout << triList[i].p[j] << " "; } 
+//		for (int j=0; j<3; ++j) { std::cout << triList[i].n[j] << " "; } 
+//		for (int j=0; j<3; ++j) { std::cout << triList[i].o[j] << " "; } 
+//		std::cout << triList[i].flip << " "; 
+
+		for (int j=0; j<3; ++j) { fprintf(file, "%d \n", triList.p[j]); } 
+		for (int j=0; j<3; ++j) { fprintf(file, "%d \n", triList.n[j]); } 
+		for (int j=0; j<3; ++j) { fprintf(file, "%d \n", triList.o[j]); } 
+		fprintf(file, "%d \n", triList.flip);
 		fprintf(file, "\n");
 	}
 
-	fprintf(file, "\n");
+	saveFile << "\n"; 
 	iter++;
 }
