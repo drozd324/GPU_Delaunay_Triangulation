@@ -37,7 +37,7 @@ __device__ inline void circumcircle(Point a, Point b, Point c, Point* center, fl
 	float det = ba0*ca1 - ca0*ba1;
 
 	if (det == 0.0) {
-		printf("DET=0");
+		printf("DET=0\n");
 	}
 
 	det = 0.5 / det;
@@ -82,7 +82,7 @@ __device__ inline void circumcircle_rad(Point a, Point b, Point c, float* r) {
 	float det = ba0*ca1 - ca0*ba1;
 
 	if (det == 0.0) {
-		printf("DET=0");
+		printf("DET=0\n");
 	}
 
 	det = 0.5 / det;
@@ -103,7 +103,7 @@ __device__ inline void circumcircle_center(Point a, Point b, Point c, Point* cen
 	float det = ba0*ca1 - ca0*ba1;
 
 	if (det == 0.0) {
-		printf("DET=0");
+		printf("DET=0\n");
 	}
 
 	det = 0.5 / det;

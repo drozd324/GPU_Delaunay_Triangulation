@@ -31,8 +31,6 @@ struct Delaunay {
 	int* triWithInsert    ; int* triWithInsert_d; 
 	int  nTriWithInsert[1]; int* nTriWithInsert_d;
 
-	float largest_dist[1]; float* largest_dist_d;
-
 	int iter = 0; int* iter_d;
 	int tag_num = 0;
 
@@ -44,8 +42,7 @@ struct Delaunay {
 	Delaunay(Point* points, int n);
 	~Delaunay();
 
-	// compute options
-	//void gpu_compute();
+	void compute();
 	
 	void initSuperTri();
 	void prepForInsert();
@@ -70,9 +67,11 @@ __global__ void setInsertPts        (Point* pts, int* npts, Tri* triList, int* p
 __global__ void prepTriWithInsert(Tri* triList, int* nTri, int* triWithInsert, int* nTriWithInsert);
 
 /* INSERT */
-__global__ void insertKernel(Tri* triList, int* nTri, int* triWithInsert, int* nTriWithInsert);
-__device__ int insertInTri(int i, Tri* triList, int newTriIdx);
-__device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx);
+__global__ void insertKernel(Tri* triList, int* nTri, int* triWithInsert, int* nTriWithInsert, int* ptToTri);
+__device__ int insertInTri(int i, Tri* triList, int newTriIdx, int* ptToTri);
+__device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx, int* ptToTri);
+__global__ void resetBiggestDistInTris(Tri* triList, int* nTri, int* nTriWithInsert);
+
 
 /* UPDATE POINTS */
 __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri);
@@ -80,9 +79,5 @@ __device__ int contains(int t, int r, Tri* triList, Point* pts);
 
 /* MISC */
 __global__ void arrayAddVal(int* array, int* val, int mult, int n);
-
-//__device__ float atomicAddFloat(float* address, float val);
-//__device__ float atomicMaxFloat(float* address, float val);
-//__device__ float atomicMinFloat(float* address, float val);
 
 #endif
