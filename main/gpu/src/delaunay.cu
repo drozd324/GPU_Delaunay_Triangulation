@@ -3,60 +3,29 @@
 void Delaunay::compute() {
     // =============== Main compute loop ================ 
 
-    //for (int i=0; i<(*npts); ++i) { 
-	//for (int i=0; i<2; ++i) {
-		//std::cout << "============[PASS " << i << "]============ \n"; 
-
-		cudaDeviceSynchronize();
-		printf("\n================================= PREP FOR INSERT\n");
-		cudaDeviceSynchronize();
-		prepForInsert();
-
-		cudaDeviceSynchronize();
-		printf("\n================================= INSERT\n");
-		cudaDeviceSynchronize();
-		insert();
-
+    for (int i=0; i<(*npts); ++i) { 
+	//for (int i=0; i<3; ++i) {
+		std::cout << "\n============[PASS " << i << "]============ \n"; 
 		printInfo();
 
+		prepForInsert();
+		printf("\nPREP FOR INSERT [%d]\n", i);
+		printInfo();
+
+		printf("\nINSERT [%d]\n", i);
+		insert();
+		printInfo();
+
+		printf("\nUPDATE POINT LOCATIONS [%d]\n", i);
+		updatePointLocations();
+		printInfo();
 		saveToFile();
 
-		cudaDeviceSynchronize();
-		printf("\n================================= UPDATE POINT LOCATIONS\n");
-		cudaDeviceSynchronize();
-		updatePointLocations();
-
-		cudaDeviceSynchronize();
-		printf("\n================================= PREP FOR INSERT\n");
-		cudaDeviceSynchronize();
-		prepForInsert();
-
-		printInfo();
-
-		cudaDeviceSynchronize();
-		printf("\n================================= INSERT\n");
-		cudaDeviceSynchronize();
-		insert();
-
-//		cudaDeviceSynchronize();
-//		printf("\n================================= UPDATE POINT LOCATIONS\n");
-//		cudaDeviceSynchronize();
-//		updatePointLocations();
-
-//		printf("\nBEFORE INSERT\n");
-//		printTri();
-
-//		cudaDeviceSynchronize();
-//		insert();
-//
-////		printf("\nAFTER INSERT\n");
-////		printTri();
-//
-//		cudaDeviceSynchronize();
-//		updatePointLocations();
-  //}
-
-
+		cudaMemcpy(nTri, nTri_d, sizeof(int), cudaMemcpyDeviceToHost);
+		if (*nTri == *nTriMax) {
+			break;
+		}
+	}
 }
 
 /*
@@ -153,7 +122,7 @@ Delaunay::Delaunay(Point* points, int n)
 //	}
 //
 //	std::cout << "Triangluation is Delaunay\n";
-	saveToFile();
+	saveToFile(true);
 }
 
 Delaunay::~Delaunay() {
@@ -322,6 +291,12 @@ __host__ __device__ void writeTri(Tri* tri, int* p, int* n, int* o) {
 void Delaunay::prepForInsert() {
 	int N;
 
+	N = *nTriMax;
+	dim3 threadsPerBlock0(32);
+	dim3 numBlocks0(N/threadsPerBlock0.x + (!(N % threadsPerBlock0.x) ? 0:1));
+
+	resetInsertPtInTris<<<numBlocks0, threadsPerBlock0>>>(triList_d, nTriMax_d);
+
 	N = *npts;
 	printf("%d\n", N);
 	dim3 threadsPerBlock1(32);
@@ -338,7 +313,39 @@ void Delaunay::prepForInsert() {
 	cudaMemset(nTriWithInsert_d, 0, sizeof(int));
 	prepTriWithInsert<<<numBlocks2, threadsPerBlock2>>>(triList_d, nTri_d, triWithInsert_d, nTriWithInsert_d);
 
-	resetBiggestDistInTris<<<numBlocks2, threadsPerBlock2>>>(triList_d, nTri_d, nTriWithInsert_d);
+	cudaMemcpy(triWithInsert, triWithInsert_d, (*nTriMax) * sizeof(int), cudaMemcpyDeviceToHost);
+	cudaMemcpy(nTriWithInsert, nTriWithInsert_d,  sizeof(int), cudaMemcpyDeviceToHost);
+	printf("nTriWithInsert: %d\n", *nTriWithInsert);
+	printf("BEFORE SORT triWithInsert: ");
+	for (int i=0; i<(*nTri); ++i) {
+		printf("%d ", triWithInsert[i]);
+	}
+	printf("\n");
+
+	gpuSort(triWithInsert_d, nTri_d); 
+
+	cudaDeviceSynchronize();
+
+	cudaMemcpy(triWithInsert, triWithInsert_d, (*nTriMax) * sizeof(int), cudaMemcpyDeviceToHost);
+	printf("AFTER SORT triWithInsert: ");
+	for (int i=0; i<(*nTri); ++i) {
+		printf("%d ", triWithInsert[i]);
+	}
+	printf("\n");
+
+	cudaDeviceSynchronize();
+//	checkInsertPoint<<<numBlocks2, threadsPerBlock2>>>(triList, triWithInsert, nTriWithInsert);
+//	gpuSort(triWithInsert_d, nTriWithInsert_d); 
+
+	resetBiggestDistInTris<<<numBlocks2, threadsPerBlock2>>>(triList_d, nTriMax_d);
+}
+
+__global__ void resetInsertPtInTris(Tri* triList, int* nTriMax) {
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (idx < (*nTriMax)) {
+		triList[idx].insertPt = -1;
+	}
 }
 
 /*
@@ -352,16 +359,11 @@ __global__ void setInsertPtsDistance(Point* pts, int* npts, Tri* triList, int* p
 		if (ptToTri[idx] >= 0) {      // for uninserted points
 			int idxTri = ptToTri[idx];
 
-			Point center;
-			circumcircle_center(pts[triList[idxTri].p[0]], 
-					            pts[triList[idxTri].p[1]],
-					            pts[triList[idxTri].p[2]],
-					            &center);
+			// find circumcenter for the trianle this point is inside of
+			Point  circumcenter;
+			circumcircle_center(pts[triList[idxTri].p[0]], pts[triList[idxTri].p[1]], pts[triList[idxTri].p[2]], &circumcenter);
 
-			triList[idxTri].circumcenter.x[0] = center.x[0]; 
-			triList[idxTri].circumcenter.x[1] = center.x[1]; 
-
-			float ptDist = dist(center, pts[idx]); 
+			float ptDist = dist(circumcenter , pts[idx]); 
 			atomicMinFloat(&(triList[idxTri].insertPt_dist), ptDist);
 		}
 	}
@@ -378,7 +380,10 @@ __global__ void setInsertPts(Point* pts, int* npts, Tri* triList, int* ptToTri) 
 		if (ptToTri[idx] >= 0) {      // for uninserted points
 			int idxTri = ptToTri[idx];
 
-			float ptDist = dist(triList[idxTri].circumcenter, pts[idx]); 
+			Point circumcenter;
+			circumcircle_center(pts[triList[idxTri].p[0]], pts[triList[idxTri].p[1]], pts[triList[idxTri].p[2]], &circumcenter);
+
+			float ptDist = dist(circumcenter, pts[idx]); 
 			if (ptDist == triList[idxTri].insertPt_dist) {
 				//printf("INSERT POINT: %d\n", triList[idxTri].insertPt);
 				atomicExch(&(triList[idxTri].insertPt), idx);
@@ -392,15 +397,34 @@ __global__ void prepTriWithInsert(Tri* triList, int* nTri, int* triWithInsert, i
 
 	if (idx < (*nTri)) {
 		// "append" index of triange to 'triWithInsert' if insert=true
-		atomicAdd(nTriWithInsert, (triList[idx].insert == true) + 0*(triWithInsert[idx] = idx) );
+		int insert_stat = triList[idx].insert && (triList[idx].insertPt != -1);
+
+		printf("TRI IDX=%d INSERT STAT: %d\n", idx, insert_stat);
+
+		// write -1 if insert is false and write the index number if insert is true
+		triWithInsert[idx] = idx*(insert_stat == 1) + (-(insert_stat == 0));
+		atomicAdd(nTriWithInsert, insert_stat);
+		//atomicAdd(nTriWithInsert, (triList[idx].insert == true) + 0*(triWithInsert[idx] = idx) );
 	}
 }
 
+__global__ void checkInsertPoint(Tri* triList, int* triWithInsert, int* nTriWithInsert) {
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+	int N = *nTriWithInsert;
 
-__global__ void resetBiggestDistInTris(Tri* triList, int* nTri, int* nTriWithInsert) {
+	if (idx < N) {
+		if (triList[nTriWithInsert[idx]].insertPt == -1) {
+			triList[nTriWithInsert[idx]].insert = false;
+			nTriWithInsert[idx] = -1;
+			atomicAdd(nTriWithInsert, -1);
+		}
+	}
+}
+
+__global__ void resetBiggestDistInTris(Tri* triList, int* nTriMax) {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
-	if (idx < ((*nTri) + (*nTriWithInsert))) {
+	if (idx < (*nTriMax)) {
 		triList[idx].insertPt_dist = (float)(unsigned long)-1;
 	}
 }
@@ -429,7 +453,7 @@ void Delaunay::insert() {
 	arrayAddVal<<<1, 1>>>(nTri_d, nTriWithInsert_d, 2, 1); 
 	
 	// reset triWithInsert_d for next iteraiton
-	cudaMemset(triWithInsert_d, -1, (*nTriMax) * sizeof(int));
+	cudaMemset(triWithInsert_d, -1, (*nTri) * sizeof(int));
 }
 
 /*
@@ -450,9 +474,10 @@ __global__ void insertKernel(Tri* triList, int* nTri, int* triWithInsert, int* n
  */
 __device__ int insertInTri(int i, Tri* triList, int newTriIdx, int* ptToTri) {
 	int r = triList[i].insertPt;
+	ptToTri[r] = -1;
 
 	if (r == -1) { // if no points inside this triangle, continue
-		printf("NEIGHBOUR DOESENT EXIST IN INSERTINTRI\n");
+		printf("POINT DOESENT EXIST IN INSERTINTRI\n");
 		return -1;
 	}
 
@@ -473,9 +498,6 @@ __device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx, int* ptT
 
 //	printf("====================================INSERT========================================\n");
 //	printf("i: %d\n", i);
-
-	ptToTri[r] = -1;
-
 
 	printf("newTriIdx: %d and %d\n", newTriIdx, newTriIdx+1);
 	
@@ -549,12 +571,14 @@ __device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx, int* ptT
 /* ===================================== UPDATE POINT LOCATIONS ========================================= */
 
 void Delaunay::updatePointLocations() {
-	int N = *npts;
-	dim3 threadsPerBlock(32);
-	dim3 numBlocks(N/threadsPerBlock.x + (!(N % threadsPerBlock.x) ? 0:1));
+	int N;
 
-	updatePointLocationsKernel<<<numBlocks, threadsPerBlock>>>(pts_d, npts_d, triList_d, nTri_d, ptToTri_d);
+	N = *npts;
+	dim3 threadsPerBlock2(32);
+	dim3 numBlocks2(N/threadsPerBlock2.x + (!(N % threadsPerBlock2.x) ? 0:1));
+	updatePointLocationsKernel<<<numBlocks2, threadsPerBlock2>>>(pts_d, npts_d, triList_d, nTri_d, ptToTri_d);
 }
+
 
 /*
  * For each point, in the array ptToTri, index of the triangle in which the point is contained in is
@@ -570,36 +594,37 @@ __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, 
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < (*npts)) {
-		if (ptToTri[idx] <= 0) {
-			ptToTri[idx] = 0;
-			for (int i=0; i<(*nTri); ++i) {
-				if (idx == 0)
-					printf("ptToTri[%d]: %d = %d * %d\n", idx, i*(contains(i, idx, triList, pts) == 1), i, (contains(i, idx, triList, pts) == 1));
-				ptToTri[idx] += i*(contains(i, idx, triList, pts) == 0);
+		if (ptToTri[idx] >= 0) {
+			for (int t=0; t<(*nTri); ++t) {
+				if (contains(t, idx, triList, pts) == 1) {
+					ptToTri[idx] = t;
+				}
 			}
 		}
 	}
 }
 
 /*
- * Checks if a triangle with index 't' contains point with index 'r'. Returns 0 if the
- * point is inside or if on the boundary and 1 if its on the outside.
+ * Checks if a triangle with index 't' contains point with index 'r'. Returns 1 if the
+ * point is inside or if on the boundary and -1 if its on the outside.
  */
 __device__ int contains(int t, int r, Tri* triList, Point* pts) {
+
 	float area;
-	int bit = 0;
 	int i, j;
+	int bit = 0;
 
 	for (i=0; i<3; ++i) {
 		j = (i+1) % 3;
-
+		// area = area of triangle (21.3.2) (21.3.10) 
 		area = (pts[triList[t].p[j]].x[0] - pts[triList[t].p[i]].x[0])*(pts[r].x[1] - pts[triList[t].p[i]].x[1]) - 
 			   (pts[triList[t].p[j]].x[1] - pts[triList[t].p[i]].x[1])*(pts[r].x[0] - pts[triList[t].p[i]].x[0]);
 
-		bit = bit ^ (area > 0); // if (area > 0) is true at least one then bit will be =1; 
+		bit = bit | (area < 0.0);
 	}
 
-	return bit;
+	return (-(bit == 1)) + (bit == 0);
+
 }
 
 
@@ -643,7 +668,7 @@ void Delaunay::printTri() {
 }
 
 
-/* ====================================== ADD VECTOR ============================================= */
+/* ====================================== MISC ============================================= */
 
 
 /*
@@ -658,22 +683,123 @@ __global__ void arrayAddVal(int* array, int* val, int mult, int n) {
 }
 
 
+
+/*
+ * @param array Device pointer to array.
+ * @param n Device pointer to length of array.
+ */
+void gpuSort(int* array, int* n) {
+    int N;
+    cudaMemcpy(&N, n, sizeof(int), cudaMemcpyDeviceToHost);
+
+	if (N <= 1) {
+		return;
+	}
+
+    int sorted[1];
+    int* sorted_d;
+    cudaMalloc(&sorted_d, sizeof(int));
+
+    dim3 threadsPerBlock(32);
+    dim3 numBlocks((N / 2 + threadsPerBlock.x - 1) / threadsPerBlock.x);
+
+    //int parity = 0;
+    do {
+        *sorted = 0;
+        cudaMemcpy(sorted_d, sorted, sizeof(int), cudaMemcpyHostToDevice);
+        sortPass<<<numBlocks, threadsPerBlock>>>(array, N, 0, sorted_d);
+        sortPass<<<numBlocks, threadsPerBlock>>>(array, N, 1, sorted_d);
+        cudaMemcpy(sorted, sorted_d, sizeof(int), cudaMemcpyDeviceToHost);
+        //parity = 1 - parity;  // alternate parity 0/1
+    } while (*sorted != 0); // continue while swaps occurred
+
+    cudaFree(sorted_d);
+}
+
+__global__ void sortPass(int* array, int n, int parity, int* sorted) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int i = 2 * idx + parity;
+	int minval, maxval;
+
+    if (i + 1 < n) {
+        int l = array[i];
+        int r = array[i + 1];
+
+		maxval = max(l, r);
+		minval = min(l, r);
+
+		array[i] = maxval;
+		array[i + 1] = minval;
+
+		atomicOr(sorted, !(l==maxval));  // Mark that a swap happened
+    }
+}
+
 /* ====================================== SAVE TO FILE ============================================= */
 
-void Delaunay::saveToFile() {
+void Delaunay::saveToFile(bool end) {
 	cudaMemcpy(nTri   , nTri_d   ,              sizeof(int), cudaMemcpyDeviceToHost);
 	cudaMemcpy(triList, triList_d, (*nTriMax) * sizeof(Tri), cudaMemcpyDeviceToHost);
 
-	fprintf(file, "%d %d\n", iter, *nTri);
-	for (int i=0; i<(*nTri); ++i) {
-		for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].p[j]); } 
-		for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].n[j]); } 
-		for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].o[j]); } 
-		fprintf(file, "%d ", triList[i].flip);
-		fprintf(file, "%d ", triList[i].insert);
-		fprintf(file, "\n");
-	}
+	if (end == false) { // save all triangles
+		fprintf(file, "%d %d\n", iter, *nTri);
+		for (int i=0; i<(*nTri); ++i) {
+			for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].p[j]); } 
+			for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].n[j]); } 
+			for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].o[j]); } 
+			fprintf(file, "%d ", triList[i].flip);
+			fprintf(file, "%d ", triList[i].insert);
 
-	fprintf(file, "\n");
-	iter++;
+			fprintf(file, "\n");
+		}
+
+		fprintf(file, "\n");
+		iter++;
+	} 
+	else {
+		int nTriFinal = 0;	
+		// count number of triangles which do not contain the supertriangle points
+		for (int i=0; i<(*nTri); ++i) {
+			int cont = 0;
+			for (int k=0; k<3; ++k) {
+				for (int l=0; l<3; ++l) {
+					if (triList[i].p[k] == ((*npts) + l)) {
+						cont = -1;
+					}
+				}
+			}
+			if (cont == -1) { continue; }
+	
+			nTriFinal++;
+		}
+	
+		fprintf(file, "%d %d\n", iter, nTriFinal);
+		//saveFile << iter << " " << nTriFinal << "\n";
+		for (int i=0; i<(*nTri); ++i) {
+			// if any point in this triangle is on the boundary dont save
+			int cont = 0;
+			for (int k=0; k<3; ++k) {
+				for (int l=0; l<3; ++l) {
+					if (triList[i].p[k] == ((*npts) + l)) {
+						cont = -1;
+					}
+				}
+			}
+	
+			if (cont == -1) {
+				continue;
+			}
+	
+			for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].p[j]); } 
+			for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].n[j]); } 
+			for (int j=0; j<3; ++j) { fprintf(file, "%d ", triList[i].o[j]); } 
+			fprintf(file, "%d ", triList[i].flip);
+			fprintf(file, "%d ", triList[i].insert);
+
+			fprintf(file, "\n");
+		}
+
+		fprintf(file, "\n");
+		iter++;
+	}
 }

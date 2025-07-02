@@ -52,7 +52,7 @@ struct Delaunay {
 	void printTri();
 
 	void updatePointLocations();
-	void saveToFile();
+	void saveToFile(bool end=false);
 };
 
 __host__ __device__ void writeTri(Tri* tri, int* p, int* n, int* o);
@@ -62,6 +62,7 @@ __global__ void sumPoints(Point* pts, int* npts, Point* avgPoint);
 __global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist);
 
 /* PREP FOR INSERT */
+__global__ void resetInsertPtInTris(Tri* triList, int* nTriMax);
 __global__ void setInsertPtsDistance(Point* pts, int* npts, Tri* triList, int* ptToTri);
 __global__ void setInsertPts        (Point* pts, int* npts, Tri* triList, int* ptToTri);
 __global__ void prepTriWithInsert(Tri* triList, int* nTri, int* triWithInsert, int* nTriWithInsert);
@@ -70,7 +71,8 @@ __global__ void prepTriWithInsert(Tri* triList, int* nTri, int* triWithInsert, i
 __global__ void insertKernel(Tri* triList, int* nTri, int* triWithInsert, int* nTriWithInsert, int* ptToTri);
 __device__ int insertInTri(int i, Tri* triList, int newTriIdx, int* ptToTri);
 __device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx, int* ptToTri);
-__global__ void resetBiggestDistInTris(Tri* triList, int* nTri, int* nTriWithInsert);
+__global__ void checkInsertPoint(Tri* triList, int* triWithInsert, int* nTriWithInsert);
+__global__ void resetBiggestDistInTris(Tri* triList, int* nTriMax);
 
 
 /* UPDATE POINTS */
@@ -79,5 +81,8 @@ __device__ int contains(int t, int r, Tri* triList, Point* pts);
 
 /* MISC */
 __global__ void arrayAddVal(int* array, int* val, int mult, int n);
+
+void gpuSort(int* array, int* n);
+__global__ void sortPass(int* array, int n, int parity, int* sorted);
 
 #endif
