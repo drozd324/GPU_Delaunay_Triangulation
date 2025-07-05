@@ -20,13 +20,13 @@ struct Tri {
 	int n[3]; // idx to Tri neighbours of this triangle
 	int o[3]; // index in the Tri noted by the int n[i] of opposite point of current Tri
 
-	bool insert = false;   
+	bool insert;   
 	int insertPt;  
 	float insertPt_dist; 
-	Point circumcenter; 
-	int flip = -1; // marks an edge to flip 0,1 or 2, -1 if not to flip any edge
+	int flip; // marks an edge to flip 0,1 or 2, -1 if not to flip any edge
+	int configIdx;
 
-	int node; // index of node in nodes array
+	//int node; // index of node in nodes array
 
 };
 

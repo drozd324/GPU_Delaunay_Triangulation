@@ -15,6 +15,7 @@
 #include "circle.h"
 #include "tri.h"
 #include "atomic.h"
+#include "misc.h"
 
 /*
  * Struct for creating a delaunay triangulation from a given vector of points. Consists of 
@@ -31,22 +32,25 @@ struct Delaunay {
 	int* triWithInsert    ; int* triWithInsert_d; 
 	int  nTriWithInsert[1]; int* nTriWithInsert_d;
 
+	int* nTriToFlip; int* nTriToFlip_d;
+	int* triToFlip ; int* triToFlip_d;
+
 	int iter = 0; int* iter_d;
-	int tag_num = 0;
 
 	int num_tris_to_insert; int* num_tris_to_insert_d;
 
-	//std::ofstream saveFile;
 	FILE* file;
 
 	Delaunay(Point* points, int n);
 	~Delaunay();
 
+	int ntpb = 128;
 	void compute();
 	
 	void initSuperTri();
 	void prepForInsert();
 	void insert();
+	void flipAfterInsert();
 
 	void printInfo();
 	void printTri();
@@ -74,15 +78,19 @@ __device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx, int* ptT
 __global__ void checkInsertPoint(Tri* triList, int* triWithInsert, int* nTriWithInsert);
 __global__ void resetBiggestDistInTris(Tri* triList, int* nTriMax);
 
+/* FLIP */
+__global__ void flipKernel(int* triToFlip, int* nTriToFlip, Tri* triList);
+__device__ int flip(int a, Tri* triList);
+__global__ void storeTriToFlip(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);
 
 /* UPDATE POINTS */
 __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri);
 __device__ int contains(int t, int r, Tri* triList, Point* pts);
 
 /* MISC */
-__global__ void arrayAddVal(int* array, int* val, int mult, int n);
-
-void gpuSort(int* array, int* n);
-__global__ void sortPass(int* array, int n, int parity, int* sorted);
+//__global__ void arrayAddVal(int* array, int* val, int mult, int n);
+//
+//void gpuSort(int* array, int* n);
+//__global__ void sortPass(int* array, int n, int parity, int* sorted);
 
 #endif

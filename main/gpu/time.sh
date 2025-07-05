@@ -4,11 +4,11 @@ cd "${0%/*}" || exit 1  # Run from script's directory
 make
 mkdir -p ./data
 
-MAXN=1000 # max n
+MAXN=23000 # max n
 STEPN=10
 STARTN=10
 
-MAXS=3 # max seeds
+MAXS=10 # max seeds
 
 HEADER="n,time,seed" 
 

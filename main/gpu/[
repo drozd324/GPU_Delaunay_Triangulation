@@ -633,185 +633,47 @@ __device__ int contains(int t, int r, Tri* triList, Point* pts) {
 /* ===================================== FLIPPING ========================================= */
 
 void Delaunay::flipAfterInsert() {
-	// reset nTriToFlip
-	*nTriToFlip = 0;
-	cudaMalloc(&nTriToFlip_d, sizeof(int));
-	cudaMemcpy(nTriToFlip_d, nTriToFlip, sizeof(int), cudaMemcpyHostToDevice);
+	int N;
 
-	// allocating appropriate size of triToFlip
+	int nTriToFlip[1] = {0};
+	int* nTriToFlip_d;
+	cudaMalloc(&nTriToFlip_d, sizeof(int));
+	cudaMemset(nTriToFlip_d, 0, sizeof(int));
+
 	cudaMemcpy(nTri, nTri_d, sizeof(int), cudaMemcpyDeviceToHost);
+	N = *nTri;
+	dim3 threadsPerBlock0(ntpb);
+	dim3 numBlocks0(N/threadsPerBlock0.x + (!(N % threadsPerBlock0.x) ? 0:1));
+	 
+	// store index of triangle to flip, the edge to flip is stored in the triangle
 	int* triToFlip_d;
 	cudaMalloc(&triToFlip_d, (*nTri) * sizeof(int));
-	cudaMemset(triToFlip_d, -1, (*nTri) * sizeof(int));
 
-	// storing which triangles we should flip in this iteration
-	storeTriToFlip();
+	storeTriToFlip<<<numBlocks0, threadsPerBlock0>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d, pts_d);
+	cudaMemcpy(nTriToFlip, nTriToFlip_d, sizeof(int), cudaMemcpyDeviceToHost);
 
 	do {
+		gpuSort(triToFlip_d, nTri_d);
+
 		N = *nTriToFlip;
 		dim3 threadsPerBlock1(ntpb);
 		dim3 numBlocks1(N/threadsPerBlock1.x + (!(N % threadsPerBlock1.x) ? 0:1));
 
 		flipKernel<<<numBlocks1, threadsPerBlock1>>>(triToFlip_d, nTriToFlip_d, triList_d);
 
-		storeTriToFlip();
-
+		storeTriToFlip<<<numBlocks0, threadsPerBlock0>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d, pts_d);
+		cudaMemcpy(nTriToFlip, nTriToFlip_d, sizeof(int), cudaMemcpyDeviceToHost);
 	} while ((*nTriToFlip) > 0);
 
 	cudaFree(triToFlip_d);
 	cudaFree(nTriToFlip_d);
 }
 
-void Delaunay::storeTriToFLip() {
-
-	checkFlipAndLegality();
-	checkFlipConflicts();
-	
-	cudaMemcpy(nTriToFlip, nTriToFlip_d, sizeof(int), cudaMemcpyDeviceToHost);
-}
-
-/* ================================== STEP 1 ==================================  */ 
-
-void Delaunay::checkFlipAndLegality() {
-	int N;
-	N = *nTri;
-	dim3 threadsPerBlock0(ntpb);
-	dim3 numBlocks0(N/threadsPerBlock0.x + (!(N % threadsPerBlock0.x) ? 0:1));
-	 
-	checkFlipAndLegalityKernel<<<numBlocks0, threadsPerBlock0>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d);
-
-	gpuSort(triWithInsert_d, nTri_d);
-}
-
-/* 
- * Performs Flip and Legality checks on each triangle.
- */
-__global__ checkFlipAndLegalityKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri) {
-	int a = blockIdx.x*blockDim.x + threadIdx.x; // idx of triangle
-	int e = triList[a].flip;                     // edge to flip in a 
-	int b = triList[a].n[e];                     // neighbour across edge 
-	int opp_idx = triList[a].o[e];               // index of opposite point in neighbour
-
-	bool flip = 0;
-
-	if (a < (*nTri)) {
-		flip = checkFlip(a, triList) & checkLegality(a, e, b, triList, pts);
-
-		// write a if marked for flip and -1 if not
-		//triToFlip[a] = max(triToFlip[a], a*(flip == 1) + (-(flip == 0)));
-		//triToFlip[a] = a*(flip == 1) + (-(flip == 0)));
-		if (flip) {
-			triToFlip[a] = a;
-			atomicAdd(nTriToFlip, 1);
-		}
-	}
-}
-
-/*
- * Checks if a triangle is marked for flipping has an eligible neibour to flip with. 
- */
-__device__ bool checkFlip(int a, Tri* triList) { 
-	bool noflip = 0;
-
-	noflip = noflip | (triList[a].flip == -1); // is it marked for flipping?
-	noflip = noflip | (b == -1);               // does its neighbour exist?
-
-	return !noflip;
-}
-
-/*
- * Checks whether a triangle marked for flipping should be flipped.
- */
-__device__ bool checkLegality(int a, int e, int b, Tri* triList, Point* pts) { 
-	bool noflip = 0;
-
-	noflip = noflip | (0 >= incircle(pts[triList[b].p[opp_idx]],
-									 pts[triList[a].p[0      ]],
-									 pts[triList[a].p[1      ]],
-									 pts[triList[a].p[2      ]] ));
-
-	return !noflip;
-}
-
-/* ================================== STEP 2 ==================================  */ 
-
-void Delaunay::checkFlipConflicts() {
-	int N;
-	N = *nTri;
-	dim3 threadsPerBlock(ntpb);
-	dim3 numBlocks(N/threadsPerBlock.x + (!(N % threadsPerBlock.x) ? 0:1));
-
-	prepForConflicts       <<<numBlocks, threadsPerBlock>>>(triList, nTri);
-	setConfigIdx           <<<numBlocks, threadsPerBlock>>>(triList, nTri);
-	storeNonConflictConfigs<<<numBlocks, threadsPerBlock>>>(triToFlip, nTriToFlip, triList, nTri);
-
-	gpuSort(triWithInsert_d, nTri_d);
-}
-
-/*
- * Sets the configuration index of each triangle in triList with a default value, here the largest value it 
- * can be in this iteration.
- */
-__global__ void prepForConflicts(Tri* triList, int* nTri) {
-	int idx = blockIdx.x*blockDim.x + threadIdx.x;
-
-	if (idx < (*nTri)) {
-		triList[idx].configIdx = (*nTri);
-	}
-}
-
-/*
- * Writes the minimun configuration index to each triangle marked for fliping  
- */
-__global__ void setConfigIdx(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri) {
-	int idx = blockIdx.x*blockDim.x + threadIdx.x;
-
-	if (idx < (*nTriToFlip)) {
-		int a = triToFlip[idx];
-		int b = triList[a].n[ triList[a].flip ];
-
-		atomicMin(&(triList[a].configIdx), min(a, b));
-		atomicMin(&(triList[b].configIdx), min(a, b));
-	}
-}
-
-__global__ void storeNonConflictConfigs(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri) {
-	int idx = blockIdx.x*blockDim.x + threadIdx.x;
-
-	if (idx < (*nTriToFlip)) {
-		int a = triToFlip[idx];
-		int b = triList[a].n[ triList[a].flip ];
-
-		// checks whether the index of both triangles of the configuration hold the 
-		// same configuration index, if so they are chosen to be flipped, else not flipped
-		bool flip = (triList[a].configIdx == min(a, b) && triList[b].configIdx == min(a, b));
-
-		// overwrite the previous checks if the triangle is not to be flipped this round
-		// else it stored the same value
-		triToFlip[a] = min(triToFlip[a], a*(flip == 1) + (-(flip == 0)));
-
-		// subtract the newly realised unflippable configurations
-		if (flip == 0) {
-			atomicSub(nTriToFlip, 1);
-		}
-		//atomicSub(nTriToFlip, (flip == 0));
-	}
-}
-
-/* ================================== STEP 3 ==================================  */ 
-
 __global__ void flipKernel(int* triToFlip, int* nTriToFlip, Tri* triList) {
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 
 	if (idx < (*nTriToFlip)) {
-		int a = triToFlip[idx];
-		int e = triList[a].flip; // edge of triangle to flip across
-		int b = triList[a].n[e]; // b is the index of the triangle across the edge
-
-		flip(a, e, b, triList);
-
-		triList[a].flip = 1;
-		triList[triList[a].n[2]].flip = 0;
+		flip(triToFlip[idx], triList);
 	}
 }
 
@@ -823,14 +685,31 @@ __global__ void flipKernel(int* triToFlip, int* nTriToFlip, Tri* triList) {
  * @param a Index in triList of chosen triangle
  * @param e Index in chosen triangle of edge/neigbour. This is an int in 0, 1 or 2.
  */
-__device__ void flip(int a, int e, int b, Tri* triList) {
+__device__ int flip(int a, Tri* triList) {
 	
+	// edge of triangle to flip across
+	int e = triList[a].flip;
+	if (e == -1) { printf("e = -1\n"); }
+
+	// b is the index of the triangle across the edge
+	int b = triList[a].n[e]; // index in triList of nei
+	if (b == -1) { return 0; } // if neighbour doesnt exist, then exit
+
 	int opp_idx = triList[a].o[e];
 
- 	// temporary qaud "struct" data just to make it readable
+	// check if we should flip
+//	if (0 > incircle(pts[triList[b].p[opp_idx]],
+//				     pts[triList[a].p[0]],
+//				     pts[triList[a].p[1]],
+//				     pts[triList[a].p[2]])) 
+//	{
+//		return 0;
+//	}
+
+ 	// temporary qaud "struct" data  just to make it readable
 	int p[4] = {triList[a].p[(e-1 + 3)%3], triList[a].p[e]                , triList[b].p[opp_idx], triList[a].p[(e + 1)%3]};
-	int n[4] = {triList[a].n[(e-1 + 3)%3], triList[b].n[(opp_idx-1 + 3)%3], triList[b].n[opp_idx], triList[a].n[(e + 1)%3]};
-	int o[4] = {triList[a].o[(e-1 + 3)%3], triList[b].o[(opp_idx-1 + 3)%3], triList[b].o[opp_idx], triList[a].o[(e + 1)%3]};
+	int n[4] = {triList[a].n[(e-1 + 3)%3], triList[b].n[(opp_idx-1 + 3)%3], triList[b].n[opp_idx], triList[a].n[(e + 1)%3]}; 
+	int o[4] = {triList[a].o[(e-1 + 3)%3], triList[b].o[(opp_idx-1 + 3)%3], triList[b].o[opp_idx], triList[a].o[(e + 1)%3]}; 
 
 	int ap[3] = {p[0], p[1], p[2]};
 	int an[3] = {n[0], n[1], b};
@@ -846,13 +725,109 @@ __device__ void flip(int a, int e, int b, Tri* triList) {
 	int nbrs[4] = {a, a, b, b};
 	int opps[4] = {2, 0, 2, 0};
 
+	// rewrite for no thread divergence.
+	// or launch as separate 4 kernels
 	for (int k=0; k<4; ++k) {
-		// n[k] is almost always >= 0 with large number of points
 		if (n[k] >= 0) {
 			triList[n[k]].n[(o[k] + 1)%3] = nbrs[k];
 			triList[n[k]].o[(o[k] + 1)%3] = opps[k];
 		}
 	}
+
+	return 1;
+}
+
+__global__ void storeTriToFlip(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts) {
+	int idx = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (idx < (*nTri)) {
+		int a = idx;
+		// recheck flip/noflip logic
+		bool noflip = 0;
+
+		// triToFlip[idx] = idx  if marked for flipping 
+		//                  -1   if not
+
+		//triToFlip[idx] = idx*(triList[idx].flip >= 0) - (triList[idx].flip == -1);
+
+		// CHECK IF MARKED FOR FLIPPING
+		noflip = noflip | (triList[idx].flip == -1);
+
+		int e = triList[a].flip; if (e == -1) { printf("e = -1\n"); }
+		int b = triList[a].n[e]; if (b == -1) { printf("b = -1\n"); } // if neighbour doesnt exist
+		int opp_idx = triList[a].o[e];
+
+		// CHECK IF WE SHOULD FLIP
+		noflip = noflip | (0 >= incircle(pts[triList[b].p[opp_idx]],
+								         pts[triList[a].p[0      ]],
+								         pts[triList[a].p[1      ]],
+								         pts[triList[a].p[2      ]] ));
+
+
+		// CHECK FOR CONFLICTS
+		triList[a].configIdx = min(a, b);
+		atomicMin(triList[b].configIdx);
+		//triList[b].configIdx = configIdx;
+
+
+
+
+		// check for if the triangle opposite this edge also wants to flip on this egde (check for duplicate flips)
+		pts[triList[b].p[(triList[b].flip + 1) % 3]];
+		pts[triList[a].p[ triList[a].flip         ]];
+		
+		if (pts[triList[b].p[(triList[b].flip + 1) % 3]] == pts[triList[a].p[triList[a].flip]]) {
+			if (b == min(a, b)) {
+				noflip = noflip | 1 ;
+			}
+		}
+
+		// [TODO]
+		// check for conflicting flips
+		for (int i=0; i<3; ++i) {
+			if (pts[triList[b].p[(triList[b].flip + 1) % 3]] == pts[triList[a].p[triList[a].flip]]) {
+						
+			}
+		}
+
+		// check if each edge of the triangle want to flip, if it does pick min to flip, if more than 1 edge 
+		// want to flip pick min edge to flip 
+
+		bool flip = !noflip;
+		triToFlip[idx] = idx*(flip == 1) - (flip == 0);
+		
+		atomicAdd(nTriToFlip, flip);
+	}
+}
+
+/*
+ * Checks if a triangle is marked for flipping has an eligible neibour to flip with. 
+ */
+__device__ bool checkFlip(int a, int b, Tri* triList) { 
+	bool noflip = 0;
+
+	// CHECK IF MARKED FOR FLIPPING
+	noflip = noflip | (triList[a].flip == -1);
+
+	return !noflip;
+}
+
+/*
+ * Checks whether a triangle marked for flipping should be flipped.
+ */
+__device__ bool checkLegality(int a, int b, Tri* triList, Point* pts) { 
+	bool noflip = 0;
+
+	int e = triList[a].flip; if (e == -1) { printf("e = -1\n"); }
+	int b = triList[a].n[e]; if (b == -1) { printf("b = -1\n"); } // if neighbour doesnt exist
+	int opp_idx = triList[a].o[e];
+	noflip = noflip | (0 >= incircle(pts[triList[b].p[opp_idx]],
+									 pts[triList[a].p[0      ]],
+									 pts[triList[a].p[1      ]],
+									 pts[triList[a].p[2      ]] ));
+
+	return !noflip;
+
 }
 
 ///*
