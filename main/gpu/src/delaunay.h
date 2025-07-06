@@ -29,11 +29,11 @@ struct Delaunay {
 	Tri* triList   ; Tri* triList_d; 
 
 	int* ptToTri          ; int* ptToTri_d;
-	int* triWithInsert    ; int* triWithInsert_d; 
 	int  nTriWithInsert[1]; int* nTriWithInsert_d;
+	int* triWithInsert    ; int* triWithInsert_d; 
 
-	int* nTriToFlip; int* nTriToFlip_d;
-	int* triToFlip ; int* triToFlip_d;
+	int nTriToFlip[1]; int* nTriToFlip_d;
+	int* triToFlip   ; int* triToFlip_d;
 
 	int iter = 0; int* iter_d;
 
@@ -44,13 +44,17 @@ struct Delaunay {
 	Delaunay(Point* points, int n);
 	~Delaunay();
 
-	int ntpb = 128;
+	int ntpb = 128; // number of threads per block
 	void compute();
 	
 	void initSuperTri();
 	void prepForInsert();
 	void insert();
+
 	void flipAfterInsert();
+	void storeTriToFlip();
+	void checkFlipAndLegality();
+	void checkFlipConflicts();
 
 	void printInfo();
 	void printTri();
@@ -79,9 +83,21 @@ __global__ void checkInsertPoint(Tri* triList, int* triWithInsert, int* nTriWith
 __global__ void resetBiggestDistInTris(Tri* triList, int* nTriMax);
 
 /* FLIP */
+
+__global__ void checkFlipKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);
+__device__ bool checkFlip(int a, int flip_edge, int b, Tri* triList); 
+
+__global__ void checkLegalityKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);
+__device__ bool checkLegality(int a, int flip_edge, int b, Tri* triList, Point* pts); 
+
+
+__global__ void prepForConflicts(Tri* triList, int* nTri);
+__global__ void setConfigIdx(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri);
+__global__ void storeNonConflictConfigs(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri);
+
 __global__ void flipKernel(int* triToFlip, int* nTriToFlip, Tri* triList);
-__device__ int flip(int a, Tri* triList);
-__global__ void storeTriToFlip(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);
+__device__ void flip(int a, int e, int b, Tri* triList);
+
 
 /* UPDATE POINTS */
 __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri);
