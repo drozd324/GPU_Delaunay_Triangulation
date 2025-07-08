@@ -36,8 +36,7 @@ struct Delaunay {
 	int* triToFlip   ; int* triToFlip_d;
 
 	int iter = 0; int* iter_d;
-
-	int num_tris_to_insert; int* num_tris_to_insert_d;
+	bool verbose = false; // gives detail info to std out about state of the triangulation
 
 	FILE* file;
 
@@ -83,30 +82,30 @@ __global__ void checkInsertPoint(Tri* triList, int* triWithInsert, int* nTriWith
 __global__ void resetBiggestDistInTris(Tri* triList, int* nTriMax);
 
 /* FLIP */
-
 __global__ void checkFlipKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);
-__device__ bool checkFlip(int a, int flip_edge, int b, Tri* triList); 
+__device__ int checkFlip(int a, int flip_edge, int b, Tri* triList); 
 
 __global__ void checkLegalityKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);
-__device__ bool checkLegality(int a, int flip_edge, int b, Tri* triList, Point* pts); 
-
+__device__ int checkLegality(int a, int flip_edge, int b, Tri* triList, Point* pts); 
 
 __global__ void prepForConflicts(Tri* triList, int* nTri);
 __global__ void setConfigIdx(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri);
 __global__ void storeNonConflictConfigs(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri);
 
+__global__ void resetTriToFlipThisIter(Tri* triList, int* nTri);
+__global__ void markTriToFlipThisIter(int* triToFlip, int* nTriToFlip, Tri* triList);
+
 __global__ void flipKernel(int* triToFlip, int* nTriToFlip, Tri* triList);
 __device__ void flip(int a, int e, int b, Tri* triList);
 
+__global__ void resetTriToFlip(Tri* triList, int* nTri);
 
 /* UPDATE POINTS */
 __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri);
 __device__ int contains(int t, int r, Tri* triList, Point* pts);
 
-/* MISC */
-//__global__ void arrayAddVal(int* array, int* val, int mult, int n);
-//
-//void gpuSort(int* array, int* n);
-//__global__ void sortPass(int* array, int n, int parity, int* sorted);
 
+__device__ void printQuad(int* p, int* n, int* o);
 #endif
+
+

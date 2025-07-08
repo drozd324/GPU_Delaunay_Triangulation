@@ -24,9 +24,8 @@ struct Tri {
 	int insertPt;  
 	float insertPt_dist; 
 	int flip; // marks an edge to flip 0,1 or 2, -1 if not to flip any edge
+	int flipThisIter;
 	int configIdx;
-
-	//int node; // index of node in nodes array
 
 };
 
