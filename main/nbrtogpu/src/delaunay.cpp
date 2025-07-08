@@ -29,16 +29,16 @@ Delaunay::Delaunay(Point* points, int n) :
 	saveToFile();
 
 	//notparallel();
-	incPtIns();
-	//onlyPointInsert();
+	//incPtIns();
+	onlyPointInsert();
 
-	int nflips = -1;
-	while (nflips != 0) {
-		nflips = legalize();
-		std::cout << "Performed	" << nflips  << " additional flips\n"; 
-	}
-
-	std::cout << "Triangluation is Delaunay\n";
+//	int nflips = -1;
+//	while (nflips != 0) {
+//		nflips = legalize();
+//		std::cout << "Performed	" << nflips  << " additional flips\n"; 
+//	}
+//
+//	std::cout << "Triangluation is Delaunay\n";
 
 	saveToFile(true);
 }
@@ -189,25 +189,35 @@ int Delaunay::flip(int a, int e) {
 
 	delete[] spts;
 
-	if (n[0] >= 0) {
-		triList[n[0]].n[(o[0]+1)%3] = a;	
-		triList[n[0]].o[(o[0]+1)%3] = 2;	
+	int nbrs[4] = {a, a, b, b};
+	int opps[4] = {2, 0, 2, 0};
+
+	for (int i=0; i<4; ++i) {
+		if (n[k] >= 0) {
+			triList[n[k]].n[(o[k] + 1)%3] = a;	
+			triList[n[k]].o[(o[k] + 1)%3] = 2;	
+		}
 	}
 
-	if (n[1] >= 0) {
-		triList[n[1]].n[(o[1]+1)%3] = a;	
-		triList[n[1]].o[(o[1]+1)%3] = 0;	
-	}
-
-	if (n[2] >= 0) {
-		triList[n[2]].n[(o[2]+1)%3] = b;	
-		triList[n[2]].o[(o[2]+1)%3] = 2;	
-	}
-
-	if (n[3] >= 0) {
-		triList[n[3]].n[(o[3]+1)%3] = b;	
-		triList[n[3]].o[(o[3]+1)%3] = 0;	
-	}
+//	if (n[0] >= 0) {
+//		triList[n[0]].n[(o[0]+1)%3] = a;	
+//		triList[n[0]].o[(o[0]+1)%3] = 2;	
+//	}
+//
+//	if (n[1] >= 0) {
+//		triList[n[1]].n[(o[1]+1)%3] = a;	
+//		triList[n[1]].o[(o[1]+1)%3] = 0;	
+//	}
+//
+//	if (n[2] >= 0) {
+//		triList[n[2]].n[(o[2]+1)%3] = b;	
+//		triList[n[2]].o[(o[2]+1)%3] = 2;	
+//	}
+//
+//	if (n[3] >= 0) {
+//		triList[n[3]].n[(o[3]+1)%3] = b;	
+//		triList[n[3]].o[(o[3]+1)%3] = 0;	
+//	}
 
 	//std::cout << "FLIPPING COMPLETE\n";
 	saveToFile();

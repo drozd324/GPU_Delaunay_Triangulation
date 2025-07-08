@@ -54,7 +54,7 @@ void Tri::writeTri(Point* gpts, int ngpts, int* searchpts, int nsearchpts,
  * and returns 0 or outside and returns 1. 
  */
 int Tri::contains(Point point) {
-	// Return 1 if point is in the triangle, 0 if on boundary, 1 if outside. (CCW triangle is assumed.)
+	// Return 1 if point is in the triangle, 0 if on boundary, -1 if outside. (CCW triangle is assumed.)
 	real area;
 	int i, j, ztest=0;
 
@@ -62,7 +62,7 @@ int Tri::contains(Point point) {
 		j = (i+1) % 3;
 		// area = area of triangle (21.3.2) (21.3.10) 
 		area = (pts[p[j]].x[0] - pts[p[i]].x[0])*(point.x[1] - pts[p[i]].x[1]) - 
-			   (pts[p[j]].x[1] - pts[p[i]].x[1])*(point.x[0] - pts[p[i]].x[0]);
+			(pts[p[j]].x[1] - pts[p[i]].x[1])*(point.x[0] - pts[p[i]].x[0]);
 
 		if (area < 0.0) {
 			return -1;
