@@ -34,8 +34,8 @@ Delaunay::Delaunay(Point* points, int n) :
 	saveFile << "\n"; 
 	saveToFile();
 
-	//incPtIns();
-	onlyPointInsert();
+	incPtIns();
+	//onlyPointInsert();
 
 	int nflips = -1;
 	while (nflips != 0) {
