@@ -1,10 +1,10 @@
 CXX := g++
-CXXFLAGS := -Og -Wall -Wextra #-std=c++20
+CXXFLAGS := -Og -Wall -Wextra -std=c++20
 DEBUG := -g -fsanitize=address,undefined   #-lefence
 
 NVCC := nvcc
-NVCCFLAGS := -Wno-deprecated-gpu-targets -rdc=true # -O4 --use_fast_math --compiler-options -funroll-loops -arch=sm_75   -lcudadevrt
-DEBUGNV = -g -G -Xcompiler -Wall #--ptxas-options=-v
+NVCCFLAGS := -Wno-deprecated-gpu-targets -rdc=true -std=c++20 # -O4 --use_fast_math --compiler-options -funroll-loops -arch=sm_75   -lcudadevrt
+DEBUGNV =  -g -G #-Xcompiler -Wall #--ptxas-options=-v
 
 OBJDIR := obj
 BINDIR := bin
@@ -32,4 +32,4 @@ $(OBJDIR) $(BINDIR):
 
 .PHONY: clean
 clean:
-	rm -f $(OBJDIR)/*.o $(EXECS) ./data/data.txt
+	rm -f $(OBJDIR)/*.o $(EXECS) ./data/*

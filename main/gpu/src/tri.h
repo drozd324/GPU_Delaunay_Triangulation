@@ -29,6 +29,12 @@ struct Tri {
 
 };
 
+struct Quad {
+	int p[4];  // indexes of points in pts list
+	int n[4]; // idx to Tri neighbours of this triangle
+	int o[4]; // index in the Tri noted by the int n[i] of opposite point of current Tri
+};
+
 struct Node {
 	// -1 if inactive, >=0 if active
 	int t;  // triangle (int indexing triangle in triList)

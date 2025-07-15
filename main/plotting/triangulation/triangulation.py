@@ -9,14 +9,21 @@ def get_type(input_data):
     except (ValueError, SyntaxError):
         return str
 
+#def plotTriangulation(interactive=True, 
+
+max_pts_for_show = 40
+only_save_plot = 0
 
 line_num = 0
 line_count = 0
-only_save_to_file = 0
+zoom = 0
 
-if sys.argv > 1:
-	if sys.argv[1] == "save":
-		only_save_to_file = 1
+filename = "../../gpu/data/tri.txt"
+
+if (len(sys.argv) > 1 and sys.argv[1] == "save"):
+	only_save_plot = 1
+	print("ONLY SAVING")
+		
 
 print("")
 print("==========[INITIALISING PLOT]==========")
@@ -31,7 +38,7 @@ def goto_line(num, data):
 	for i in range(num-1):
 		data.readline()
 
-with open("./data/data.txt", "r") as data:
+with open(filename, "r") as data:
 	line_count = len(data.readlines())
 	data.seek(0)
 
@@ -64,6 +71,8 @@ with open("./data/data.txt", "r") as data:
 	while run:
 		goto_line(iter_line_num[iter_idx], data)
 		plt.clf()
+		
+		print("[STORING TRANGLE INFO THIS ITERATION]")
 
 		# collect triangle info in per iteration
 		iter, num_tri = np.fromstring(read_line(data), sep=" ", dtype=int) 
@@ -71,9 +80,13 @@ with open("./data/data.txt", "r") as data:
 		for i in range(num_tri):
 			tris[i] = np.fromstring(read_line(data), sep=" ", dtype=float) 
 
+		print("[DRAWING TRIANGLES]")
+
 		# plot data about each triangle
 		for k, tri in enumerate(list(tris)):
 			tri_pts = np.zeros((3,2))
+
+			print(f"{k+1}/{num_tri}", end="\r")
 
 			# plot edges of triangle
 			for i in range(3):
@@ -85,11 +98,12 @@ with open("./data/data.txt", "r") as data:
 				tri_pts[i][0] = x0
 				tri_pts[i][1] = y0
 					
-				plt.plot([x0, x1], [y0, y1], color="black", linewidth=max(1, (250/num_pts)))
+				plt.plot([x0, x1], [y0, y1], color="black")#, linewidth=(250/num_pts))
+
 
 			# scatter mean of triangles points to represent the triangle
 			tri_k_avg = (np.mean(tri_pts[:, 0]), np.mean(tri_pts[:, 1]))
-			if num_pts < 20:
+			if num_pts <= max_pts_for_show:
 				#plt.scatter(tri_k_avg[0], tri_k_avg[1], color="green", s=1)
 				plt.annotate(str(f"t{k}"), (tri_k_avg[0], tri_k_avg[1]))
 
@@ -127,16 +141,18 @@ with open("./data/data.txt", "r") as data:
 
 			# color triangles to be flipped and fatten edge
 			if show_edges_to_flip == True:
-				edge_to_flip = tri[9]
+				edge_to_flip = tri[11]
 				if edge_to_flip != -1:
 					flip_line = [tri_pts[edge_to_flip],
 								 tri_pts[(edge_to_flip+1) % 3] ]
 					plt.plot([flip_line[0][0], flip_line[1][0]], [flip_line[0][1], flip_line[1][1]], linewidth=3, color="orange")
 				 
 
+		print(f"                 ", end="\r")
+		print("[DRAWING POINTS]")
 
 		# plots points in triangulation
-		if num_pts < 20 and iter_idx != (len(iter_line_num) - 1):
+		if num_pts <= max_pts_for_show and iter_idx != (len(iter_line_num) - 1):
 			if iter_idx == len(iter_line_num) - 1:
 				plt.scatter(pts[:-3,0 ], pts[:-3, 1], color="red")
 				for i, x, y in zip(range(num_pts), pts[:-3, 0], pts[:-3, 1]):
@@ -147,14 +163,20 @@ with open("./data/data.txt", "r") as data:
 					plt.annotate(str(i), (x, y))
 
 		plt.axis('square')
+		if (zoom == True):
+			plt.xlim(np.min([pts[i][0] for i in range(len(pts)-3)]) , np.max([pts[i][0] for i in range(len(pts)-3)]) )
+			plt.ylim(np.min([pts[i][1] for i in range(len(pts)-3)]) , np.max([pts[i][1] for i in range(len(pts)-3)]) )
 
-		plt.title(f"{num_pts} points, triangles: {len(tris)}, iter: {iter}/{len(iter_line_num) - 1}") 
+		plt.title(f"{num_pts} points, triangles: {num_tri}/{(len(tris))}, iter: {iter}/{len(iter_line_num) - 1}") 
 
-		if (only_save_to_file == 1):
-			savefig("triangulation.png", dpi=max(300, num_pts))
+		if only_save_plot:
+			print("[SAVING PLOT]")
+			plt.savefig("delauay_triangluation.png", dpi=max(300, int(num_pts)))
+			run = False
 		else:
 			plt.draw()
-			plt.pause(.00001)
+
+		plt.pause(.00001)
 
 
 			
@@ -168,10 +190,9 @@ with open("./data/data.txt", "r") as data:
 			continue
 
 		# user input
-		if (only_save_to_file == 0):
+		entered = 0
+		if (only_save_plot == 0):
 			entered = input("> ")
-		else:
-			run = False
 		if entered == "play":
 			play = 0
 			iter_idx = 0
@@ -192,11 +213,14 @@ with open("./data/data.txt", "r") as data:
 			else:
 				iter_idx -= 1
 		elif entered == "e":
-			show_edges_to_flip = True
+			show_edges_to_flip = 0*(show_edges_to_flip == 1) + 1*(show_edges_to_flip == 0)
+		elif entered == "z":
+			zoom = 0*(zoom == 1) + 1*(zoom == 0)
 		elif entered == "t":
-			print("idx | points | neighbours |  ")
+			print("idx | points        | neighbours    | opposite      | flip | insert | flipThisIter")
+			print("----+---------------+---------------+---------------+------+--------+-------------")
 			for i, tri in enumerate(list(tris)):
-				print(i, "|", tri[0], tri[1], tri[2], " ", tri[3], tri[4], tri[5] , " ", tri[6], tri[7], tri[8])
+				print(f"{i:3d} | {tri[0]:3d}, {tri[1]:3d}, {tri[2]:3d} | {tri[3]:3d}, {tri[4]:3d}, {tri[5]:3d} | {tri[6]:3d}, {tri[7]:3d}, {tri[8]:3d} | {tri[9]:4d} | {tri[10]:6d} | {tri[11]:3d}")
 		elif entered == "n":
 			show_nbr = (show_nbr + 1) % (len(tris))
 		elif entered == "q" or entered == "quit" or entered == "^C":
@@ -211,9 +235,11 @@ with open("./data/data.txt", "r") as data:
 			print("| n: displays neighbours of chosen triangle") 
 			print("| e: shows edges marked for flipping") 
 			print("| play: loops through all iterations") 
+			print("| z: zoom") 
 			print("| q: quit this session") 
 			print("| h: prints this user guide") 
 		else:
 			continue
 				
 	plt.ioff()
+
