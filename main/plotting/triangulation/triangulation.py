@@ -18,7 +18,7 @@ line_num = 0
 line_count = 0
 zoom = 0
 
-filename = "../../gpu/data/tri.txt"
+filename = "./tri.txt"
 
 if (len(sys.argv) > 1 and sys.argv[1] == "save"):
 	only_save_plot = 1

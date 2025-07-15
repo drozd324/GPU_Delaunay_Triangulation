@@ -35,7 +35,8 @@ struct Tri {
 		if (spts_alloc == true) { delete[] spts; }
 	}
 
-	void writeTri(Point* gpts, int ngpts, int* searchpts, int nsearchpts, int triPts[3], int triNeighbours[3], int triOpposite[3]);
+	//void writeTri(Point* gpts, int ngpts, int* searchpts, int nsearchpts, int triPts[3], int triNeighbours[3], int triOpposite[3]);
+	void writeTri(Point* gpts, int ngpts, int triPts[3], int triNeighbours[3], int triOpposite[3]);
 
 	int contains(Point point);
 	void find_pts_inside();

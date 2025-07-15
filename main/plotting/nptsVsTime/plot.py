@@ -8,15 +8,15 @@ avg_df = df.groupby('ntpb')['totalRuntime'].mean().reset_index()
 
 dist_names = ["uniform square", "uniform disk", "gaussian"]
 for i, dist in enumerate(dist_names):
-	df_distrib = df[ df["distribution"] == i ].groupby('ntpb')['totalRuntime'].mean().reset_index()
+	df_distrib = df[ df["distribution"] == i ].groupby('npts')['totalRuntime'].mean().reset_index()
 	
-	ntpb = list(df_distrib.iloc[:, 0])
+	npts = list(df_distrib.iloc[:, 0])
 	time = list(df_distrib.iloc[:, 1])
 
-	plt.plot(ntpb, time, label=dist)
+	plt.plot(npts, time, label=dist)
 
-plt.xlabel("number of threads per block")
+plt.xlabel("number of points")
 plt.ylabel("time (seconds)")
 plt.legend()
-plt.savefig("ntpbVstime.png", dpi=200)
+plt.savefig("ntbpVstime.png", dpi=200)
 plt.show()
