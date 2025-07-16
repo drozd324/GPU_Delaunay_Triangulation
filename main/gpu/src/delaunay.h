@@ -50,6 +50,7 @@ struct Delaunay {
 	FILE* csvfile;
 	FILE* insertedPerIterfile;
 	FILE* flipedPerIterfile;
+	FILE* errorfile; 
 
 	int seed = -1;
 	int distribution = -1;
@@ -103,13 +104,12 @@ __global__ void prepTriWithInsert(Tri* triList, int* nTri, int* triWithInsert, i
 
 /* INSERT */
 //__global__ void insertKernel(Tri* triList, int* nTri, int* triWithInsert, int* nTriWithInsert, int* ptToTri);
-__global__ void insertKernel(Tri* triList, int* nTri, int* nTriMax, int* triWithInsert, int* nTriWithInsert, int* ptToTri);
-__device__ int insertInTri(int i, Tri* triList, int newTriIdx, int* ptToTri);
-__device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx);
+__global__ void insertKernel(Tri* triList, int* nTri, int* nTriMax, int* triWithInsert, int* nTriWithInsert, int* ptToTr, Tri* triList_previ);
+__device__ int insertInTri(int i, Tri* triList, int newTriIdx, int* ptToTri, Tri* triList_prev);
+__device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx, Tri* triList_prev);
 
 __global__ void updateNbrsAfterIsertKernel(Tri* triList, int* triWithInsert, int* nTriWithInsert, int* nTri, Tri* triList_prev);
-__device__ void updateNbrsAfterIsert(int i, Tri* triList, int newTriIdx);
-__device__ void updateNbrsAfterIsert_wprev(int i, Tri* triList, int newTriIdx, Tri* triList_prev);
+__device__ void updateNbrsAfterIsert(int i, Tri* triList, int newTriIdx, Tri* triList_prev);
 
 __global__ void checkInsertPoint(Tri* triList, int* triWithInsert, int* nTriWithInsert);
 __global__ void resetBiggestDistInTris(Tri* triList, int* nTriMax);

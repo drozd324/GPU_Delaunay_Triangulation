@@ -5,7 +5,7 @@ cd "$GPUDIR" # need to run gpu code in this directory
 
 STARTN=10
 N=100 # max num of points
-MAXS=3 # max seeds
+MAXS=1 # max seeds
 MAXTPB=8
 #MAXTPB=1024
 

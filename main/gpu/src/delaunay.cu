@@ -53,19 +53,19 @@ void Delaunay::compute() {
 			printf("    time: %f\n", insertTime);
 		}
 
-		if (saveHistory == true) { saveToFile(); }
-
-		//flipTime = timeGPU([this] () { flipAfterInsert(); });
-		//flipTime = timeGPU([this, &numConfigsFlipped] () { numConfigsFlipped = flipAfterInsert(); });
-		//flipTime = timeGPU([this] () { bruteFlip(); });
-		flipTime = timeGPU([this, &numConfigsFlipped] () { numConfigsFlipped = bruteFlip(); });
-		numConfigsFlippedTot += numConfigsFlipped;
-		if (verbose == true) printInfo();
-		if (info == true) {
-			printf("============== [%d] FLIP ----------------- ==============\n", i);
-			printf("    No. of configurations flipped: %d\n", numConfigsFlipped);
-			printf("    time: %f\n", flipTime);
-		}
+//		if (saveHistory == true) { saveToFile(); }
+//
+//		//flipTime = timeGPU([this] () { flipAfterInsert(); });
+//		//flipTime = timeGPU([this, &numConfigsFlipped] () { numConfigsFlipped = flipAfterInsert(); });
+//		//flipTime = timeGPU([this] () { bruteFlip(); });
+//		flipTime = timeGPU([this, &numConfigsFlipped] () { numConfigsFlipped = bruteFlip(); });
+//		numConfigsFlippedTot += numConfigsFlipped;
+//		if (verbose == true) printInfo();
+//		if (info == true) {
+//			printf("============== [%d] FLIP ----------------- ==============\n", i);
+//			printf("    No. of configurations flipped: %d\n", numConfigsFlipped);
+//			printf("    time: %f\n", flipTime);
+//		}
 
 		updatePtsTime = timeGPU([this] () { updatePointLocations(); });
 		if (verbose == true) printInfo();
@@ -96,6 +96,9 @@ void Delaunay::compute() {
 		//cudaDeviceSynchronize();
 		bruteFlip();
 		//cudaDeviceSynchronize();
+		delaunayCheck();
+
+		bruteFlip();
 		delaunayCheck();
 	}
 
@@ -169,6 +172,9 @@ void Delaunay::constructor(Point* points, int n) {
 		flipedPerIterfile = fopen("./data/flipedPerIter.txt", "a");
 	}
 
+	errorfile = fopen("./data/errorfile.txt", "w");
+	fclose(errorfile );
+	errorfile = fopen("./data/errorfile.txt", "a");
 
 	// ============= DEVICE INFO ==================
 
@@ -302,6 +308,8 @@ Delaunay::~Delaunay() {
 		fclose(insertedPerIterfile);
 		fclose(flipedPerIterfile); 
 	}
+
+	fclose(errorfile); 
 
 	cudaFree(pts_d);
 	cudaFree(npts_d);
@@ -601,7 +609,8 @@ void Delaunay::insert() {
 	cudaMemcpy(triList_prev_d, triList_d, (*nTriMax) * sizeof(Tri), cudaMemcpyDeviceToDevice);
 
 	//cudaDeviceSynchronize();
-	insertKernel<<<numBlocks, threadsPerBlock>>>(triList_d, nTri_d, nTriMax_d, triWithInsert_d, nTriWithInsert_d, ptToTri_d);
+	//insertKernel<<<numBlocks, threadsPerBlock>>>(triList_d, nTri_d, nTriMax_d, triWithInsert_d, nTriWithInsert_d, ptToTri_d);
+	insertKernel<<<numBlocks, threadsPerBlock>>>(triList_d, nTri_d, nTriMax_d, triWithInsert_d, nTriWithInsert_d, ptToTri_d, triList_prev_d);
 
 	//cudaDeviceSynchronize();
 	updateNbrsAfterIsertKernel<<<numBlocks, threadsPerBlock>>>(triList_d, triWithInsert_d, nTriWithInsert_d, nTri_d, triList_prev_d);
@@ -618,14 +627,15 @@ void Delaunay::insert() {
 /*
  * Inserts points in parallel into triangles marked for insertion.
  */
-__global__ void insertKernel(Tri* triList, int* nTri, int* nTriMax, int* triWithInsert, int* nTriWithInsert, int* ptToTri) {
+__global__ void insertKernel(Tri* triList, int* nTri, int* nTriMax, int* triWithInsert, int* nTriWithInsert, int* ptToTri, Tri* triList_prev) {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < (*nTriWithInsert)) {
 		int triIdx = triWithInsert[idx];
 		if (triIdx < 0) printf("idx %d, triIdx %d\n", idx, triIdx);
 		if ((*nTri) + 2*idx >= (*nTriMax)) printf("(*nTri) + 2*idx: %d\n", (*nTri) + 2*idx);
-		insertInTri(triIdx, triList, (*nTri) + 2*idx, ptToTri);
+
+		insertInTri(triIdx, triList, (*nTri) + 2*idx, ptToTri, triList_prev);
 	}
 }
 
@@ -633,7 +643,7 @@ __global__ void insertKernel(Tri* triList, int* nTri, int* nTriMax, int* triWith
  * Pick a triangle by index 'i' in triList and insert its center point.
  * Returns the number of a new triangles created. 
  */
-__device__ int insertInTri(int i, Tri* triList, int newTriIdx, int* ptToTri) {
+__device__ int insertInTri(int i, Tri* triList, int newTriIdx, int* ptToTri, Tri* triList_prev) {
 	int r = triList[i].insertPt;
 	ptToTri[r] = -1;
 
@@ -642,7 +652,7 @@ __device__ int insertInTri(int i, Tri* triList, int newTriIdx, int* ptToTri) {
 		return -1;
 	}
 
-	insertPtInTri(r, i, triList, newTriIdx);
+	insertPtInTri(r, i, triList, newTriIdx, triList_prev);
 	return 0;
 }
 
@@ -655,18 +665,18 @@ __device__ int insertInTri(int i, Tri* triList, int newTriIdx, int* ptToTri) {
  * @param triList Array of triangles
  * @param newTriIdx Index at which to store the new triangles in array 'triList'.  
  */
-__device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx) {
-	int p[3] = {triList[i].p[0],
-				triList[i].p[1],
-				triList[i].p[2]};
+__device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx, Tri* triList_prev) {
+	int p[3] = {triList_prev[i].p[0],
+				triList_prev[i].p[1],
+				triList_prev[i].p[2]};
 
-	int n[3] = {triList[i].n[0],
-				triList[i].n[1],
-				triList[i].n[2]};
+	int n[3] = {triList_prev[i].n[0],
+				triList_prev[i].n[1],
+				triList_prev[i].n[2]};
 
-	int o[3] = {triList[i].o[0],
-				triList[i].o[1],
-				triList[i].o[2]};
+	int o[3] = {triList_prev[i].o[0],
+				triList_prev[i].o[1],
+				triList_prev[i].o[2]};
 
 	int p0[3] = {r            , p[0], p[1]};
 	int n0[3] = {newTriIdx + 1, n[0], newTriIdx};
@@ -702,42 +712,41 @@ __global__ void updateNbrsAfterIsertKernel(Tri* triList, int* triWithInsert, int
 
 	if (idx < (*nTriWithInsert)) {
 		int triIdx = triWithInsert[idx];
-		//updateNbrsAfterIsert(triIdx, triList, (*nTri) + 2*idx);
-		updateNbrsAfterIsert_wprev(triIdx, triList, (*nTri) + 2*idx, triList_prev);
+		updateNbrsAfterIsert(triIdx, triList, (*nTri) + 2*idx, triList_prev);
 	}
 }
 
-__device__ void updateNbrsAfterIsert(int i, Tri* triList, int newTriIdx) {
+//__device__ void updateNbrsAfterIsert(int i, Tri* triList, int newTriIdx) {
+//
+//	// ==================== updates neighbour points opposite point if they exist ==================== 
+//	int nbrnbr[3] = {i, newTriIdx, newTriIdx + 1};
+//	int n[3] = {(triList[nbrnbr[0]].n[1] + 1) % 3, (triList[nbrnbr[1]].n[1] + 1) % 3, (triList[nbrnbr[2]].n[1] + 1) % 3};
+//
+//	for (int k=0; k<3; ++k) {
+//		int mvInsNbr[3] = {(triList[nbrnbr[0]].o[1] + 1) % 3, (triList[nbrnbr[1]].o[1] + 1) % 3, (triList[nbrnbr[2]].o[1] + 1) % 3};
+//
+//		if (n[k] >= 0) { // if nbr exist, this will almost allways happen with large number of points
+//			if (triList[n[k]].insert & (triList[n[k]].insertPt != -1)) {
+//				int idxNbr_k = n[k];
+//
+//				// move anticlockwise in the nbr tri which just was inserted into 
+//				for (int i=0; i<mvInsNbr[k]; ++i) {
+//					idxNbr_k = triList[idxNbr_k].n[2];
+//				}
+//
+//				triList[idxNbr_k].o[1] = 0;
+//				triList[idxNbr_k].n[1] = nbrnbr[k];
+//
+//			} else { 
+//			//} if (triList[n[k]].insert == false) { // nbr was not marked for insertion and is the same from prev state
+//				triList[n[k]].o[mvInsNbr[k]] = 0;
+//				triList[n[k]].n[mvInsNbr[k]] = nbrnbr[k];
+//			}
+//		}
+//	}
+//}
 
-	// ==================== updates neighbour points opposite point if they exist ==================== 
-	int nbrnbr[3] = {i, newTriIdx, newTriIdx + 1};
-	int n[3] = {(triList[nbrnbr[0]].n[1] + 1) % 3, (triList[nbrnbr[1]].n[1] + 1) % 3, (triList[nbrnbr[2]].n[1] + 1) % 3};
-
-	for (int k=0; k<3; ++k) {
-		int mvInsNbr[3] = {(triList[nbrnbr[0]].o[1] + 1) % 3, (triList[nbrnbr[1]].o[1] + 1) % 3, (triList[nbrnbr[2]].o[1] + 1) % 3};
-
-		if (n[k] >= 0) { // if nbr exist, this will almost allways happen with large number of points
-			if (triList[n[k]].insert & (triList[n[k]].insertPt != -1)) {
-				int idxNbr_k = n[k];
-
-				// move anticlockwise in the nbr tri which just was inserted into 
-				for (int i=0; i<mvInsNbr[k]; ++i) {
-					idxNbr_k = triList[idxNbr_k].n[2];
-				}
-
-				triList[idxNbr_k].o[1] = 0;
-				triList[idxNbr_k].n[1] = nbrnbr[k];
-
-			} else { 
-			//} if (triList[n[k]].insert == false) { // nbr was not marked for insertion and is the same from prev state
-				triList[n[k]].o[mvInsNbr[k]] = 0;
-				triList[n[k]].n[mvInsNbr[k]] = nbrnbr[k];
-			}
-		}
-	}
-}
-
-__device__ void updateNbrsAfterIsert_wprev(int i, Tri* triList, int newTriIdx, Tri* triList_prev) {
+__device__ void updateNbrsAfterIsert(int i, Tri* triList, int newTriIdx, Tri* triList_prev) {
 
 	int n[3] = {triList_prev[i].n[0],
 				triList_prev[i].n[1],
@@ -747,16 +756,11 @@ __device__ void updateNbrsAfterIsert_wprev(int i, Tri* triList, int newTriIdx, T
 				triList_prev[i].o[1],
 				triList_prev[i].o[2]};
 
-	// ==================== updates neighbour points opposite point if they exist ==================== 
-
-	// ==================== updates neighbour points opposite point if they exist ==================== 
 	int nbrnbr[3] = {i, newTriIdx, newTriIdx + 1};
 
 	for (int k=0; k<3; ++k) {
 		int mvInsNbr = (o[k] + 1) % 3;
 
-		//printf("insert point: %d, triidx: %d | n[%d]= %d\n", r, i, k, n[k]);
-		
 		if (n[k] >= 0) { // if nbr exist, this will almost allways happen with large number of points
 			if (triList[n[k]].insert & (triList[n[k]].insertPt != -1)) {
 				int idxNbr_k = n[k];
