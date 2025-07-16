@@ -87,19 +87,19 @@ void Delaunay::compute() {
 	totalRuntime = (float)t1 / CLOCKS_PER_SEC;
 
 
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	if (delaunayCheck() > 0) {
 		if (info == true) {
 			printf("Attempting to perform additional flips\n");
 		}
 
-		cudaDeviceSynchronize();
+		//cudaDeviceSynchronize();
 		bruteFlip();
-		cudaDeviceSynchronize();
+		//cudaDeviceSynchronize();
 		delaunayCheck();
 	}
 
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	if (info == true) {
 
 		printf("All time measured in seconds\n");
@@ -364,9 +364,9 @@ void Delaunay::initSuperTri() {
 	dim3 threadsPerBlock2(ntpb);
 	dim3 numBlocks2(ncomps/threadsPerBlock2.x + (!(ncomps % threadsPerBlock2.x) ? 0:1));
 	if (numBlocks2.x > 65535) { printf("GRID SIZE TOO BIG\n"); }
-	computeMaxDistPts<<<numBlocks2, threadsPerBlock2>>>(pts_d, npts_d, largest_dist_d);
+	//computeMaxDistPts<<<numBlocks2, threadsPerBlock2>>>(pts_d, npts_d, largest_dist_d);
 	cudaMemcpy(largest_dist, largest_dist_d, sizeof(float), cudaMemcpyDeviceToHost);
-	//*largest_dist = 2;
+	*largest_dist = 2;
 
 
 	// writing supertriangle points to pts
@@ -463,17 +463,17 @@ void Delaunay::prepForInsert() {
 	dim3 numBlocks0(N/threadsPerBlock0.x + (!(N % threadsPerBlock0.x) ? 0:1));
 
 	
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	resetInsertPtInTris<<<numBlocks0, threadsPerBlock0>>>(triList_d, nTriMax_d);
 
 	N = *npts;
 	dim3 threadsPerBlock1(ntpb);
 	dim3 numBlocks1(N/threadsPerBlock1.x + (!(N%threadsPerBlock1.x) ? 0:1));
 
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	setInsertPtsDistance<<<numBlocks1, threadsPerBlock1>>>(pts_d, npts_d, triList_d, ptToTri_d);
 
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	setInsertPts<<<numBlocks1, threadsPerBlock1>>>(pts_d, npts_d, triList_d, ptToTri_d);
 
 	N = *nTri;
@@ -481,7 +481,7 @@ void Delaunay::prepForInsert() {
 	dim3 numBlocks2(N/threadsPerBlock2.x + (!(N%threadsPerBlock2.x) ? 0:1));
 
 	cudaMemset(nTriWithInsert_d, 0, sizeof(int));
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	prepTriWithInsert<<<numBlocks2, threadsPerBlock2>>>(triList_d, nTri_d, triWithInsert_d, nTriWithInsert_d);
 
 	//cudaMemset(nTriWithInsert_d, 0, sizeof(int));
@@ -490,10 +490,10 @@ void Delaunay::prepForInsert() {
 	cudaMemcpy(nTriWithInsert, nTriWithInsert_d, sizeof(int), cudaMemcpyDeviceToHost);
 	fprintf(insertedPerIterfile, "%d\n", (*nTriWithInsert));
 
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	gpuSort(triWithInsert_d, nTriMax_d); 
 
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	resetBiggestDistInTris<<<numBlocks2, threadsPerBlock2>>>(triList_d, nTriMax_d);
 }
 
@@ -1159,8 +1159,8 @@ __global__ void flipKernel(int* triToFlip, int* nTriToFlip, Tri* triList) {
 		flip(a, flip_edge, b, triList);
 
 		// disabled for updateNbrsAfterFlip
-		triList[a].flipThisIter = -1;
-		triList[b].flipThisIter = -1;
+		//triList[a].flipThisIter = -1;
+		//triList[b].flipThisIter = -1;
 
 		// disabled for brute flip
 		//triList[a].flip = 1;
@@ -1180,8 +1180,8 @@ __global__ void flipKernel(int* triToFlip, int* nTriToFlip, Tri* triList, Quad* 
 		flip(a, flip_edge, b, triList, &(quadList[idx]));
 
 		// disabled for updateNbrsAfterFlip
-		triList[a].flipThisIter = -1;
-		triList[b].flipThisIter = -1;
+		//triList[a].flipThisIter = -1;
+		//triList[b].flipThisIter = -1;
 
 		// disabled for brute flip
 		//triList[a].flip = 1;
@@ -1254,10 +1254,115 @@ __device__ void flip(int a, int e, int b, Tri* triList) {
 	}
 }
 
+
+
 /* 
  * One with quad structs for splitting the eupdate nbr step
  */
 __device__ void flip(int a, int e, int b, Tri* triList, Quad* quad) {
+	
+	int opp_idx = triList[a].o[e]; // index in neighbour of point opposite the edge marked for flipping in 'a'.
+
+ 	// temporary qaud "struct" data just to make it readable
+	int p[4] = {triList[a].p[(e-1 + 3)%3], triList[a].p[e]                , triList[b].p[opp_idx], triList[a].p[(e + 1)%3]};
+	int n[4] = {triList[a].n[(e-1 + 3)%3], triList[b].n[(opp_idx-1 + 3)%3], triList[b].n[opp_idx], triList[a].n[(e + 1)%3]};
+	int o[4] = {triList[a].o[(e-1 + 3)%3], triList[b].o[(opp_idx-1 + 3)%3], triList[b].o[opp_idx], triList[a].o[(e + 1)%3]};
+
+	/* ===================================== THIS SHIT IS FUNKY =============================================================*/ 
+
+	// making sure nbr and opposite points are good and correcting then if not
+	for (int k=0; k<4; ++k) {
+		if (triList[n[k]].flipThisIter == 1) {
+			// the neighbouring flip will be performed in the direction of this flip, SCREAM
+			if (triList[n[k]].flip == ((o[k] + 1) % 3)) {
+				printf("CONFIG IDX %d | NEIGHBOURING TRIANGLE (%d) WILL FLIP INTO THIS CONFIGURATION (%d, %d) | CONFIG IDX of nbr %d \n", triList[a].configIdx, n[k], a, b, triList[n[k]].configIdx);
+				//printf("IDX %d | a: (%f, %f), b: (%f, %f)\n", a, triList[a].p[0].x[0], triList[a].x[1], triList[b].x[0], triList[b].x[1]);
+			}
+
+			// in this case nbr will change in the neighbours flip
+			else if (triList[n[k]].flip == ((o[k]    ) % 3)) {
+				n[k] = triList[n[k]].n[ triList[n[k]].flip ]; // the index of the triangle which neighbour n[k] will be flipping with.
+				o[k] = 0;
+			}
+
+			// in this case nbr stay the same in the neighbours flip
+			else if (triList[n[k]].flip == ((o[k] + 2) % 3)) {
+				//n[k] = n[k];
+				o[k] = 2;
+			}
+		}
+	}
+
+	// write to trilistNext instead of triList, then swap pointers
+	/* ===================================== THIS SHIT IS FUNKY =============================================================*/ 
+
+	// writeQuad
+	for (int i=0; i<4; ++i) { 
+		//quad->p[i] = p[i];	
+		quad->n[i] = n[i];	
+		quad->o[i] = o[i];	
+	}
+
+	//printf("flip | base a: %d | n : %d, %d, %d, %d\n", a, n[0], n[1], n[2], n[3]);
+	//printf("flip | base a: %d | o : %d, %d, %d, %d\n", a, o[0], o[1], o[2], o[3]);
+
+	// is a cause of the divergent threads that the rewriting step is performed multiple times?
+
+	int ap[3] = {p[0], p[1], p[2]};
+	int an[3] = {n[0], n[1], b   };
+	int ao[3] = {o[0], o[1], 1   };
+
+	int bp[3] = {p[2], p[3], p[0]};
+	int bn[3] = {n[2], n[3], a   };
+	int bo[3] = {o[2], o[3], 1   };
+
+	writeTri(&(triList[a]), ap, an, ao);
+	writeTri(&(triList[b]), bp, bn, bo);
+
+
+//	int nbrs[4] = {a, a, b, b};
+//	int opps[4] = {2, 0, 2, 0};
+//
+//	for (int k=0; k<4; ++k) {
+//		int mvIdx = (o[k] + 1) % 3;
+//		// n[k] is almost always >= 0 with large number of points
+//		if (n[k] >= 0)  {
+//			triList[n[k]].n[mvIdx] = nbrs[k];
+//			triList[n[k]].o[mvIdx] = opps[k];
+//		}
+//	}
+}
+
+void Delaunay::quadFlip() {
+	cudaMemcpy(nTriToFlip, nTriToFlip_d, sizeof(int), cudaMemcpyDeviceToHost);
+
+	int N = *nTriToFlip;
+	dim3 threadsPerBlock(ntpb);
+	dim3 numBlocks(N/threadsPerBlock.x + (!(N % threadsPerBlock.x) ? 0:1));
+
+	Quad* quadList_d;
+	cudaMalloc(&quadList_d, (*nTriToFlip) * sizeof(Quad));
+
+	writeQuadKernel          <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, quadList_d);
+	flipFromQuadKernel       <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, quadList_d);
+	updateNbrsAfterFlipKernel<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, quadList_d);
+
+	cudaFree(quadList_d);
+}
+
+__global__ void writeQuadKernel(int* triToFlip, int* nTriToFlip, Tri* triList, Quad* quadList) {
+	int idx = blockIdx.x*blockDim.x + threadIdx.x;
+
+	if (idx < (*nTriToFlip)) {
+		int a = triToFlip[idx];
+		int flip_edge = triList[a].flip; // edge of triangle to flip across
+		int b = triList[a].n[ flip_edge ]; // b is the index of the triangle across the edge
+
+		writeQuads(a, flip_edge, b, triList, &(quadList[idx]));
+	}
+}
+
+__device__ void writeQuads(int a, int e, int b, Tri* triList, Quad* quad) {
 	
 	int opp_idx = triList[a].o[e]; // index in neighbour of point opposite the edge marked for flipping in 'a'.
 
@@ -1295,11 +1400,32 @@ __device__ void flip(int a, int e, int b, Tri* triList, Quad* quad) {
 		quad->n[i] = n[i];	
 		quad->o[i] = o[i];	
 	}
+}
 
-	//printf("flip | base a: %d | n : %d, %d, %d, %d\n", a, n[0], n[1], n[2], n[3]);
-	//printf("flip | base a: %d | o : %d, %d, %d, %d\n", a, o[0], o[1], o[2], o[3]);
+__global__ void flipFromQuadKernel(int* triToFlip, int* nTriToFlip, Tri* triList, Quad* quadList) {
+	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 
-	// is a cause of the divergent threads that the rewriting step is performed multiple times?
+	if (idx < (*nTriToFlip)) {
+		int a = triToFlip[idx];
+		int flip_edge = triList[a].flip; // edge of triangle to flip across
+		int b = triList[a].n[ flip_edge ]; // b is the index of the triangle across the edge
+
+		flipFromQuad(a, flip_edge, b, triList, &(quadList[idx]));
+	}
+}
+
+__device__ void flipFromQuad(int a, int e, int b, Tri* triList, Quad* quad) {
+
+	int p[4];
+	int n[4];
+	int o[4];
+
+	// copy from quad
+	for (int i=0; i<4; ++i) {
+		p[i] = quad->p[i];
+		n[i] = quad->n[i];
+		o[i] = quad->o[i];
+	}
 
 	int ap[3] = {p[0], p[1], p[2]};
 	int an[3] = {n[0], n[1], b   };
@@ -1311,19 +1437,6 @@ __device__ void flip(int a, int e, int b, Tri* triList, Quad* quad) {
 
 	writeTri(&(triList[a]), ap, an, ao);
 	writeTri(&(triList[b]), bp, bn, bo);
-
-
-//	int nbrs[4] = {a, a, b, b};
-//	int opps[4] = {2, 0, 2, 0};
-//
-//	for (int k=0; k<4; ++k) {
-//		int mvIdx = (o[k] + 1) % 3;
-//		// n[k] is almost always >= 0 with large number of points
-//		if (n[k] >= 0)  {
-//			triList[n[k]].n[mvIdx] = nbrs[k];
-//			triList[n[k]].o[mvIdx] = opps[k];
-//		}
-//	}
 }
 
 
@@ -1344,6 +1457,7 @@ __global__ void updateNbrsAfterFlipKernel(int* triToFlip, int* nTriToFlip, Tri* 
 	}
 }
 
+// maybe need to mark non conflicting update nbrs step
 __device__ void updateNbrsAfterFlip(int a, int e, int b, Tri* triList, Quad* quad) {
 	
 	//int p[4];
@@ -1357,16 +1471,12 @@ __device__ void updateNbrsAfterFlip(int a, int e, int b, Tri* triList, Quad* qua
 		o[i] = quad->o[i];
 	}
 
-	//printf("update | base a: %d | n : %d, %d, %d, %d\n", a, n[0], n[1], n[2], n[3]);
-	//printf("update | base a: %d | o : %d, %d, %d, %d\n", a, o[0], o[1], o[2], o[3]);
-
 	int nbrs[4] = {a, a, b, b};
 	int opps[4] = {2, 0, 2, 0};
 
 	for (int k=0; k<4; ++k) {
 		int mvIdx = (o[k] + 1) % 3;
-		// n[k] is almost always >= 0 with large number of points
-		if (n[k] >= 0)  {
+		if (n[k] >= 0)  { // n[k] is almost always >= 0 with large number of points
 			triList[n[k]].n[mvIdx] = nbrs[k];
 			triList[n[k]].o[mvIdx] = opps[k];
 		}
@@ -1460,10 +1570,10 @@ int Delaunay::bruteFlip() {
 //		dim3 numBlocks0(N/threadsPerBlock0.x + (!(N % threadsPerBlock0.x) ? 0:1));
 //	resetTriToFlipThisIter<<<numBlocks0, threadsPerBlock0>>>(triList_d, nTri_d);
 //
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	checkIncircleAll();
 
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	checkFlipConflicts();
 
 	cudaMemcpy(nTriToFlip, nTriToFlip_d, sizeof(int), cudaMemcpyDeviceToHost);
@@ -1496,22 +1606,26 @@ int Delaunay::bruteFlip() {
 //			printf("\n");
 		}
 
-
+		//cudaDeviceSynchronize();
 		if (saveHistory == true) {
 			fprintf(flipedPerIterfile, "%d ", N);
 		}
-		
 
-		Quad* quadList_d;
-		cudaMalloc(&quadList_d, (*nTriMax) * sizeof(Quad));
+		quadFlip();
+
+//		Quad* quadList_d;
+//		cudaMalloc(&quadList_d, (*nTriMax) * sizeof(Quad));
+		//cudaMemset(quadList_d, -1, sizeof(Quad));
 
 		//cudaDeviceSynchronize();
-		flipKernel<<<numBlocks1, threadsPerBlock1>>>(triToFlip_d, nTriToFlip_d, triList_d, quadList_d);
 
-		//cudaDeviceSynchronize();
-		updateNbrsAfterFlipKernel<<<numBlocks1, threadsPerBlock1>>>(triToFlip_d, nTriToFlip_d, triList_d, quadList_d);
 
-		cudaFree(quadList_d);
+//		flipKernel<<<numBlocks1, threadsPerBlock1>>>(triToFlip_d, nTriToFlip_d, triList_d, quadList_d);
+//
+//		//cudaDeviceSynchronize();
+//		updateNbrsAfterFlipKernel<<<numBlocks1, threadsPerBlock1>>>(triToFlip_d, nTriToFlip_d, triList_d, quadList_d);
+
+//		cudaFree(quadList_d);
 		
 //		N = *nTri;
 //		dim3 threadsPerBlock2(ntpb);
@@ -1521,8 +1635,8 @@ int Delaunay::bruteFlip() {
 		saveToFile();
 
 		*nTriToFlip = 0;
-		//cudaMemcpy(nTriToFlip_d, nTriToFlip, sizeof(int), cudaMemcpyHostToDevice);
-		cudaMemset(nTriToFlip_d, 0, sizeof(int));
+		cudaMemcpy(nTriToFlip_d, nTriToFlip, sizeof(int), cudaMemcpyHostToDevice);
+		//cudaMemset(nTriToFlip_d, 0, sizeof(int));
 		cudaMemset(triToFlip_d, -1, (*nTriMax) * sizeof(int));
 
 		//cudaDeviceSynchronize();
@@ -1551,7 +1665,7 @@ int Delaunay::bruteFlip() {
 	N = *nTri;
 	dim3 threadsPerBlock2(ntpb);
 	dim3 numBlocks2(N/threadsPerBlock2.x + (!(N % threadsPerBlock2.x) ? 0:1));
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	resetTriToFlip<<<numBlocks2, threadsPerBlock2>>>(triList_d, nTri_d);
 
 	return numConfigsFlipped;
@@ -1566,7 +1680,7 @@ void Delaunay::checkIncircleAll() {
 	checkIncircleAllKernel<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d, pts_d);
 	//}
 
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	gpuSort(triToFlip_d, nTriMax_d);
 }
 
@@ -1686,7 +1800,7 @@ void Delaunay::printTri() {
 /* ====================================== SAVE TO FILE ============================================= */
 
 void Delaunay::saveToFile(bool end) {
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 	cudaMemcpy(nTri   , nTri_d   ,              sizeof(int), cudaMemcpyDeviceToHost);
 	cudaMemcpy(triList, triList_d, (*nTriMax) * sizeof(Tri), cudaMemcpyDeviceToHost);
 

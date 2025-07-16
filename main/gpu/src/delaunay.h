@@ -44,7 +44,7 @@ struct Delaunay {
 	bool verbose = false; // gives detail info to std out about state of the triangulation
 	bool saveHistory = true; 
 	bool info = true;
-	bool dataframe_out = true;
+	bool dataframe_out = false;
 
 	FILE* trifile;
 	FILE* csvfile;
@@ -81,6 +81,7 @@ struct Delaunay {
 	int delaunayCheck();
 
 	int bruteFlip();
+	void quadFlip();
 	void checkIncircleAll();
 
 	void updatePointLocations();
@@ -137,6 +138,12 @@ __global__ void updateNbrsAfterFlipKernel(int* triToFlip, int* nTriToFlip, Tri* 
 __device__ void updateNbrsAfterFlip(int a, int e, int b, Tri* triList, Quad* quad);
 
 __global__ void resetTriToFlip(Tri* triList, int* nTri);
+
+// quadflip
+__global__ void writeQuadKernel(int* triToFlip, int* nTriToFlip, Tri* triList, Quad* quadList);
+__device__ void writeQuads(int a, int e, int b, Tri* triList, Quad* quad);
+__global__ void flipFromQuadKernel(int* triToFlip, int* nTriToFlip, Tri* triList, Quad* quadList);
+__device__ void flipFromQuad(int a, int e, int b, Tri* triList, Quad* quad);
 
 /* UPDATE POINTS */
 __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri);
