@@ -8,47 +8,33 @@
 	edition = {3},
 }
 
-@book{devadoss2011,
+@book{DiscComGeom,
 	author = {Devadoss, Satyan L. and O'Rourke, Joseph},
 	publisher = {Princeton University Press},
 	title = {{Discrete and Computational Geometry, 1st Edition}},
 	year = {2011},
 }
 
-@inproceedings{gDel3D,
-	author = {Cao, Thanh-Tung and Nanjappa, Ashwin and Gao, Mingcen and Tan, Tiow-Seng},
-	title = {A GPU accelerated algorithm for 3D Delaunay triangulation},
-	year = {2014},
-	isbn = {9781450327176},
-	publisher = {Association for Computing Machinery},
-	address = {New York, NY, USA},
-	url = {https://doi.org/10.1145/2556700.2556710},
-	doi = {10.1145/2556700.2556710},
-	booktitle = {Proceedings of the 18th Meeting of the ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games},
-	pages = {47–54},
-	numpages = {8},
-	keywords = {Delaunay triangulation, GPGPU, bilateral flipping, incremental insertion, star splaying},
-	location = {San Francisco, California},
-	series = {I3D '14}
+@book{CGAlgoApp,
+	author = {de Berg, Mark and van Kreveld, Marc and Overmars, Mark and Schwarzkopf, Otfried},
+	title = {Computational geometry: algorithms and applications},
+	year = {1997},
+	isbn = {354061270X},
+	publisher = {Springer-Verlag},
+	address = {Berlin, Heidelberg}
 }
 
-@inproceedings{GPUDT,
-	author = {Rong, Guodong and Tan, Tiow-Seng and Cao, Thanh-Tung and Stephanus},
-	title = {Computing two-dimensional Delaunay triangulation using graphics hardware},
-	year = {2008},
-	isbn = {9781595939838},
-	publisher = {Association for Computing Machinery},
-	address = {New York, NY, USA},
-	url = {https://doi.org/10.1145/1342250.1342264},
-	doi = {10.1145/1342250.1342264},
-	booktitle = {Proceedings of the 2008 Symposium on Interactive 3D Graphics and Games},
-	pages = {89–97},
-	numpages = {9},
-	keywords = {GPGPU, Voronoi diagram, computational geometry, graphics hardware},
-	location = {Redwood City, California},
-	series = {I3D '08}
+delaynay triangultions provide more accurate soutions
+@inproceedings{MeshSmoothing,
+	author = {Chen, Long},
+	year = {2004},
+	month = {01},
+	pages = {109-120},
+	title = {Mesh Smoothing Schemes Based on Optimal Delaunay Triangulations.},
+	journal = {Proceedings of the 13th International Meshing Roundtable}
 }
 
+% The paper which established the flipping operation
 @article{Lawson72,
 	author = {Lawson, Charles L.},
 	title = {Transforming triangulations},
@@ -68,6 +54,23 @@
 	numpages = {8}
 }		
 
+@article{FirstPI,
+	author = {Guibas, Leonidas and Stolfi, Jorge},
+	title = {Primitives for the manipulation of general subdivisions and the computation of Voronoi},
+	year = {1985},
+	issue_date = {April 1985},
+	publisher = {Association for Computing Machinery},
+	address = {New York, NY, USA},
+	volume = {4},
+	number = {2},
+	issn = {0730-0301},
+	url = {https://doi.org/10.1145/282918.282923},
+	doi = {10.1145/282918.282923},
+	journal = {ACM Trans. Graph.},
+	month = apr,
+	pages = {74–123},
+	numpages = {50},
+}
 @aritcle{Lawson77,
 	title = {Software for C1 Surface Interpolation},
 	editor = {John R. Rice},
@@ -80,3 +83,48 @@
 	url = {https://www.sciencedirect.com/science/article/pii/B978012587260750011X},
 	author = {C.L. Lawson},
 }
+
+
+
+@phdthesis{Nanjappa12,
+	author = {Nanjappa, Ashwin},
+	year = {2012},
+	title = {Delaunay triangulation in R3 on the GPU}
+}
+
+@inproceedings{gDel3D,
+	author = {Cao, Thanh-Tung and Nanjappa, Ashwin and Gao, Mingcen and Tan, Tiow-Seng},
+	title = {A GPU accelerated algorithm for 3D Delaunay triangulation},
+	year = {2014},
+	isbn = {9781450327176},
+	publisher = {Association for Computing Machinery},
+	address = {New York, NY, USA},
+	url = {https://doi.org/10.1145/2556700.2556710},
+	doi = {10.1145/2556700.2556710},
+	booktitle = {Proceedings of the 18th Meeting of the ACM SIGGRAPH Symposium on Interactive 3D Graphics and Games},
+	pages = {47–54},
+	numpages = {8},
+	keywords = {Delaunay triangulation, GPGPU, bilateral flipping, incremental insertion, star splaying},
+	location = {San Francisco, California},
+	series = {I3D '14}
+}
+
+
+
+@inproceedings{GPUDT,
+	author = {Rong, Guodong and Tan, Tiow-Seng and Cao, Thanh-Tung and Stephanus},
+	title = {Computing two-dimensional Delaunay triangulation using graphics hardware},
+	year = {2008},
+	isbn = {9781595939838},
+	publisher = {Association for Computing Machinery},
+	address = {New York, NY, USA},
+	url = {https://doi.org/10.1145/1342250.1342264},
+	doi = {10.1145/1342250.1342264},
+	booktitle = {Proceedings of the 2008 Symposium on Interactive 3D Graphics and Games},
+	pages = {89–97},
+	numpages = {9},
+	keywords = {GPGPU, Voronoi diagram, computational geometry, graphics hardware},
+	location = {Redwood City, California},
+	series = {I3D '08}
+}
+
