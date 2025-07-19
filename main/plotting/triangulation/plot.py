@@ -9,16 +9,12 @@ def get_type(input_data):
     except (ValueError, SyntaxError):
         return str
 
-#def plotTriangulation(interactive=True, 
-
-max_pts_for_show = 40
-only_save_plot = 0
-
 line_num = 0
 line_count = 0
+show_tri_labels = 0
+max_pts_for_show = 10000
 zoom = 0
-
-filename = "./tri.txt"
+only_save_plot = 0
 
 if (len(sys.argv) > 1 and sys.argv[1] == "save"):
 	only_save_plot = 1
@@ -38,7 +34,7 @@ def goto_line(num, data):
 	for i in range(num-1):
 		data.readline()
 
-with open(filename, "r") as data:
+with open("tri.txt", "r") as data:
 	line_count = len(data.readlines())
 	data.seek(0)
 
@@ -54,6 +50,7 @@ with open(filename, "r") as data:
 
 	# collect file layout data
 	iter_line_num = []
+	print("Reading file data")
 	while line_num <= line_count-2:
 		read_line(data)
 
@@ -63,7 +60,7 @@ with open(filename, "r") as data:
 			read_line(data)
 
 	# interactive plot loop
-	iter_idx = len(iter_line_num) - 1
+	iter_idx = len(iter_line_num) - 1 if len(iter_line_num) > 100 else 1 
 	run = True
 	show_nbr = -1
 	show_edges_to_flip = False 
@@ -103,7 +100,8 @@ with open(filename, "r") as data:
 
 			# scatter mean of triangles points to represent the triangle
 			tri_k_avg = (np.mean(tri_pts[:, 0]), np.mean(tri_pts[:, 1]))
-			if num_pts <= max_pts_for_show:
+			#if num_pts <= max_pts_for_show:
+			if show_tri_labels:
 				#plt.scatter(tri_k_avg[0], tri_k_avg[1], color="green", s=1)
 				plt.annotate(str(f"t{k}"), (tri_k_avg[0], tri_k_avg[1]))
 
@@ -152,7 +150,7 @@ with open(filename, "r") as data:
 		print("[DRAWING POINTS]")
 
 		# plots points in triangulation
-		if num_pts <= max_pts_for_show and iter_idx != (len(iter_line_num) - 1):
+		if num_pts <= 100 and iter_idx != (len(iter_line_num) - 1):
 			if iter_idx == len(iter_line_num) - 1:
 				plt.scatter(pts[:-3,0 ], pts[:-3, 1], color="red")
 				for i, x, y in zip(range(num_pts), pts[:-3, 0], pts[:-3, 1]):
@@ -216,13 +214,32 @@ with open(filename, "r") as data:
 			show_edges_to_flip = 0*(show_edges_to_flip == 1) + 1*(show_edges_to_flip == 0)
 		elif entered == "z":
 			zoom = 0*(zoom == 1) + 1*(zoom == 0)
+		elif entered == "lt":
+			show_tri_labels = 0*(show_tri_labels == 1) + 1*(show_tri_labels == 0)
 		elif entered == "t":
-			print("idx | points        | neighbours    | opposite      | flip | insert | flipThisIter")
-			print("----+---------------+---------------+---------------+------+--------+-------------")
-			for i, tri in enumerate(list(tris)):
-				print(f"{i:3d} | {tri[0]:3d}, {tri[1]:3d}, {tri[2]:3d} | {tri[3]:3d}, {tri[4]:3d}, {tri[5]:3d} | {tri[6]:3d}, {tri[7]:3d}, {tri[8]:3d} | {tri[9]:4d} | {tri[10]:6d} | {tri[11]:3d}")
+			tri_in = input(">> ")
+			if get_type(tri_in) == int:
+				print("idx | points        | neighbours    | opposite      | flip | insert | flipThisIter")
+				print("----+---------------+---------------+---------------+------+--------+-------------")
+				for i, tri in enumerate(list(tris)):
+					if i == int(tri_in):
+						print(f"{i:3d} | {tri[0]:3d}, {tri[1]:3d}, {tri[2]:3d} | {tri[3]:3d}, {tri[4]:3d}, {tri[5]:3d} | {tri[6]:3d}, {tri[7]:3d}, {tri[8]:3d} | {tri[9]:4d} | {tri[10]:6d} | {tri[11]:3d}")
+			else:
+				print("idx | points        | neighbours    | opposite      | flip | insert | flipThisIter")
+				print("----+---------------+---------------+---------------+------+--------+-------------")
+				for i, tri in enumerate(list(tris)):
+					print(f"{i:3d} | {tri[0]:3d}, {tri[1]:3d}, {tri[2]:3d} | {tri[3]:3d}, {tri[4]:3d}, {tri[5]:3d} | {tri[6]:3d}, {tri[7]:3d}, {tri[8]:3d} | {tri[9]:4d} | {tri[10]:6d} | {tri[11]:3d}")
+
 		elif entered == "n":
-			show_nbr = (show_nbr + 1) % (len(tris))
+			show_nbr_in = input(">> ")
+			if get_type(show_nbr_in) == int:
+				show_nbr = int(show_nbr_in)
+			elif "n":
+				show_nbr = (int(show_nbr) + 1) % (len(tris))
+			else:
+				continue
+			
+
 		elif entered == "q" or entered == "quit" or entered == "^C":
 			run = False
 		elif entered == "h" or entered == "help":
@@ -233,6 +250,7 @@ with open(filename, "r") as data:
 			print("| -1: goes to the end of the seqence") 
 			print("| t: prints traingles plotted") 
 			print("| n: displays neighbours of chosen triangle") 
+			print("| lt: toggles labels on triangles")
 			print("| e: shows edges marked for flipping") 
 			print("| play: loops through all iterations") 
 			print("| z: zoom") 
