@@ -26,6 +26,8 @@ struct Tri {
 	int flip; // marks an edge to flip 0,1 or 2, -1 if not to flip any edge
 	int flipThisIter;
 	int configIdx;
+	int flipUsage;
+	int claimed;
 
 };
 

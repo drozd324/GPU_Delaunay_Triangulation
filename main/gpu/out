@@ -1,0 +1,690 @@
+========= COMPUTE-SANITIZER
+[DEVICE INFO]
+Found 1 CUDA-enabled devices
+GPU compute capability: 8.6
+GPU model name: NVIDIA GeForce RTX 3090
+GPU total global memory: 25.305481 GB
+GPU Shared memory available per block in GB: 0.000049
+GPU 32-bit registers available per block: 65536
+GPU L2 cache size: 6291456 bytes
+
+============== [0] PASS ----------------- ==============
+    No. of triangles in triangulation: 1/1261
+    No. of points currently inserted: 0/630
+============== [0] PREP FOR INSERT ------ ==============
+    No. of triangles with points to insert: 1
+    time: 0.063291
+============== [0] INSERT --------------- ==============
+    time: 0.010861
+============== [0] UPDATE POINT LOCATIONS ==============
+    time: 0.002909
+============== [1] PASS ----------------- ==============
+    No. of triangles in triangulation: 3/1261
+    No. of points currently inserted: 1/630
+============== [1] PREP FOR INSERT ------ ==============
+    No. of triangles with points to insert: 3
+    time: 0.043138
+============== [1] INSERT --------------- ==============
+    time: 0.000526
+============== [1] UPDATE POINT LOCATIONS ==============
+    time: 0.000896
+============== [2] PASS ----------------- ==============
+    No. of triangles in triangulation: 9/1261
+    No. of points currently inserted: 4/630
+============== [2] PREP FOR INSERT ------ ==============
+    No. of triangles with points to insert: 6
+    time: 0.043319
+============== [2] INSERT --------------- ==============
+    time: 0.000587
+============== [2] UPDATE POINT LOCATIONS ==============
+    time: 0.002021
+============== [3] PASS ----------------- ==============
+    No. of triangles in triangulation: 21/1261
+    No. of points currently inserted: 10/630
+============== [3] PREP FOR INSERT ------ ==============
+    No. of triangles with points to insert: 18
+    time: 0.043925
+============== [3] INSERT --------------- ==============
+    time: 0.000560
+============== [3] UPDATE POINT LOCATIONS ==============
+    time: 0.005380
+============== [4] PASS ----------------- ==============
+    No. of triangles in triangulation: 57/1261
+    No. of points currently inserted: 28/630
+============== [4] PREP FOR INSERT ------ ==============
+    No. of triangles with points to insert: 42
+    time: 0.046664
+============== [4] INSERT --------------- ==============
+    time: 0.000577
+============== [4] UPDATE POINT LOCATIONS ==============
+    time: 0.012954
+============== [5] PASS ----------------- ==============
+    No. of triangles in triangulation: 141/1261
+    No. of points currently inserted: 70/630
+============== [5] PREP FOR INSERT ------ ==============
+    No. of triangles with points to insert: 84
+    time: 0.047527
+============== [5] INSERT --------------- ==============
+    time: 0.000540
+============== [5] UPDATE POINT LOCATIONS ==============
+    time: 0.025746
+============== [6] PASS ----------------- ==============
+    No. of triangles in triangulation: 309/1261
+    No. of points currently inserted: 154/630
+============== [6] PREP FOR INSERT ------ ==============
+    No. of triangles with points to insert: 134
+    time: 0.057237
+============== [6] INSERT --------------- ==============
+    time: 0.000536
+============== [6] UPDATE POINT LOCATIONS ==============
+    time: 0.047955
+============== [7] PASS ----------------- ==============
+    No. of triangles in triangulation: 577/1261
+    No. of points currently inserted: 288/630
+============== [7] PREP FOR INSERT ------ ==============
+    No. of triangles with points to insert: 166
+    time: 0.072801
+============== [7] INSERT --------------- ==============
+    time: 0.000526
+============== [7] UPDATE POINT LOCATIONS ==============
+    time: 0.075511
+============== [8] PASS ----------------- ==============
+    No. of triangles in triangulation: 909/1261
+    No. of points currently inserted: 454/630
+============== [8] PREP FOR INSERT ------ ==============
+    No. of triangles with points to insert: 119
+    time: 0.091588
+============== [8] INSERT --------------- ==============
+    time: 0.000542
+============== [8] UPDATE POINT LOCATIONS ==============
+    time: 0.0========= Invalid __global__ read of size 4 bytes
+=========     at writeQuads(int, int, int, Tri *, Quad *)+0x3ba0 in delaunay.cu:1517
+=========     by thread (47,0,0) in block (2,0,0)
+=========     Address 0x7f8479401bf4 is out of bounds
+=========     and is 12 bytes before the nearest allocation at 0x7f8479401c00 of size 80,704 bytes
+=========         Device Frame: writeQuadKernel(int *, int *, Tri *, Quad *)+0xbf0 in delaunay.cu:1502
+=========     Saved host backtrace up to driver entry point at kernel launch time
+=========         Host Frame: Delaunay::quadFlip() in delaunay.cu:1487 [0xda5b] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1762 [0xe9c4] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: flipFromQuadKernel(int*, int*, Tri*, Quad*) in delaunay.cu:1546 [0xbf4b] in test
+=========         Host Frame: Delaunay::quadFlip() in delaunay.cu:1488 [0xdaab] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1762 [0xe9c4] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: updateNbrsAfterFlipKernel(int*, int*, Tri*, Quad*) in delaunay.cu:1584 [0xc04b] in test
+=========         Host Frame: Delaunay::quadFlip() in delaunay.cu:1489 [0xda83] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1762 [0xe9c4] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::quadFlip() in delaunay.cu:1491 [0xda26] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1762 [0xe9c4] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::saveToFile(bool) in delaunay.cu:1952 [0xe130] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1783 [0xe9ce] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::saveToFile(bool) in delaunay.cu:1953 [0xe14a] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1783 [0xe9ce] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1786 [0xe9f1] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemset.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1788 [0xea0a] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::checkIncircleAll() in delaunay.cu:1823 [0xdcb2] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1791 [0xea12] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: checkIncircleAllKernel(int*, int*, Tri*, int*, Point*) in delaunay.cu:1875 [0xb627] in test
+=========         Host Frame: Delaunay::checkIncircleAll() in delaunay.cu:1828 [0xdd3e] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1791 [0xea12] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:39 [0x126f0] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1791 [0xea12] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMalloc.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:47 [0x12714] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1791 [0xea12] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:54 [0x127ae] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1791 [0xea12] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: sortPass(int*, int, int, int*) in misc.cu:14 [0x125a0] in test
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:55 [0x127ee] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1791 [0xea12] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: sortPass(int*, int, int, int*) in misc.cu:14 [0x125a0] in test
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:56 [0x1280d] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1791 [0xea12] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:57 [0x12783] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1791 [0xea12] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:60 [0x12821] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1791 [0xea12] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: prepForConflicts(Tri*, int*) in delaunay.cu:1209 [0xc9bb] in test
+=========         Host Frame: Delaunay::checkFlipConflicts() in delaunay.cu:1195 [0xd874] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1794 [0xea1a] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: setConfigIdx(int*, int*, Tri*, int*) in delaunay.cu:1220 [0xbb4b] in test
+=========         Host Frame: Delaunay::checkFlipConflicts() in delaunay.cu:1196 [0xd8ea] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1794 [0xea1a] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: storeNonConflictConfigs(int*, int*, Tri*, int*) in delaunay.cu:1232 [0xbc4b] in test
+=========         Host Frame: Delaunay::checkFlipConflicts() in delaunay.cu:1197 [0xd8ca] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1794 [0xea1a] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:39 [0x126f0] in test
+=========         Host Frame: Delaunay::checkFlipConflicts() in delaunay.cu:1199 [0xd819] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1794 [0xea1a] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: resetTriToFlipThisIter(Tri*, int*) in delaunay.cu:1262 [0xca8b] in test
+=========         Host Frame: Delaunay::checkFlipConflicts() in delaunay.cu:1201 [0xd8ac] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1794 [0xea1a] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: markTriToFlipThisIter(int*, int*, Tri*) in delaunay.cu:1275 [0xc224] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1794 [0xea1a] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1796 [0xea33] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: resetTriToFlip(Tri*, int*) in delaunay.cu:1627 [0xc81b] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1817 [0xebdc] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:97 [0xef13] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1642 [0xdb5a] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:99 [0xef1b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMalloc.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1650 [0xdba1] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:99 [0xef1b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1651 [0xdbb7] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:99 [0xef1b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: delaunayCheckKernel(Tri*, int*, Point*, int*) in delaunay.cu:1672 [0xc14b] in test
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1652 [0xdc64] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:99 [0xef1b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1654 [0xdbf2] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:99 [0xef1b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1667 [0xdc0c] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:99 [0xef1b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1710 [0xe922] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1713 [0xe945] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemset.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1714 [0xe95e] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::checkIncircleAll() in delaunay.cu:1823 [0xdcb2] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1722 [0xe966] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: checkIncircleAllKernel(int*, int*, Tri*, int*, Point*) in delaunay.cu:1875 [0xb627] in test
+=========         Host Frame: Delaunay::checkIncircleAll() in delaunay.cu:1828 [0xdd3e] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1722 [0xe966] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:39 [0x126f0] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1722 [0xe966] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMalloc.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:47 [0x12714] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1722 [0xe966] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:54 [0x127ae] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1722 [0xe966] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: sortPass(int*, int, int, int*) in misc.cu:14 [0x125a0] in test
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:55 [0x127ee] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1722 [0xe966] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: sortPass(int*, int, int, int*) in misc.cu:14 [0x125a0] in test
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:56 [0x1280d] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1722 [0xe966] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:57 [0x12783] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1722 [0xe966] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:60 [0x12821] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1722 [0xe966] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: prepForConflicts(Tri*, int*) in delaunay.cu:1209 [0xc9bb] in test
+=========         Host Frame: Delaunay::checkFlipConflicts() in delaunay.cu:1195 [0xd874] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1725 [0xe96e] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: setConfigIdx(int*, int*, Tri*, int*) in delaunay.cu:1220 [0xbb4b] in test
+=========         Host Frame: Delaunay::checkFlipConflicts() in delaunay.cu:1196 [0xd8ea] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1725 [0xe96e] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: storeNonConflictConfigs(int*, int*, Tri*, int*) in delaunay.cu:1232 [0xbc4b] in test
+=========         Host Frame: Delaunay::checkFlipConflicts() in delaunay.cu:1197 [0xd8ca] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1725 [0xe96e] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: gpuSort(int*, int*) in misc.cu:39 [0x126f0] in test
+=========         Host Frame: Delaunay::checkFlipConflicts() in delaunay.cu:1199 [0xd819] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1725 [0xe96e] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: resetTriToFlipThisIter(Tri*, int*) in delaunay.cu:1262 [0xca8b] in test
+=========         Host Frame: Delaunay::checkFlipConflicts() in delaunay.cu:1201 [0xd8ac] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1725 [0xe96e] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: markTriToFlipThisIter(int*, int*, Tri*) in delaunay.cu:1275 [0xc224] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1725 [0xe96e] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1727 [0xe987] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: resetTriToFlip(Tri*, int*) in delaunay.cu:1627 [0xc81b] in test
+=========         Host Frame: Delaunay::bruteFlip() in delaunay.cu:1817 [0xebdc] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:101 [0xef23] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1642 [0xdb5a] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:102 [0xef2b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMalloc.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1650 [0xdba1] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:102 [0xef2b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1651 [0xdbb7] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:102 [0xef2b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaLaunchKernel.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: delaunayCheckKernel(Tri*, int*, Point*, int*) in delaunay.cu:1672 [0xc14b] in test
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1652 [0xdc64] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:102 [0xef2b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1654 [0xdbf2] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:102 [0xef2b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::delaunayCheck() in delaunay.cu:1667 [0xdc0c] in test
+=========         Host Frame: Delaunay::compute() in delaunay.cu:102 [0xef2b] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:310 [0xfb94] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::saveToFile(bool) in delaunay.cu:1952 [0xe130] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:312 [0xfba1] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaMemcpy.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::saveToFile(bool) in delaunay.cu:1953 [0xe14a] in test
+=========         Host Frame: Delaunay::constructor(Point*, int) in delaunay.cu:312 [0xfba1] in test
+=========         Host Frame: main in test.cu:65 [0x8c17] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:326 [0xcad9] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:327 [0xcae2] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:328 [0xcaeb] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:330 [0xcaf4] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:331 [0xcb00] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:332 [0xcb09] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:333 [0xcb12] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:335 [0xcb1e] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:336 [0xcb2a] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:337 [0xcb36] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:338 [0xcb3f] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:339 [0xcb48] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:341 [0xcb54] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+========= Program hit cudaErrorLaunchFailure (error 719) due to "unspecified launch failure" on CUDA API call to cudaFree.
+=========     Saved host backtrace up to driver entry point at error
+=========         Host Frame: Delaunay::~Delaunay() in delaunay.cu:342 [0xcb60] in test
+=========         Host Frame: main in test.cu:65 [0x8c27] in test
+========= 
+95067
+============== [9] PASS ----------------- ==============
+    No. of triangles in triangulation: 1147/1261
+    No. of points currently inserted: 573/630
+============== [9] PREP FOR INSERT ------ ==============
+    No. of triangles with points to insert: 47
+    time: 0.104913
+============== [9] INSERT --------------- ==============
+    time: 0.000531
+============== [9] UPDATE POINT LOCATIONS ==============
+    time: 0.102190
+============== [10] PASS ----------------- ==============
+    No. of triangles in triangulation: 1241/1261
+    No. of points currently inserted: 620/630
+============== [10] PREP FOR INSERT ------ ==============
+    No. of triangles with points to insert: 10
+    time: 0.108699
+============== [10] INSERT --------------- ==============
+    time: 0.000519
+============== [10] UPDATE POINT LOCATIONS ==============
+    time: 0.104350
+============== [11] PASS ----------------- ==============
+    No. of triangles in triangulation: 1261/1261
+    No. of points currently inserted: 630/630
+
+Triangulation is NOT Delaunay, with 722 illegal edges
+
+Attempting to perform additional flips
+    [Performing flip iteration 1]
+        Flipping 305 configurations
+        Iter : 12
+
+Triangulation is Delaunay
+
+
+Triangulation is Delaunay
+
+All time measured in seconds
+prepForInsertTimeTot__________: 0.723101
+insertTimeTot_________________: 0.016306
+flipTimeTot___________________: 0.000000
+updatePtsTimeTot______________: 0.474979
+
+Total run time of cuda kernels: 1.214386
+Total run time of host code   : 0.006437
+Total run time of all code____: 1.220823
+========= ERROR SUMMARY: 73 errors
