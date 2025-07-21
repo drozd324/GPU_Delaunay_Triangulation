@@ -3,17 +3,16 @@ cd "${0%/*}" || exit 1  # Run from script's directory
 GPUDIR="../../gpu"
 cd "$GPUDIR" # need to run gpu code in this directory
 
-N=100 # max num of points
+N=100 # num of points
 MAXS=5 # max seeds
-NDISTRIBITIONS=3
+NDISTRIBITIONS=2
 NTPB=128
-
 
 #STZ="/usr/local/cuda-12.8/bin/compute-sanitizer"
 
 EXEDIR="./bin/test"
-DATADIR="data/coredata.csv"
-PLOTDATA="../plotting/dataDistrib/data.csv"
+DATADIR="./data/coredata.csv"
+PLOTDATA="../plotting/timeDistrib/data.csv"
 > "$PLOTDATA"
 
 echo "$EXEDIR" -n "$N"

@@ -8,7 +8,7 @@ MAXN=50 # max num of points
 STEP=10 
 MAXS=2 # max seeds
 
-NDISTRIBITIONS=3
+NDISTRIBITIONS=2
 
 NTPB=128 # number of threads per block
 

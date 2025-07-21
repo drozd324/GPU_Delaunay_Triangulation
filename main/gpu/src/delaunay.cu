@@ -52,21 +52,21 @@ void Delaunay::compute() {
 			printf("============== [%d] INSERT --------------- ==============\n", i);
 			printf("    time: %f\n", insertTime);
 		}
-//
-//		if (saveHistory == true) { saveToFile(); }
-//
-//		//flipTime = timeGPU([this] () { flipAfterInsert(); });
-//		//flipTime = timeGPU([this, &numConfigsFlipped] () { numConfigsFlipped = flipAfterInsert(); });
-//		//flipTime = timeGPU([this] () { bruteFlip(); });
-//		flipTime = timeGPU([this, &numConfigsFlipped] () { numConfigsFlipped = bruteFlip(); });
-//		numConfigsFlippedTot += numConfigsFlipped;
-//		if (verbose == true) printInfo();
-//		if (info == true) {
-//			printf("============== [%d] FLIP ----------------- ==============\n", i);
-//			printf("    No. of configurations flipped: %d\n", numConfigsFlipped);
-//			printf("    time: %f\n", flipTime);
-//		}
-//
+
+		if (saveHistory == true) { saveToFile(); }
+
+		//flipTime = timeGPU([this] () { flipAfterInsert(); });
+		//flipTime = timeGPU([this, &numConfigsFlipped] () { numConfigsFlipped = flipAfterInsert(); });
+		//flipTime = timeGPU([this] () { bruteFlip(); });
+		flipTime = timeGPU([this, &numConfigsFlipped] () { numConfigsFlipped = bruteFlip(); });
+		numConfigsFlippedTot += numConfigsFlipped;
+		if (verbose == true) printInfo();
+		if (info == true) {
+			printf("============== [%d] FLIP ----------------- ==============\n", i);
+			printf("    No. of configurations flipped: %d\n", numConfigsFlipped);
+			printf("    time: %f\n", flipTime);
+		}
+
 		updatePtsTime = timeGPU([this] () { updatePointLocations(); });
 		if (verbose == true) printInfo();
 		if (info == true) {
