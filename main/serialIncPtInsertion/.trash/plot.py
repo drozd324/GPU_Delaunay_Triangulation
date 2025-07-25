@@ -60,7 +60,7 @@ with open("./data/data.txt", "r") as data:
 
 		# collect triangle info in per iteration
 		iter, num_tri = np.fromstring(read_line(data), sep=" ", dtype=int) 
-		tris = np.zeros((num_tri, 11), dtype=int)
+		tris = np.zeros((num_tri, 10), dtype=int)
 		for i in range(num_tri):
 			tris[i] = np.fromstring(read_line(data), sep=" ", dtype=float) 
 

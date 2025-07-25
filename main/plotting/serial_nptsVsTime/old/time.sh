@@ -1,10 +1,12 @@
 #!/bin/bash
 cd "${0%/*}" || exit 1  # Run from script's directory
 
+cd ../../serialPointInsertion
+
 make
 mkdir -p ./data
 
-MAXN=1000 # max n
+MAXN=100 # max n
 STEPN=10
 STARTN=10
 

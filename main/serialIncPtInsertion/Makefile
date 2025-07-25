@@ -28,4 +28,4 @@ $(OBJDIR) $(BINDIR):
 
 .PHONY: clean
 clean:
-	rm -f $(OBJDIR)/*.o $(EXECS) ./data/data.txt
+	rm -f $(OBJDIR)/*.o $(EXECS) ./data/*

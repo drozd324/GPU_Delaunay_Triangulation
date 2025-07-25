@@ -28,7 +28,7 @@
 
 
 #figure(
-	image("main/plotting/triangulation/triangulationCover.png", width: 90%),
+	image("main/plotting/serial_triangulation/tri1000.png", width: 100%),
 	//caption: [I like this font],
 )
 
@@ -90,9 +90,9 @@
 	is particularly well suited for this algorithm as we are mostly performing the same operations
 	in each iteration of the algorithm in parallel.
 
-	The goad of this project is to explore the Delaunay trianglion through both serial and parallel
+	The goal of this project was to explore the Delaunay triangulations through both serial and parallel
 	algorithms with the goal of presenting a easy to understand, sufficiently complex parallel
-	algorthm designed with with Nvidia's CUDA programming model for runnig software on their
+	algorthm designed with with Nvidia's CUDA programming model for running software on their
 	GPUs.
 ]
 
@@ -109,14 +109,19 @@
 	algorithms used in this project. For the entirety of this project we only focus on 2 dimensional 
 	Delaunay triangulations.
 
-	In order to introduce indroduce the Delaunay Traingulation we first must define what we 
-	mean when we say triangultion. In order to create a triangualtion we need a set of points $P$ 
-	which will make up the vertices of the triangles.
+	In order to introduce indroduce the Delaunay Traingulation we first must define what we mean 
+	mean by a triangultion. In order to create a triangualtion we need a set of points 
+	which will make up the vertices of the triangles. But first we want to clarify a possible ambiguity 
+	about edges.
 
 	#definition[
 		For a point set $P$, the term edge is used to indicate any
 		segment that includes precisely two points of S at its endpoints.
+		@DiscComGeom.
 	] <edge_def>
+
+	Alterantively we could say an edge doesnt contain its enpoints which could be more 
+	useful in different contexts. But now we define the triangulation.
 
 	#definition[
 		A _triangulation_ of a planar point set $P$ is a subdivision of the
@@ -125,36 +130,48 @@
 		@DiscComGeom.
 	] <triangulation_def>
 
+	This is a somewhat technical but precise definition. The most imortant point in @triangulation_def is 
+	that it is a _maximal_ set of noncrossing egdes which for us means that we will not have any other shapes
+	than triangles int this structure. 
+
 
 	#subpar.grid(
-		figure(image("images/triangulation1.png", width: 50%), caption: [
+		figure(image("images/triangulation1.png", width: 80%), caption: [
 		]), <a>,
 
-		figure(image("images/triangulation2.png", width: 50%), caption: [
+		figure(image("images/triangulation2.png", width: 80%), caption: [
 		]), <b>,
 
-		columns: (auto, auto),
-		caption: [Examples of two traingulations on the same set of points.
-		          Triangulations are not unique!],
+		figure(image("images/triangulation3.png", width: 80%), caption: [
+		]), <c>,
+
+		columns: (1fr, 1fr, 1fr),
+		caption: [Examples of two traingulations (a) (b) on the same set of points.
+		          In (c) an illustration of a non maximal set of edges.
+		],
 		align: bottom,
 		label: <triangulations>,
 	)
 
-	A fact about triangulations is that we know how many triangles our triangulation
-	will contains only given a set of points. This will be usefull when we will be storing 
-	triangles as we will allways know the number that will be created. For our purposes
-	the convex hull is a boundary enclosing our triangulation will allways be known in algorithms
-	in the following chapters.
+	A useful fact about triangulations is that we can know how many triangles our triangulation
+	will contain if given a set of points and its convex hull. For our purposes the convex hull will 
+	allways be a set which will covering a set of points, in our case the points in our triangulation.
+	This will be usefull when we will be storing triangles as we will allways know the number of triangles
+	that will be created.
 
 	#theorem[
-		@CGAlgoApp Let $P$ be a set of $n$ points in the plane, not all collinear, and let $k$
+		Let $P$ be a set of $n$ points in the plane, not all collinear, and let $k$
 		denote the number of points in $P$ that lie on the boundary of the convex hull
 		of $P$. Then any triangulation of $P$ has $2n − 2 − k$ triangles and $3n − 3 − k$ edges.
+		@CGAlgoApp 
 	]
 
-	A key feature of all of the Delaunay triangulation theorems we will be considering is that 
+	A key feature of all of the Delaunay triangulation theorems we will be considering that 
 	no three points from the set of points $P$ which will make up our triangulation will lie 
-	on a shared line. This leads us to the following definition.
+	on a line and alse that no 4 points like on a circle. Motivation for this defintion will become
+	more apparent in @emptyCirclyProp_thrm and following. @genpos_def lets us imagine that our points
+	are distributed randomly enough so that our algorithms will work with no degeneracies appearing. 
+	This leads us to the following definition.
 	
 	#definition[
 		A set of points $P$ is in _general position_ if no 3 points in $P$ 
@@ -163,7 +180,16 @@
 	
 	From this point onwards we will allways assume that the point set $P$ from which 
 	we obtain our triangulation will be in _general position_. This is neccesary for the 
-	definitions and theorems we will define.
+	definitions and theorems we will define. 
+
+	In order to define a Delaunay triangulation we would like to establish the motivation for the definition
+	with another, preliminary definition. A Delaunay triangulation is a type of triangulation which in 
+	a sense maximizes smallest angles in a triangulation $T$. This idea is formalized by defining an 
+	_angle sequence_ $(alpha_1, alpha_2, ... , alpha_(3n))$ of $T$ which is an ordered list of all angles
+	of T sorted from the smallest to largest. With angle sequences we can now compare two triangulations
+	to eachother. We can say for two triangulations $T_1$ and $T_2$ we write $T_1 > T_2$ ($T_1$ is fatter
+	than $T_2$) if the angle sequence of $T_1$ is lexographically greater than $T_2$. Now we can compare
+	triangulations. And by defining @legaledge_def are able to define a _Delaunay triangulation_.
 
 	#definition[
 		Let $e$ be an edge of a triangulation $T_1$ , and let $Q$ be the
@@ -181,24 +207,15 @@
 		@DiscComGeom
 	] <delaunay_def>
 
-//	#theorem("Delaunay")[
-//		Let P be a set of points in the plane, and let T be a triangulation
-//		of P. Then T is a Delaunay triangulation of P if and only if the circumcircle of
-//		any triangle of T does not contain a point of P in its interior.
-//	]
+	As per @delaunay_def, Delaunay triangulations wish to only contain legal edges and this provides 
+	us with a "nice" triangluation with fat triangles. 
 
 	#theorem("Empty Circle Property")[
-		Let $P$ be a point set in general position, where no four points are cocircular.
-		A triangulation $T$ is a Delaunay triangulation if and only if no point from $P$
-		is in the interior of any circumcircle of a triangle of $T$. 
+		Let $P$ be a point set in general position. A triangulation $T$ is a 
+		Delaunay triangulation if and only if no point from $P$ is in the interior
+		of any circumcircle of a triangle of $T$. 
 		@DiscComGeom
 	] <emptyCirclyProp_thrm>
-
-	@emptyCirclyProp_thrm is the key ingredient in the the Delaunay triangulation algorithms
-	we are going to use. This is because instead of having to compare angles, as is defined
-	by @delaunay_def we are allowed to only perform a computation, involving finding a
-	circumcicle and performing one comparison which would involve determining whether the
-	point not shared by triangles circumcircle is contained inside the circumcircle or not.
 
 	#subpar.grid(
 		figure(image("images/flip1.png"), caption: [
@@ -218,32 +235,24 @@
 		label: <triangulations>,
 	)
 
+	@emptyCirclyProp_thrm is the key ingredient in the the Delaunay triangulation algorithms
+	we are going to use. This is because instead of having to compare angles, as would be 
+	demanded by @delaunay_def, we are allowed to only perform a computation, involving finding a
+	circumcicle and performing one comparison which would involve determining whether the
+	point not shared by triangles circumcircle is contained inside the circumcircle or not.
+	Algorithms such as initially intruduced by Lawson@Lawson77 exist which do focus on angle
+	comparisons but are not preferred as they do not introduce desired locality and are more
+	complex.
+
+	And finally we present the theorem which guarantees that we will eventually arrive at 
+	our desired Delaunay triangluation by stating that we can travel across all possible 
+	triangultions of our point set $P$ by using the fliping operation.
+
 	#theorem("Lawson")[
-		@Lawson72 Given any two triangulations of a set of points $P$, $T_1$ and $T_2$, there exist
+		Given any two triangulations of a set of points $P$, $T_1$ and $T_2$, there exist
 		a finite sequence of exchanges (flips) by which $T_1$ can be transformed to $T_2$.
+		@Lawson72 
 	] <lawson_thrm>
-
-
-
-//	#algorithm[
-//		@DiscComGeom Let $S$ be a point set in general position, with no four points
-//		cocircular. Start with any triangulation $T$. If $T$ has an illegal edge,
-//		flip the edge and make it legal. Continue flipping illegal edges,
-//		moving through the flip graph of S in any order, until no more illegal
-//		edges remain.
-//	]
-
-// some definitions : 
-//                  : Lawsons original transforming triangulations
-// some theorems: 
-//              : Lawsons original transforming triangulations
-
-
-//intuition for the key concepts
-
-
-//= Background
-// which background is importa:nt and why
 
 = The GPU
 	The Graphical Processing Unit (GPU) is a type of hardware accelerator originally used to
@@ -270,7 +279,7 @@
 				  as an _Array Processor_ as illustriated by Michael J. Flynn @FlynnsTaxonomy. The 
 				  control unit communicates instructions to the $N$ processing element with each
 				  processing element having its own memory.]
-	)
+	) <array_proc_img>
 
 	What makes the GPU increadibly usefull in certain usecases (like the one of this report) is
 	its architecture which is build to enable massively parallelisable tasks. In Flynn's Taxonomy
@@ -281,18 +290,20 @@
 	unit having its own memory allowing for more diverse proccessing of data.
 
 	#figure(
-		image("images/grid_of_clusters.png", width: 80%),
-		caption: [@CUDACPP]
-	)
+		image("images/grid_of_thread_blocks.png", width: 80%),
+		caption: [An illustratino of the structure of the GPU programming model. As the lowest
+				  compute instrcution we have a thread block consisting of a number
+				  threads $<=$ 1024. The thread blocks are contained in a grid.
+			  	  @CUDACPP]
+	) <grid_of_thread_blocks_img>
 
 	Nvida's GPUs take the SIMT model and further develop it. There are three core abstractions which 
-	allow Nvidia's GPU model to be succesfull, a hierarchy of thread groups, shared memories and 
+	allow Nvidia's GPU model to be succesfull; a hierarchy of thread groups, shared memories and 
 	synchronization @CUDACPP. The threads, which represent the a theoretical proccesses which encode
 	programmed instrcutions, are launched together in groups of 32 known as _warps_. This 
 	is the smallest unit of instructions that is executed on the GPU. The threads are further grouped 
 	into _thread blocks_ which are used as a way of organising the shared memory to be used by each thread
 	in this thread block. And once more the _thread blocks_ grouped into a _grid_.
-	
 	
 // Compute on the gpu is useful because allows highly paraellisable algorthims to benenfit
 // from this archicture
@@ -302,84 +313,169 @@
 // compare it a bit to OMP and MPI
 
 = Algorithms
+	
+	In this section we focus on two types of algorithms, serial and parallel, but with a focus on the 
+	parallel algorithm. Commonly algorithms are first developed with a serialized verion and only 
+	later optimized into parallelized versions if possible. This is how I will be presenting my chosen
+	Delanay Triangulation algorithms in order to portray a chronolgical development of ideas used 
+	in all algorithms.
+	 
 
 == Serial
-	
+
+	The simplest type of DT algorithm can be stated as follows in @flipping_alg
+
+	#figure(
+		kind: "algorithm",
+		supplement: [Algorithm],
+
+		pseudocode-list(booktabs: true, numbered-title: [Lawson Flip algorithm])[
+			Let $P$ be a point set in general position. Initialize $T$ as any trianulation of $P$.
+			If $T$ has an illegal edge, flip the edge and make it legal. Continue flipping illegal
+			edges, moving through the flip graph of $P$ in any order, until no more illegal
+			edges remain.
+			@DiscComGeom
+		]
+	) <flipping_alg>
+
+	This algorithm presents with a bit of ambiguity however I believe its a good algorithm to keep in mind
+	when progressing to more complex algorithms as it presents the most important feature in a DT algorithm,
+	that is, checking if an edge in the traingultion is legal and if not flipping it. Most DT algorithms take
+	this core concept and build a more optimized verions of it with as @flipping_alg has a complexity
+	of $O(n^2)$ @ZurichDT.
+
+	The next best serial algorithm commonly presented by popular textbooks @CGAlgoApp@NumericalRecipies is the 
+	_randomized incrimental point insertion_ @ripiflip_alg. When implemented properly this algorithm should
+	have a complexity of $O(n log(n))$ @CGAlgoApp. This algorithm is favoured for its relative low complexity
+	and ease of implementaion. The construction this algorithm is a bit mathematically involved however the 
+	motivation behind the construction of the algorithm is to perform point instertions, and after each point
+	insertion we perform necessary flips to transform the current triangulation into a DT. This in turn 
+	reduces the number of flips we need to perform and this is reflected in the runtume complexity.
+
+	#figure(
+		kind: "algorithm",
+		supplement: [Algorithm],
+
+		pseudocode-list(booktabs: true, numbered-title: [Randomized incremental point insertion])[
+		  Data: point set $P$
+		  + Initialize $T$ with a triangle enclosing all points in $P$ 
+		  + Compute a random permutation of $P$
+		  + *for* $p in P$
+			+ Insert $p$ into the triangle $t$ containing it
+			//+ Legalize each edge in $t$ *recursively* 
+			+ *for* each edge $e in t$
+				+ LegalizeEdge($e$, $t$)
+		  + return $T$
+		]
+	) <ripiflip_alg>
+
+	A signficant part of this algorithmis the FlipEdge function in @legedge_alg. This function performs	
+	the necessary flips, both number of and on the correct edges, for the triangulation in the current
+	iteration of point insertion to become a DT.
+
+	#figure(
+		kind: "algorithm",
+		supplement: [Algorithm],
+
+		pseudocode-list(booktabs: true, numbered-title: [LegalizeEdge])[
+		  Data: egde $e$, triangle $t_a$
+		  + *if* $e$ is illegal
+			+ _flip_ with triangle $t_b$ across edge $e$
+			+ let $e_1$, $e_2$ be the outward facing egdes of $t_b$
+			+ LegalizeEdge($e_1$, $t_b$)
+			+ LegalizeEdge($e_2$, $t_b$)
+		]
+	) <legedge_alg>
+
+
+	In the following sections we will discuss the point insertion and flipping steps in more detail.
 
 === Point insertion
 
+	In the point instertion procedure there a point not yet insterted in the point set making up the 
+	final triagulation is chosen and then the triangle in which it lies in is found and selected for 
+	insertion. @s_pointinsertion_img illustrates this process.
 
+	
 	#subpar.grid(
 		figure(image("images/s_insert1.png"), caption: [
+			Before insertion.
 		]), <a>,
 
 		figure(image("images/s_insert2.png"), caption: [
+			After insertion.
 		]), <b>,
 
 		columns: (1fr, 1fr),
-		caption: [],
+		caption: [An illustration of the point insertion in step 4 of @ripiflip_alg. In figure (a) the
+				  center most triangle $t_i$ will be then triangle in which a point will be chosen for
+				  insertion. Triangle $t_i$ knows its neighbours across each edge represented by the green
+				  arrows and knows the points opposite each of these edges. After the point it inserted (b), 
+				  $t_i$ is moved and two new triangles $t_j$, $t_k$ are created to accomodate the new point.
+				  Each new trianlge $t_i$, $t_j$, $t_k$ can be fully constructed from the previously existing
+				  $t_i$ and each neighbour of $t_i$ in (a) has its neighbours updated to reflect the insertion. 
+				  	
+		],
 		align: bottom,
-		label: <full>,
-	)
+		label: <s_pointinsertion_img>,
+	) 
 
 === Flipping
 
+	Once the point insertion step is complete, appropirate flipping operations are then performed. @s_flip_img
+	illustrates this procedure. One can observe that the new edges introduced by the point insertion do not
+	need to be flipped as they their circumcircles will not contain the points opposite the edge by
+	construction @Guibas85 and also would interfere with other triangles if flipped as the
+	configurations are not convex. New edges are chosen to be ones which have not been previously flipped
+	surrounding the point insertion and only need to be checked once @Guibas85.
+
 	#subpar.grid(
 		figure(image("images/insert_flip1.png"), caption: [
+			Before flipping.
 		]), <a>,
 
 		figure(image("images/insert_flip2.png"), caption: [
+			After flipping.
 		]), <b>,
 
 		columns: (1fr, 1fr),
 		caption: [Illustrating the flipping operation. In figure (a), point r has just been inserted
 				  and the orange edges are have been marked to be checked for flipping. Two of these
-				  end  edges end up beigh flipped in (b). The edges insidewould not quaify for flipping
+				  end edges end up being flipped in (b). The edges inside would not qualify for flipping
 				  as any quadrilateral would not form a convex region.
 		],
 		
 		align: bottom,
-		label: <full>,
-	)
+		label: <s_flip_img>,
+	) 
 
 
 
 
-	#figure(
-	  kind: "algorithm",
-	  supplement: [Algorithm],
+=== Implementation
+	
+	The implementaion was written in a C++ style, without excessive use of object oriented programmingn (OOP)
+	techniques for an gentler trinsition to a CUDA implementaion as CUDA heavily relies on pointer semantics
+	and doesnt not support some of the more convenient OOP. However as CUDA does support OOP features on the
+	host side so the I chose to write a _Delaunay_ class which holds most of the important features of the
+	computation as methods which are exectued in the constructor of the _Delaunay_ object.
 
-	  pseudocode-list(booktabs: true, numbered-title: [Flipping])[
-//		Let $P$ be a point set in general position, with no four points
-//		cocircular. Initialize $T$ as any trianulation of $P$
-//		If $T$ has an illegal edge, flip the edge and make it legal.
-//		Continue flipping illegal edges, moving through the flip
-//		graph of $S$ in any order, until no more illegal edges remain.
+	*Output*
+	
 
-		//+ Let $P$ be a point set in general position with no four points cocircular.
-		+ Initialize $T$ as any trianulation of $P$
 
-		+ *while* $T$ has an illegal edge
-			+ *for* each illegal edge $e$
-				+ flip $e$
+=== Analysis
 
-		+ *return* $T$ 
-	  ]
-	)
+	The analysis in this section will be brief but I hope succint as the majority of the work done was 
+	involved in the paralleliezd verions of this algorithm showcased in the following sections.
+
+				
 
 	#figure(
-	  kind: "algorithm",
-	  supplement: [Algorithm],
-
-	  pseudocode-list(booktabs: true, numbered-title: [Randomized incremental point insertion @CGAlgoApp])[
-		+ Initialize $T$ with a triangle enclosing all points in $P$ 
-		+ Compute a random permutation of $P$
-		+ *for* $p in P$
-			+ Insert $p$ into the triangle $t$ containing it
-			+ Legalize each edge in $t$ *recursively* 
-		+ return $T$
-	  ]
-	)
+		image("main/plotting/serial_nptsVsTime/serial_nptsVsTime.png", width: 70%),
+		caption: [Plot showing the amount of time it took serial code to run with respect
+				  to the number of points in the triangulation.],
+	) <nptsVsTime_plt>
 
 == Parallel
 
@@ -401,29 +497,172 @@
 			+ update locations of $p in P$
 		+ return $T$
 	  ]
-	)
-
+	) <ppi_alg>
 
 === Insertion
 
+	The parellel point insertion step is very well suited for parallelization. Without the exect methods of
+	implementation, parallel point insertion can be performed without any interfernce with their neighbours.
+	This procedure is performed independantly for each triangle with a point to insert. The only complication
+	arises in the updating of neighbouring triangles information about their newly updated neighbours and
+	opposite points. This must be done after all new triangles have been constructed and saved to memory. Only 
+	then you can exploit the data structure and traverse the neighbouring triangle to a update the
+	correct triangles appropirate edge. 
 
 	#subpar.grid(
 		figure(image("images/s_insert1.png"), caption: [
-			An image of the andromeda galaxy.
+			Before insertion.
 		]), <a>,
 
 		figure(image("images/p_insert.png"), caption: [
-			A sunset illuminating the sky abov.
+			After insertion.
 		]), <b>,
 
 		columns: (1fr, 1fr),
-		caption: [A figure composed of two sub figures.],
+		caption: [
+			
+		],
 		align: bottom,
 		label: <full>,
 	)
 
 
 === Flipping
+
+
+
+=== Implementation
+
+	This parallelized version of the Incremental Point Instertion alogorithm @ripiflip_alg, as showcased 
+	in @ppi_alg, is written in CUDA.
+
+	*Layout* 
+	
+	The majoriy of the code is wrapped in a _Delaunay_ class for the ease of readability and
+	maintainability. The constructor once again performs the computaion however this time on any available GPU. This
+	OOP approach was chosen because of the   
+
+	*Insertion*
+	
+	The parallel point insertion proceduce is implemented as two distinct operations. The _PrepForInsert_ method performs
+	key steps to prepare the triangulation for the parallel insertion of new points. This method
+
+	#figure(
+		kind: "algorithm",
+		supplement: [Algorithm],
+
+		pseudocode-list(booktabs: true, numbered-title: [prepForInsert])[
+			//+ resetInsertPtInTris
+			+ updatePtsUninsterted
+			+ gpuSort ptsUninserted_d;
+
+			+ setInsertPtsDistance
+			+ setInsertPts
+
+			+ prepTriWithInsert
+			+ gpuSort triWithInsert_d nTriMax_d;
+
+			//+ resetBiggestDistInTris
+		]
+	) <pfinsert_alg>
+
+
+	#figure(
+		kind: "algorithm",
+		supplement: [Algorithm],
+
+		pseudocode-list(booktabs: true, numbered-title: [insert])[
+			+ insertKernel
+			+ updateNbrsAfterIsertKernel
+
+			+ update num tri
+			+ update num pts inserted
+		]
+	) <par_insert_alg>
+
+
+
+	and following it the _insert_ method 
+
+	*Flipping*
+
+
+=== Analysis
+
+#figure(
+	image("main/plotting/blocksizeVsTime/blocksizeVsTime.png", width: 70%),
+	caption: [Analysis on finding the best block size to be use by all kerels.],
+) <blocksizeVsTime_plt>
+
+//#figure(
+//	image("main/plotting/nflipsVsIter/nflipsVsIter.png", width: 70%),
+//	//caption: [I like this font],
+//)
+//
+//#figure(
+//	image("main/plotting/ninstertVsIter/ninstertVsIter.png", width: 70%),
+//	//caption: [I like this font],
+//)
+//
+
+#figure(
+	image("main/plotting/nptsVsTime/nptsVsTime.png", width: 70%),
+	caption: [Plot showing the amount of time it took the GPU code to run with respect
+			  to the number of points in the triangulation.],
+) <nptsVsTime_plt>
+
+
+#figure(
+	image("main/plotting/timeDistrib/timeDistrib.png", width: 70%),
+	caption: [Showing the proportions of time each function took as a percentage of the 
+			  total runtime.]
+) <timeDistrib_plt>
+
+
+#figure(
+	image("main/plotting/nptsVsSpeedup/nptsVsSpeedup.png", width: 70%),
+	caption: [Plot showing speedup of the GPU code with respect to the serial implemenation
+			  of the incremental point insertion @ripiflip_alg. The speedup here is comparing
+			  the runtime of the serial code with for a given number of points and with the
+			  runtime of the GPU code with the same number of points. Both implementaions 
+			  are run with single precision floating point arithmetic. Speedup here is defined
+			  as the ratio $"timeGPU" / "timeCPU"$.
+	],
+) <nptsVsSpeedup_plt>
+
+
+//#figure(
+//	image("main/plotting/triangulation/triangulation.png", width: 70%),
+//	//caption: [I like this font],
+//)
+
+
+
+
+
+
+	#subpar.grid(
+		figure( image("main/plotting/serial_triangulation/tri1000.png", width: 100%), caption: [
+			Uniform distribution of unit square.
+		]), <a>,
+
+		figure( image("main/plotting/serial_triangulation/tri1000.png", width: 100%), caption: [
+			Uniform distribution of unit Disk.
+		]), <b>,
+
+		figure( image("main/plotting/serial_triangulation/tri1000.png", width: 100%), caption: [
+			Gaussian distribution with mean 0 and variance 1.
+		]), <c>,
+
+		columns: (1fr, 1fr, 1fr),
+		caption: [Visualisations of Delaunay triangluations of various point distributions. ],
+		align: bottom,
+		label: <triangulations>,
+	)
+
+	
+	
+
 
 == Data Structures
 
@@ -453,6 +692,12 @@
 				  index will by written in the corresponding entry in the structure. 
 		]
 	) <tri_stuct>
+
+	This data structure was chosen for the ease of implementation and as whenever we want to read a traigle
+	we will be a significant amount of data about it and this locality theoreitcally helps with memory
+	reads, as opposed to storing separate parts of date about the triangle in different structures, ie 
+	separating point and neighbour information into two different structs. 
+	
 
 
 

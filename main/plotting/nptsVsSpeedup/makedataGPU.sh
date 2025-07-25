@@ -1,16 +1,18 @@
 #!/bin/bash
+
+# ========================= GRAB GPU DATA ========================= 
+
 cd "${0%/*}" || exit 1  # Run from script's directory
 GPUDIR="../../gpu"
 cd "$GPUDIR" # need to run gpu code in this directory
 
-VID=make 
+VOID=make 
 
-STARTN=10
-MAXN=50 # max num of points
-STEP=10 
-MAXS=2 # max seeds
-
-NDISTRIBITIONS=2
+STARTN=$1
+MAXN=$2 # max num of points
+STEP=$3 
+MAXS=$4 # max seeds
+NDISTRIBITIONS=$5
 
 NTPB=128 # number of threads per block
 
@@ -18,7 +20,7 @@ NTPB=128 # number of threads per block
 
 EXEDIR="./bin/test"
 DATADIR="data/coredata.csv"
-PLOTDATA="../plotting/nptsVsTime/data.csv"
+PLOTDATA="../plotting/nptsVsSpeedup/dataCPU.csv"
 > "$PLOTDATA"
 
 #"$STZ" "$EXEDIR" -n "$STARTN" -s 0 -d 0 -t "$NTPB"

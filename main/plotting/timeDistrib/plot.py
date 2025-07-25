@@ -8,13 +8,13 @@ df = pd.read_csv("./data.csv")
 metrics = ["prepForInsertTimeTot", "insertTimeTot", "flipTimeTot", "updatePtsTimeTot"]
 avg_df = df.groupby("distribution")[metrics].mean()
 
-print(avg_df)
+#print(avg_df)
 
 # Normalize each row so values sum to 1 (i.e., percentage)
 normalized = avg_df.div(avg_df.sum(axis=1), axis=0)
 
 # Labels and styling
-distributions = ["uniform square", "uniform disk", "gaussian"]
+distributions = ["uniform square", "uniform disk"]#, "gaussian"]
 colors = ['forestgreen', 'gold', 'cornflowerblue', 'salmon']
 hatches = ['..', '//', '\\\\', 'xx']
 labels = ["prepForInsert", "insert", "flip", "updatePts"]
@@ -38,5 +38,4 @@ plt.legend(loc="upper right", ncol=2)
 plt.tight_layout()
 
 plt.savefig("timeDistrib.png", dpi=200)
-plt.show()
-
+#plt.show()

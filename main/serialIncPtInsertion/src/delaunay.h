@@ -4,6 +4,12 @@
 #include <iostream>
 #include <fstream>
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+#include <ctime>
+
 #include "macros.h"
 #include "types.h"
 #include "mymath.h"
@@ -24,9 +30,16 @@ struct Delaunay {
 
 	//Node nodes[10000]; // big num figure out later
 
-	std::ofstream saveFile;
+	//std::ofstream saveFile;
+	FILE* trifile;
+	FILE* csvfile;
+
+	int seed = -1;
+	int distribution = -1;
 
 	Delaunay(Point* points, int n);
+	Delaunay(Point* points, int n, int seed_mark, int distribution_mark);
+	void constructor(Point* points, int n);
 	~Delaunay();
 
 	// compute options

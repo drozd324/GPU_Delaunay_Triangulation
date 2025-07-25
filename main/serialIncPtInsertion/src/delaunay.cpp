@@ -1,50 +1,80 @@
 #include "delaunay.h"
 
+
+Delaunay::Delaunay(Point* points, int n) {
+	constructor(points, n);	
+}
+
+Delaunay::Delaunay(Point* points, int n, int seed_mark, int distribution_mark) {
+	seed = seed_mark;
+	distribution = distribution_mark;
+
+	constructor(points, n);	
+}
+
 /*
  * Constructor which creates the delaunay triagulation from an array of 'points'
  * and its lenght 'n'.
  */
-Delaunay::Delaunay(Point* points, int n) :
-	npts(n),
-	pts(new Point[npts + 3]),
+//Delaunay::Delaunay(Point* points, int n) :
+void Delaunay::constructor(Point* points, int n) {
+	npts = n;
+	pts = new Point[npts + 3];
 
-	nTri(0),
-	nTriMax(2*(npts+3) - 2 - 3),
-	triList(new Tri[nTriMax]),
+	nTri = 0;
+	nTriMax = 2*(npts+3) - 2 - 3;
+	triList = new Tri[nTriMax];
 
-	saveFile("./data/data.txt", std::ios_base::app) 
-{
+	// Opening files to save data
+	trifile = fopen("./data/tri.txt", "w");
+	fclose(trifile);
+	trifile = fopen("./data/tri.txt", "a");
 
-	std::cout << "[ALLOCATING] \n";
-	std::cout << "npts + 3     = " << npts + 3 << "\n";
-	std::cout << "nTriMax      = " <<  nTriMax << "\n";
+	csvfile = fopen("./data/coredata.csv", "w");
 
+	// assigning copyting points
 	for (int i=0; i<npts; i++) {
 		pts[i] = points[i];
 	}
 
-	std::cout << "INITSUPERTRIANGLE\n";
+	// initialize super triangle
 	initSuperTri();
 
-	// save points data to file
-	saveFile << npts+3 << "\n";
-	for (int i=0; i<npts+3; ++i) {
-		saveFile << pts[i].x[0] << " " << pts[i].x[1] << "\n";
+    // save points data to trifile
+	fprintf(trifile, "%d\n", npts + 3);
+	for (int i=0; i<npts + 3; ++i) {
+		fprintf(trifile, "%f %f\n", pts[i].x[0], pts[i].x[1]);
 	}
-	saveFile << "\n"; 
+	fprintf(trifile, "\n");
+
 	saveToFile();
+	// main compute which performs the incremental point insertion
+	clock_t t0 = clock();
 
 	incPtIns();
 
+	clock_t t1 = clock() - t0;
+	float totalRuntime = (float)t1 / CLOCKS_PER_SEC;
+
+
+	// check if triangulation is delaunay
 	int nflips = -1;
 	while (nflips != 0) {
-		nflips = legalize();
+		if ((nflips = legalize()) == 0) {
+			break;
+		} else {
+			std::cout << "Triangluation is NOT Delaunay\n";
+		}
 		std::cout << "Performed	" << nflips  << " additional flips\n"; 
 	}
 
 	std::cout << "Triangluation is Delaunay\n";
 
+	// saves final triangulion with extra points removed
 	saveToFile(true);
+
+	fprintf(csvfile, "npts,nTriMax,totalRuntime,seed,distribution,\n");
+	fprintf(csvfile, "%d,%d,%f,%d,%d,\n", npts, nTriMax, totalRuntime, seed, distribution);
 }
 
 /*
@@ -53,6 +83,9 @@ Delaunay::Delaunay(Point* points, int n) :
 Delaunay::~Delaunay() {
 	delete[] triList; 
 	delete[] pts;
+	
+	fclose(trifile);
+	fclose(csvfile);
 }
 
 void Delaunay::incPtIns() {
@@ -286,7 +319,7 @@ void Delaunay::initSuperTri() {
 		avg.x[k] = avg.x[k]/npts;
 	}
 
-	std::cout << "Avg point: (" << avg.x[0] << ", " << avg.x[1] << ")\n"; 
+	//std::cout << "Avg point: (" << avg.x[0] << ", " << avg.x[1] << ")\n"; 
 
 	real largest_dist = 0;
 	real sample_dist;
@@ -299,7 +332,7 @@ void Delaunay::initSuperTri() {
 		}
 	}
 
-	std::cout << "largest_dist: " << largest_dist << "\n";
+	//std::cout << "largest_dist: " << largest_dist << "\n";
 
 	real center_x = avg.x[0];
 	real center_y = avg.x[1];
@@ -320,27 +353,25 @@ void Delaunay::initSuperTri() {
 
 void Delaunay::saveToFile(bool end) {
 	if (end == false) { // save all triangles
-
-		saveFile << iter << " " << nTri << "\n";
+		fprintf(trifile, "%d %d\n", iter, nTri);
 		for (int i=0; i<nTri; ++i) {
-			for (int j=0; j<3; ++j) { saveFile << triList[i].p[j] << " "; } 
-			for (int j=0; j<3; ++j) { saveFile << triList[i].n[j] << " "; } 
-			for (int j=0; j<3; ++j) { saveFile << triList[i].o[j] << " "; } 
-			saveFile << triList[i].flip << " "; 
+			for (int j=0; j<3; ++j) { fprintf(trifile, "%d ", triList[i].p[j]); } 
+			for (int j=0; j<3; ++j) { fprintf(trifile, "%d ", triList[i].n[j]); } 
+			for (int j=0; j<3; ++j) { fprintf(trifile, "%d ", triList[i].o[j]); } 
+			fprintf(trifile, "%d ", triList[i].flip);
+//			fprintf(trifile, "%d ", triList[i].insert);
+//			fprintf(trifile, "%d ", triList[i].flipThisIter);
 
-			saveFile << "\n"; 
+			fprintf(trifile, "\n");
 		}
 
-		saveFile << "\n"; 
+		fprintf(trifile, "\n");
 		iter++;
-	}
-
-	else { // save triangulation with super triangle points removed
-
-		// count number of triangles which do not contain the supertriangle points
+	} 
+	else {
 		int nTriFinal = 0;	
+		// count number of triangles which do not contain the supertriangle points
 		for (int i=0; i<nTri; ++i) {
-			// if any point in this triangle is on the boundary dont save
 			int cont = 0;
 			for (int k=0; k<3; ++k) {
 				for (int l=0; l<3; ++l) {
@@ -349,16 +380,13 @@ void Delaunay::saveToFile(bool end) {
 					}
 				}
 			}
+			if (cont == -1) { continue; }
 	
-			if (cont == -1) {
-				continue;
-			}
-	
-			nTriFinal++;	
+			nTriFinal++;
 		}
 	
-		// save
-		saveFile << iter << " " << nTriFinal << "\n";
+		fprintf(trifile, "%d %d\n", iter, nTriFinal);
+		//saveFile << iter << " " << nTriFinal << "\n";
 		for (int i=0; i<nTri; ++i) {
 			// if any point in this triangle is on the boundary dont save
 			int cont = 0;
@@ -374,15 +402,17 @@ void Delaunay::saveToFile(bool end) {
 				continue;
 			}
 	
-			for (int j=0; j<3; ++j) { saveFile << triList[i].p[j] << " "; } 
-			for (int j=0; j<3; ++j) { saveFile << triList[i].n[j] << " "; } 
-			for (int j=0; j<3; ++j) { saveFile << triList[i].o[j] << " "; } 
-			saveFile << triList[i].flip << " "; 
+			for (int j=0; j<3; ++j) { fprintf(trifile, "%d ", triList[i].p[j]); } 
+			for (int j=0; j<3; ++j) { fprintf(trifile, "%d ", triList[i].n[j]); } 
+			for (int j=0; j<3; ++j) { fprintf(trifile, "%d ", triList[i].o[j]); } 
+			fprintf(trifile, "%d ", triList[i].flip);
+//			fprintf(trifile, "%d ", triList[i].insert);
+//			fprintf(trifile, "%d ", triList[i].flipThisIter);
 
-			saveFile << "\n"; 
+			fprintf(trifile, "\n");
 		}
-	
-		saveFile << "\n"; 
+ 
+		fprintf(trifile, "\n");
 		iter++;
 	}
 }

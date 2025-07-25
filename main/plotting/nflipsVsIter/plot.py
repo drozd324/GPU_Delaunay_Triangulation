@@ -32,5 +32,5 @@ plt.legend()
 #plt.loglog(x, x**2, label=r"x^2")
 #plt.legend()
 
-plt.show()
+#plt.show()
 
