@@ -129,7 +129,7 @@ __device__ int checkLegality(int a, int flip_edge, int b, Tri* triList, Point* p
 
 __global__ void prepForConflicts(Tri* triList, int* nTri, int* nTriMax);
 __global__ void setConfigIdx(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri);
-__global__ void storeNonConflictConfigs(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri);
+__global__ void storeNonConflictConfigs(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, int* subtract_nTriToFlip);
 
 __global__ void resetTriToFlipThisIter(Tri* triList, int* nTri);
 __global__ void markTriToFlipThisIter(int* triToFlip, int* nTriToFlip, Tri* triList);

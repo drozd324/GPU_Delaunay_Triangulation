@@ -172,9 +172,9 @@ void Delaunay::constructor(Point* points, int n) {
 		flipedPerIterfile = fopen("./data/flipedPerIter.txt", "a");
 	}
 
-	errorfile = fopen("./data/errorfile.txt", "w");
-	fclose(errorfile );
-	errorfile = fopen("./data/errorfile.txt", "a");
+//	errorfile = fopen("./data/errorfile.txt", "w");
+//	fclose(errorfile );
+//	errorfile = fopen("./data/errorfile.txt", "a");
 
 	// ============= DEVICE INFO ==================
 
@@ -322,7 +322,7 @@ Delaunay::~Delaunay() {
 		fclose(flipedPerIterfile); 
 	}
 
-	fclose(errorfile); 
+//	fclose(errorfile); 
 
 	cudaFree(pts_d);
 	cudaFree(npts_d);
@@ -1190,11 +1190,18 @@ void Delaunay::checkFlipConflicts() {
 
 	prepForConflicts       <<<numBlocks, threadsPerBlock>>>(triList_d, nTri_d, nTriMax_d);
 	setConfigIdx           <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d);
-	storeNonConflictConfigs<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d);
+	
+	int* subtract_nTriToFlip_d;
+	cudaMalloc(&subtract_nTriToFlip_d, sizeof(int));
+	cudaMemset(subtract_nTriToFlip_d, 0, sizeof(int));
+	storeNonConflictConfigs<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d, subtract_nTriToFlip_d);
+
+	arraySubVal<<<1, 1>>>(nTriToFlip_d, subtract_nTriToFlip_d, 1, 1); 
+	cudaFree(subtract_nTriToFlip_d);
 
 	gpuSort(triToFlip_d, nTriMax_d);
 
-	resetTriToFlipThisIter<<<numBlocks, threadsPerBlock>>>(triList_d, nTri_d);
+	resetTriToFlipThisIter<<<numBlocks, threadsPerBlock>>>(triList_d, nTriMax_d);
 	markTriToFlipThisIter<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d);
 }
 
@@ -1206,8 +1213,13 @@ __global__ void prepForConflicts(Tri* triList, int* nTri, int* nTriMax) {
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 
 	if (idx < (*nTri)) {
+
+//	int idx0 = blockIdx.x*blockDim.x + threadIdx.x;
+//	if (idx0 == 0) {
+//	for (int idx=0; idx<(*nTri); ++idx) {
 		triList[idx].configIdx = (*nTriMax);
 	}
+//	}
 }
 
 /*
@@ -1217,11 +1229,17 @@ __global__ void setConfigIdx(int* triToFlip, int* nTriToFlip, Tri* triList, int*
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 
 	if (idx < (*nTriToFlip)) {
+
+//	int idx0 = blockIdx.x*blockDim.x + threadIdx.x;
+//	if (idx0 == 0) {
+//	for (int idx=0; idx<(*nTriToFlip); ++idx) {
+
 		int a = triToFlip[idx];
 		int b = triList[a].n[ triList[a].flip ];
 
 		atomicMin(&(triList[a].configIdx), min(a, b));
 		atomicMin(&(triList[b].configIdx), min(a, b));
+//	}
 
 //		atomicAdd((&triList[a].flipUsage), 1);
 //		atomicAdd((&triList[b].flipUsage), 1);
@@ -1239,21 +1257,20 @@ __global__ void resetFlipUsageInTris(Tri* triList, int* nTriMax) {
 	}
 }
 
-__global__ void storeNonConflictConfigs(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri) {
+__global__ void storeNonConflictConfigs(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, int* subtract_nTriToFlip) {
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 
 	if (idx < (*nTriToFlip)) {
 
-//	if (idx == 0) {
-//	for (int idx0=0; i<(*nTriToFlip); ++idx0) {
+//	int idx0 = blockIdx.x*blockDim.x + threadIdx.x;
+//	if (idx0 == 0) {
+//	for (int idx=0; idx<(*nTriToFlip); ++idx) {
 		int a = triToFlip[idx];
 		int b = triList[a].n[ triList[a].flip ];
 
-		if (b < 0) printf("b = %d\n", b);
+		//int flip = 0;
 
-		int flip = 0;
-
-		flip = ((a == min(a, b)) && //b == max(a, b) &
+		int flip = ((a == min(a, b)) && //b == max(a, b) &
 //				(triList[a].flipUsage) == 1) && 
 //				(triList[b].flipUsage) == 1) &&
 				(triList[a].configIdx == min(a, b)) &&
@@ -1267,10 +1284,11 @@ __global__ void storeNonConflictConfigs(int* triToFlip, int* nTriToFlip, Tri* tr
 		//} 
 
 		if (!flip) { // overwrite the previous checks if the triangle is not to be flipped this round
-			atomicAdd(nTriToFlip, -1);
+			atomicAdd(subtract_nTriToFlip, 1);
 			//atomicMin(&(triToFlip[idx]), -1);
 			atomicExch(&(triToFlip[idx]), -1);
 		}
+//	}
 	}
 }
 
@@ -1283,7 +1301,12 @@ __global__ void resetTriToFlipThisIter(Tri* triList, int* nTri) {
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 
 	if (idx < (*nTri)) {
+
+//	int idx0 = blockIdx.x*blockDim.x + threadIdx.x;
+//	if (idx0 == 0) {
+//	for (int idx=0; idx<(*nTri); ++idx) {
 		triList[idx].flipThisIter = -1;
+//	}
 	}
 }
 
@@ -1296,6 +1319,12 @@ __global__ void markTriToFlipThisIter(int* triToFlip, int* nTriToFlip, Tri* triL
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 
 	if (idx < (*nTriToFlip)) {
+
+
+//	int idx0 = blockIdx.x*blockDim.x + threadIdx.x;
+//	if (idx0 == 0) {
+//	for (int idx=0; idx<(*nTriToFlip); ++idx) {
+
 		int a = triToFlip[idx];
 		int flip_edge = triList[a].flip; // edge of triangle to flip across
 		int b = triList[a].n[ flip_edge ]; // b is the index of the triangle across the edge
@@ -1303,6 +1332,7 @@ __global__ void markTriToFlipThisIter(int* triToFlip, int* nTriToFlip, Tri* triL
 		atomicExch(&(triList[a].flipThisIter), 1);
 		atomicExch(&(triList[b].flipThisIter), 1);
 		atomicExch(&(triList[b].flip), ((triList[a].o[flip_edge] + 1) % 3)); // lets the flipping companion know where its going to flip
+//	}		
 	}
 }
 /* ================================== STEP 3 ==================================  */ 
@@ -1626,8 +1656,8 @@ __global__ void updateNbrsAfterFlipKernel(int* triToFlip, int* nTriToFlip, Tri* 
 
 		updateNbrsAfterFlip(a, flip_edge, b, triList, &(quadList[idx]));
 
-		//triList[a].flipThisIter = -1;
-		//triList[b].flipThisIter = -1;
+		triList[a].flipThisIter = -1;
+		triList[b].flipThisIter = -1;
 	}
 }
 
@@ -1745,26 +1775,16 @@ int Delaunay::bruteFlip() {
 	*nTriToFlip = 0;
 	cudaMemcpy(nTriToFlip_d, nTriToFlip, sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemset(triToFlip_d, -1, (*nTriMax) * sizeof(int));
-//
-//		N = *nTri;
-//		dim3 threadsPerBlock0(ntpb);
-//		dim3 numBlocks0(N/threadsPerBlock0.x + (!(N % threadsPerBlock0.x) ? 0:1));
-//	resetTriToFlipThisIter<<<numBlocks0, threadsPerBlock0>>>(triList_d, nTri_d);
-//
-	//cudaDeviceSynchronize();
-	checkIncircleAll();
 
-	cudaDeviceSynchronize();
-	checkFlipConflicts();
-//	checkFlipConflicts();
-//	checkFlipConflicts();
+//	N = *nTri;
+//	dim3 threadsPerBlock0(ntpb);
+//	dim3 numBlocks0(N/threadsPerBlock0.x + (!(N % threadsPerBlock0.x) ? 0:1));
+//	resetTriToFlipThisIter<<<numBlocks0, threadsPerBlock0>>>(triList_d, nTri_d);
+
+	checkIncircleAll();
+	checkFlipConflicts(); //	checkFlipConflicts(); checkFlipConflicts();
 
 	cudaMemcpy(nTriToFlip, nTriToFlip_d, sizeof(int), cudaMemcpyDeviceToHost);
-	//cudaMemset(nTriToFlip_d, 0, sizeof(int));
-
-//	if (saveHistory == true) {
-//		fprintf(flipedPerIterfile, "%d %d\n", -1, -1);
-//	}
 
 	int flipIter = 0;
 	while ((*nTriToFlip) > 0) {
@@ -1777,8 +1797,6 @@ int Delaunay::bruteFlip() {
 		if (info == true) {
 			printf("    [Performing flip iteration %d]\n"     , flipIter);
 			printf("        Flipping %d configurations\n"     , N);
-			//printf("        Number of threads per block: %d\n", threadsPerBlock1.x);
-			//printf("        Number of blocks: %d\n"           , numBlocks1.x);
 			printf("        Iter : %d\n"                      , iter);
 
 //			cudaMemcpy(triToFlip, triToFlip_d, (*nTriMax) * sizeof(int), cudaMemcpyDeviceToHost);
@@ -1789,7 +1807,6 @@ int Delaunay::bruteFlip() {
 //			printf("\n");
 		}
 
-		//cudaDeviceSynchronize();
 		if (saveHistory == true) {
 			fprintf(flipedPerIterfile, "%d ", N);
 		}
@@ -1808,16 +1825,11 @@ int Delaunay::bruteFlip() {
 
 		*nTriToFlip = 0;
 		cudaMemcpy(nTriToFlip_d, nTriToFlip, sizeof(int), cudaMemcpyHostToDevice);
-		//cudaMemset(nTriToFlip_d, 0, sizeof(int));
 		cudaMemset(triToFlip_d, -1, (*nTriMax) * sizeof(int));
 
-		//cudaDeviceSynchronize();
 		checkIncircleAll();
 
-		cudaDeviceSynchronize();
-		checkFlipConflicts();
-//		checkFlipConflicts();
-//		checkFlipConflicts();
+		checkFlipConflicts(); //		checkFlipConflicts(); checkFlipConflicts();
 
 		cudaMemcpy(nTriToFlip, nTriToFlip_d, sizeof(int), cudaMemcpyDeviceToHost);
 	}

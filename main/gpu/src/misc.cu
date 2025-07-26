@@ -11,6 +11,14 @@ __global__ void arrayAddVal(int* array, int* val, int mult, int n) {
 	}
 }
 
+__global__ void arraySubVal(int* array, int* val, int mult, int n) {
+	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (idx < n) {
+		array[idx] -= mult * (*val);
+	}
+}
+
 __global__ void sortPass(int* array, int n, int parity, int* sorted) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int i = 2 * idx + parity;

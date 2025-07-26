@@ -4,7 +4,7 @@ DEBUG := -g -fsanitize=address,undefined   #-lefence
 
 NVCC := nvcc
 NVCCFLAGS := -Wno-deprecated-gpu-targets -rdc=true -std=c++20 -O4 --use_fast_math --compiler-options -funroll-loops -arch=sm_75   -lcudadevrt
-DEBUGNV = -g -G #-Xcompiler -Wall #--ptxas-options=-v
+DEBUGNV = #-g -G #-Xcompiler -Wall #--ptxas-options=-v
 
 OBJDIR := obj
 BINDIR := bin
