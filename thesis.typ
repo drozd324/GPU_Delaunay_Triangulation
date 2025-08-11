@@ -256,22 +256,24 @@
 
 = The GPU
 	The Graphical Processing Unit (GPU) is a type of hardware accelerator originally used to
-	significantly improve running video rendering tasks such for example in video games through 
-	visualizing the two or three dimensional environments the "gamer" would be interacting with
-	or rendering vidoes in movies. Many different hardware accelerators have been tried and tested
-	for more general use, like Intels Xeon Phis, however the more purpose oriented GPU has prevailed
-	in the market mainly lead by Nvidia and AMD, with intel now recently entering the GPU market
-	with their Arc series. Today, the GPU has gained a more general purporse status with the rise
-	of General Purpose GPU (GPGPU) programming as more and more people have notices that GPUs are
-	very useful as a general hardware accelerator.
+	significantly improve running video rendering tasks for example in video games through 
+	visualizing the two or three dimensional environments the player would be interacting with
+	or rendering vidoes in movies after the addition of visual effects. Many different hardware accelerators
+	have been tried and tested for more general use, like Intels Xeon Phis, however the more purpose oriented GPU
+	has prevailed in the market and in performance mainly lead by Nvidia in prevoius years, Today, the GPU
+	has gained a more general purporse status with the rise of General Purpose GPU (GPGPU) programming as more
+	and more people have noticed that GPUs are very useful as a general hardware accelerator.
 
-	The triadional CPU (based on the Von Neumann architecture) which
-	is built to perform _serial_ tasks with helful features such as branch predicion, for 
-	dealing with if statements and vairable lenght instructions like for loops with
-	variable lengh, The CPU is built to be a general purpose hardware for performing all tasks
-	a user would demand from the computer. In contrast the GPU can't run alone and must be
+	The traditional CPU (based on the Von Neumann architecture) which
+	is built to perform _serial_ tasks , the CPU is built to be a general purpose hardware for
+	performing all tasks a user would demand from the computer. In contrast the GPU can't run alone and must be
 	used in conjuction to the CPU. The CPU sends compute intructions for the GPU to perform and 
 	data is commonly passes between the CPU and GPU. 
+
+//	, for 
+//	dealing with if statements and vairable lenght instructions like for loops with
+//	variable lengh,
+
 
 	#figure(
 		image("images/array_processor.png", width: 80%),
@@ -367,6 +369,7 @@
 				+ LegalizeEdge($e$, $t$)
 		  + return $T$
 		]
+
 	) <ripiflip_alg>
 
 	A signficant part of this algorithmis the FlipEdge function in @legedge_alg. This function performs	
@@ -467,7 +470,7 @@
 === Analysis
 
 	The analysis in this section will be brief but I hope succint as the majority of the work done was 
-	involved in the paralleliezd verions of this algorithm showcased in the following sections.
+	involved in the paralleliezd verions of this algorithm showcased in the following sections. 
 
 				
 
@@ -479,35 +482,99 @@
 
 == Parallel
 
+	The a parallelization of the DT is conceptually not very different than its serial counterpart. We will
+	be considering only parallelization with a GPU here which lends itself to algorithms which are created with 
+	their arichitecures in mind. This means that accesing data will be largely done by accessing global arrays
+	which all threads of execution have access to. Methods akin to divide and conquer @DivAndConq would be
+	useful if we consider multi CPU or mu GPU systems but that is not in the scope of this project. An 
+	overview of the parallelized algorithm is in @ppi_alg mostly adapted from @gDel3D which is as of this
+	moment the fastest GPU delaunay triangluation algorithm. 
+
 	#figure(
 	  kind: "algorithm",
 	  supplement: [Algorithm],
 
-	  pseudocode-list(booktabs: true, numbered-title: [Parallel point insertion and flipping @gDel3D])[
+	  pseudocode-list(booktabs: true, numbered-title: [Parallel point insertion and flipping])[
 		Data: A point set $P$
 		+ Initialize $T$ with a triangle $t$ enclosing all points in $P$ 
+		+ Initialize locations of $p in P$ to all lie in $t$
 		+ *while* there are $p in P$ to insert 
 			+ *for each* $p in P$ *do in parallel*
-				+ choose $p_t in P$ to insert
+				+ choose $p_t in P$ to insert if any
 			+ *for each* $t in T$ with $p_t$ to insert *do in parallel*
 				+ split $t$  
-			+ *while* there are configurations to flip
-				+ *for each* base triangle $t in T$ in a configuration marked to flip
+			//+ *while* there are configurations to flip
+			+ *while* there are illegal edges
+				//+ *for each* triangle $t in T$ mark whether it should be flipped or not.
+				+ *for each* triangle $t in T$ mark whether it should be flipped or not.
+				+ *for each* triangle $t in T$ in a configuration marked to flip
 					+ flip $t$
 			+ update locations of $p in P$
 		+ return $T$
 	  ]
 	) <ppi_alg>
 
+	@ppi_alg is takes as input a point set $P$ for the triangluation to be constructed from and return
+	the DT from the transformed triangulation $T$. _(line 1)_ The triangultion is initialized as a triangle
+	enclosing all points in $P$ by adding 3 new points to the triangulation. These extra three points will
+	later be removed. _(line 2)_ Tells us to keep peforming the main work of the algorithm as long as there 
+	are points to be inserted into $T$. _(lines 3-4)_ We pick out points in parellel which can be inserted
+	into $T$ by checking in which triangle each point not yet inserted, if any, is closest to the circumcenter of
+	the triangle. This point will be inserted in the _(lines_5-6)_ in which for every triangle which has a 
+	point inside it to be inserted we split the existing triangle $t$ into 3 new triangles which all contain 
+	the inserted point $p$. Now in _(lines 7-10)_ at this point, we have a non Delaunay mesh which needs to
+	be transformed and so we perform neccesary flipping operations in order for this to be a DT. For each
+	triangle we first check whether we should flip with any 3 any of its neighbours by checking if each edge
+	is illegal. If an edge is found to be illegal the first neighbouring triangle is marked to be flipped with.
+	Following this we check whether any triangles marked for flipping would be conlflicting with any other
+	configuration flipping, and if so, it is discarded for this iteration of the while loop. 
+	In _(lines 10-11)_ we perform the flipping operation for each triangle which wont have any conflicts.
+	At the end of the outermost while loop in _(line 12)_ we update our knowlege of where points which have
+	not yet been instered not lie after the chages by the point insertion creating new triangles and flipping
+	changing the triangles themselves. 
+
+
+
+
+	@ppi_alg exploits the most parallizable aspects of the point insertion @ripiflip_alg, which are the 
+	point insertion, for which only one triangle is involved in at a time, and the flipping operation, which
+	can be parallized but some book keeping needs to be taken care of in order for confilicting flip to not
+	be performed. With a large point set this parallelization allows for a massively alogorithm as a large 
+	number of point insertions and flips can be performed in parallel. Flipping conlficts can happen when
+	two different configurations of neighbouring triangles want to flip and these two configurations share
+	a triangle, as illustrated in @flipconflict_img.
+	
+
+	#subpar.grid(
+		figure(image("images/s_insert1.png"), caption: [
+			insertion.
+		]), <a>,
+
+		figure(image("images/p_insert.png"), caption: [
+			After insertion.
+		]), <b>,
+
+		columns: (1fr, 1fr),
+		caption: [ Add flip conflic illustration here ],
+		align: bottom,
+		label: <flipconflict_img>,
+	)
+
+		
+
+
+
 === Insertion
 
-	The parellel point insertion step is very well suited for parallelization. Without the exect methods of
-	implementation, parallel point insertion can be performed without any interfernce with their neighbours.
-	This procedure is performed independantly for each triangle with a point to insert. The only complication
-	arises in the updating of neighbouring triangles information about their newly updated neighbours and
-	opposite points. This must be done after all new triangles have been constructed and saved to memory. Only 
-	then you can exploit the data structure and traverse the neighbouring triangle to a update the
-	correct triangles appropirate edge. 
+	The parellel point insertion step is very well suited for parallelization. Without the focusig on the 
+	methods of implementation, parallel point insertion can be performed without any interfernce with their
+	neighbours. This procedure is performed independantly for each triangle with a point to insert. The only
+	complication arises in the updating of neighbouring triangles information about their newly updated
+	neighbours and opposite points. This must be done after all new triangles have been constructed and saved
+	to memory. Only then you can exploit the data structure and traverse the neighbouring triangle to a update
+	the correct triangles appropirate edge. 
+
+	
 
 	#subpar.grid(
 		figure(image("images/s_insert1.png"), caption: [
@@ -519,15 +586,35 @@
 		]), <b>,
 
 		columns: (1fr, 1fr),
-		caption: [
-			
-		],
+		caption: [Parallel point insertion],
 		align: bottom,
 		label: <full>,
 	)
 
 
 === Flipping
+
+	As briefly mentiond earlier, flippig can be performed in a highly parallel manner however some care needs
+	to be taken. The logic within the flippig operation is split up into three main steps. The first one is the 
+	reading of triangles to be flipping in the corresponding configuraion into a _Quad_ data structure which here 
+	is mainly created for the purpose of an easier implementation. This _Quad_ strut will aid us in constructing
+	flipped cofiguartion. The the two new triagles are the written by one kernel and appropriate neighbours are
+	then updated in a separate kerel.
+
+	#subpar.grid(
+		figure(image("images/s_insert1.png"), caption: [
+			Before insertion.
+		]), <a>,
+
+		figure(image("images/p_insert.png"), caption: [
+			After insertion.
+		]), <b>,
+
+		columns: (1fr, 1fr),
+		caption: [Illustration for parallel flipping],
+		align: bottom,
+		label: <full>,
+	)
 
 
 
@@ -539,13 +626,13 @@
 	*Layout* 
 	
 	The majoriy of the code is wrapped in a _Delaunay_ class for the ease of readability and
-	maintainability. The constructor once again performs the computaion however this time on any available GPU. This
-	OOP approach was chosen because of the   
+	maintainability. The constructor once again performs the computaion however this time on any available GPU.
+	This OOP approach was chosen because of the   
 
 	*Insertion*
 	
-	The parallel point insertion proceduce is implemented as two distinct operations. The _PrepForInsert_ method performs
-	key steps to prepare the triangulation for the parallel insertion of new points. This method
+	The parallel point insertion proceduce is implemented as two distinct operations. The _PrepForInsert_ method
+	performs key steps to prepare the triangulation for the parallel insertion of new points. This method
 
 	#figure(
 		kind: "algorithm",
@@ -636,11 +723,6 @@
 //	//caption: [I like this font],
 //)
 
-
-
-
-
-
 	#subpar.grid(
 		figure( image("main/plotting/serial_triangulation/tri1000.png", width: 100%), caption: [
 			Uniform distribution of unit square.
@@ -666,21 +748,25 @@
 
 == Data Structures
 
-=== Triangles
-	
 	The core data structure that is needed in this algorithm is one to represent a the triangulation itself.
 	There are a handful of different approaches to this problem inculding representing edges by the qaud
 	edge data structure @Guibas85 however we choose to represent the triangles in our triangulation by
 	explicit triangle structures @Nanjappa12 which hold neccesary information about their neighbours for 
 	the construction of the trianulation and for performing point insertion and flipping operations.
 
-	```c
-		struct Tri {
-			int p[3]; // points
-			int n[3]; // neighours
-			int o[3]; // opposite points
-		};
-	```
+	#figure( 
+		caption: [Triangle data structure. Stores point index info, the indexes of its neighbouring triangles
+				  and the points opposite its edges by the index of that point in the corresponding neighbour.
+		],
+
+		```c
+			struct Tri {
+				int p[3]; // points
+				int n[3]; // neighours
+				int o[3]; // opposite points
+			};
+		``` 
+	) <tri_struct>
 
 	#figure(
 		image("images/tri_struct.png", width: 40%),
@@ -697,6 +783,26 @@
 	we will be a significant amount of data about it and this locality theoreitcally helps with memory
 	reads, as opposed to storing separate parts of date about the triangle in different structures, ie 
 	separating point and neighbour information into two different structs. 
+
+
+	The @quad_sruct below
+	
+	
+	#figure( 
+		caption: [Quad data structure. Stores point index info, the indexes of its neighbouring triangles
+				  and the points opposite its edges by the index of that point in the corresponding neighbour.
+		],
+
+		```c
+			struct Quad {
+				int p[4];
+				int n[4];
+				int o[4];
+			};
+		```
+	) <quad_sruct>
+
+
 	
 
 
