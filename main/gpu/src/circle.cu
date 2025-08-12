@@ -30,7 +30,8 @@ __host__ __device__ void circumcircle(Point a, Point b, Point c, Point* center, 
 }
 
 /*
- *	
+ * Checks whether the point d is inside the circle created by the points a, b and c. Returns a positve number if
+ * d lies on the inside, 0 if on the circle ad a negativee number if it lies on the outside.
  */
 __host__ __device__ float incircle(Point d, Point a, Point b, Point c){
 	// +: inside  | flip

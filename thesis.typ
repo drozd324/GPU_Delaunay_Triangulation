@@ -420,7 +420,13 @@
 				  arrows and knows the points opposite each of these edges. After the point it inserted (b), 
 				  $t_i$ is moved and two new triangles $t_j$, $t_k$ are created to accomodate the new point.
 				  Each new trianlge $t_i$, $t_j$, $t_k$ can be fully constructed from the previously existing
-				  $t_i$ and each neighbour of $t_i$ in (a) has its neighbours updated to reflect the insertion. 
+				  $t_i$ and each neighbour of $t_i$ in (a) has its neighbours updated to reflect the insertion.
+				  The neighbouring triangles opposite points are updated by accesing the opposite point across
+				  the edge of the neighbouring triangle and obtaining the index of the edge which has the 
+				  triangle currently being split. The index of the opposite point will allways be $0$ by
+				  construction. The neighbouring triangle is also updated similarly but with the appropriate
+				  index which will be the one of the triangle who's modifying the neighbour.
+				
 				  	
 		],
 		align: bottom,
@@ -479,8 +485,60 @@
 	host side so the I chose to write a _Delaunay_ class which holds most of the important features of the
 	computation as methods which are exectued in the constructor of the _Delaunay_ object.
 
-	*Output*
-	
+
+	#figure( 
+		caption: [ wow
+		],
+
+		```c
+		__device__ void circumcircle(Point a, Point b, Point c, Point* center, float* r) {
+
+			float ba0 = b.x[0] - a.x[0];
+			float ba1 = b.x[1] - a.x[1];
+			float ca0 = c.x[0] - a.x[0];
+			float ca1 = c.x[1] - a.x[1];
+
+			float det = ba0*ca1 - ca0*ba1;
+
+			det = 0.5 / det;
+			float asq = ba0*ba0 + ba1*ba1;
+			float csq = ca0*ca0 + ca1*ca1;
+			float ctr0 = det*(asq*ca1 - csq*ba1);
+			float ctr1 = det*(csq*ba0 - asq*ca0);
+
+			*r = sqrt(ctr0*ctr0 + ctr1*ctr1);
+			center->x[0] = ctr0 + a.x[0];
+			center->x[1] = ctr1 + a.x[1];
+		}
+
+		```
+	)
+
+
+
+	#figure( 
+		caption: [ wow
+		],
+
+		```c
+		__device__ float incircle(Point d, Point a, Point b, Point c){
+			// +: inside  | flip
+			// 0: on      |
+			// -: outside | dont flip
+
+			Point center;
+			float rad;
+			circumcircle(a, b, c, &center, &rad);
+
+			// distance from center to d
+			float dist_sqr = (d.x[0] - center.x[0])*(d.x[0] - center.x[0]) 
+						   + (d.x[1] - center.x[1])*(d.x[1] - center.x[1]); 
+
+			return (rad*rad - dist_sqr);
+		}
+
+		```
+	)
 
 
 === Analysis
@@ -505,11 +563,11 @@
 
 == Parallel
 
-	The a parallelization of the DT is conceptually not very different than its serial counterpart. We will
+	The parallelization of the DT is conceptually not very different than its serial counterpart. We will
 	be considering only parallelization with a GPU here which lends itself to algorithms which are created with 
 	their arichitecures in mind. This means that accesing data will be largely done by accessing global arrays
 	which all threads of execution have access to. Methods akin to divide and conquer @DivAndConq would be
-	useful if we consider multi CPU or mu GPU systems but that is not in the scope of this project. An 
+	useful if we consider multi CPU or multi GPU systems but that is not in the scope of this project. An 
 	overview of the parallelized algorithm is in @ppi_alg mostly adapted from @gDel3D which is as of this
 	moment the fastest GPU delaunay triangluation algorithm. 
 
@@ -529,8 +587,9 @@
 			//+ *while* there are configurations to flip
 			+ *while* there are illegal edges
 				//+ *for each* triangle $t in T$ mark whether it should be flipped or not.
-				+ *for each* triangle $t in T$ mark whether it should be flipped or not.
-				+ *for each* triangle $t in T$ in a configuration marked to flip
+				+ *for each* triangle $t in T$ *do in parallel*
+					+ mark whether it should be flipped
+				+ *for each* triangle $t in T$ in a configuration marked to flip *do in parallel*
 					+ flip $t$
 			+ update locations of $p in P$
 		+ return $T$
@@ -551,8 +610,8 @@
 	is illegal. If an edge is found to be illegal the first neighbouring triangle is marked to be flipped with.
 	Following this we check whether any triangles marked for flipping would be conlflicting with any other
 	configuration flipping, and if so, it is discarded for this iteration of the while loop. 
-	In _(lines 10-11)_ we perform the flipping operation for each triangle which wont have any conflicts.
-	At the end of the outermost while loop in _(line 12)_ we update our knowlege of where points which have
+	In _(lines 11-12)_ we perform the flipping operation for each triangle which wont have any conflicts.
+	At the end of the outermost while loop in _(line 13)_ we update our knowlege of where points which have
 	not yet been instered not lie after the chages by the point insertion creating new triangles and flipping
 	changing the triangles themselves. 
 
@@ -562,39 +621,17 @@
 	be performed. With a large point set this parallelization allows for a massively alogorithm as a large 
 	number of point insertions and flips can be performed in parallel. Flipping conlficts can happen when
 	two different configurations of neighbouring triangles want to flip and these two configurations share
-	a triangle, as illustrated in @flipconflict_img.
+	a triangle, as illustrated in @parallel_flip_img.
 	
-
-	#subpar.grid(
-		figure(image("images/pflip0.png"), caption: [
-		]), <a>,
-
-		figure(image("images/pflip1.png"), caption: [
-		]), <b>,
-
-		figure(image("images/pflip2.png"), caption: [
-		]), <c>,
-
-		columns: (1fr, 1fr, 1fr),
-		caption: [Illustration of parallel flipping while accounting for flipping non conflicting 
-				  configurations. 
-		],
-		align: bottom,
-		label: <flipconflict_img>,
-	)
-
-
 === Insertion
 
-	The parellel point insertion step is very well suited for parallelization. Without the focusig on the 
-	methods of implementation, parallel point insertion can be performed without any interfernce with their
+	The parellel point insertion step is very well suited for parallelization. Parallel point insertion can be
+	performed without any interfernce with their
 	neighbours. This procedure is performed independantly for each triangle with a point to insert. The only
 	complication arises in the updating of neighbouring triangles information about their newly updated
 	neighbours and opposite points. This must be done after all new triangles have been constructed and saved
 	to memory. Only then you can exploit the data structure and traverse the neighbouring triangle to a update
 	the correct triangles appropirate edge. 
-
-	
 
 	#subpar.grid(
 		figure(image("images/s_insert1.png"), caption: [
@@ -611,32 +648,46 @@
 		label: <full>,
 	)
 
+	*Implementation*
 
-=== Flipping
+	The implemenation of the parallel point insertion algorithm relies on two steps, preparation of points to be
+	inserted and the insertion of points. If only the point insertion procedure is performed we also need to 
+	update point locations which is normally done after the flipping operations needed. 
 
-	As briefly mentiond earlier, flippig can be performed in a highly parallel manner however some care needs
-	to be taken. The logic within the flippig operation is split up into three main steps. The first one is the 
-	reading of triangles to be flipping in the corresponding configuraion into a _Quad_ data structure which here 
-	is mainly created for the purpose of an easier implementation. This _Quad_ strut will aid us in constructing
-	flipped cofiguartion. The the two new triagles are the written by one kernel and appropriate neighbours are
-	then updated in a separate kerel.
+	The preparation step ivolves a handful of checks or verifications to find out which point should be inserted
+	into each triangle. In this algorithm we wish to find the most suitable point for each triangle to have 
+	inserted into it. We do this by finding out which point, which is not yet inserted into the triangulation
+	lies in which triangle. The point closest to the circumcenter of the triangle is chosen to be inserted. Two
+	CUDA kernels are used in this procedure, one to calculate the distances of each point to their corresponding
+	circumcentres and another to find the minimum distance. This procedure relies on computing the distance twice
+	as compute is cheap on GPU as opposed to copying memory of the triangle structures. In between all of this
+	arrays which contain information about uninserted points _ptsUninsterted_ are used throughout in order to
+	not waste resources in the form of threads which would obtain instructions to do nothing. The
+	_ptsUninsterted_ array is sorted in order to launch the minimum number of threads needed. A few other kerels
+	are used for book keeping purposes which *arent?* explained. 
 
-=== Implementation
+	Once the preperation step is completed, which makes up the majority of the compute for point insertion
+	procedure (@timeDistrib_plt) we can now actually insert the points which have been pickout out. The logic
+	in the parallel point insertion step is as follows. The logic is mostly consistent as in 
+	@s_pointinsertion_img but needs to be adapted in order for it to be parallelized. For the creation and
+	rewriting involved in making the 3 new traingles stays the same except for the updating of the neighbouring
+	triangles before insertion. If a neighbouring triangle will not perform a point insertion
 
-	This parallelized version of the Incremental Point Instertion alogorithm @ripiflip_alg, as showcased 
-	in @ppi_alg, is written in CUDA.
-
-	*Layout* 
-	
-	The majoriy of the code is wrapped in a _Delaunay_ class for the ease of readability and
-	maintainability. The constructor once again performs the computaion however this time on any available GPU.
-	This OOP approach was chosen because of the   
-
-	*Insertion*
-	
-	The parallel point insertion proceduce is implemented as two distinct operations. The _PrepForInsert_ method
-	performs key steps to prepare the triangulation for the parallel insertion of new points. This method
-
+//
+//	This parallelized version of the Incremental Point Instertion alogorithm @ripiflip_alg, as showcased 
+//	in @ppi_alg, is written in CUDA.
+//
+//	*Layout* 
+//	
+//	The majoriy of the code is wrapped in a _Delaunay_ class for the ease of readability and
+//	maintainability. The constructor once again performs the computaion however this time on any available GPU.
+//	This OOP approach was chosen because of the   
+//
+//	*Insertion*
+//	
+//	The parallel point insertion proceduce is implemented as two distinct operations. The _PrepForInsert_ method
+//	performs key steps to prepare the triangulation for the parallel insertion of new points. This method
+//
 	#figure(
 		kind: "algorithm",
 		supplement: [Algorithm],
@@ -669,11 +720,51 @@
 			+ update num pts inserted
 		]
 	) <par_insert_alg>
+//
+//
+//
+//	and following it the _insert_ method 
 
 
+=== Flipping
 
-	and following it the _insert_ method 
+	As briefly mentiond earlier, flippig can be performed in a highly parallel manner however some care needs
+	to be taken. The logic within the flippig operation is split up into three main steps. The first one is the 
+	reading of triangles to be flipping in the corresponding configuraion into a _Quad_ data structure which here 
+	is mainly created for the purpose of an easier implementation. This _Quad_ strut will aid us in constructing
+	flipped cofiguartion. The the two new triagles are the written by one kernel and appropriate neighbours are
+	then updated in a separate kerel.
 
+
+	#subpar.grid(
+		figure(image("images/pflip0.png"), caption: [
+		]), <a>,
+
+		figure(image("images/pflip1.png"), caption: [
+		]), <b>,
+
+		figure(image("images/pflip2.png"), caption: [
+		]), <c>,
+
+		columns: (1fr, 1fr, 1fr),
+		caption: [Illustration of parallel flipping while accounting for flipping non conflicting 
+				  configurations. Edges colored orange are marked for flipping.  
+				  For each configuration marked for flipping by each orange edge
+				  the triangle with the smallest index will be the one performing the flipping operation, 
+				  and the configuration with the smallest index (min of both indexes of triangles the 
+				  configuration) will have priority to flip first in each round of parallel flipping.  
+			  	  In the first figure (a) 3 edges are marked for flipping. Only configurations of triangles
+				  $t_1 t_2$ and $t_3 t_4$, with configuration indexes $1$ and $3$ respectively, will flip. 
+				  Configuration $t_5, t_1$ with a configuration index of $1$ will not flip in the first
+				  parallel flipping iteration (b) as it is not the minimum index in its configuration. (c)
+				  Showcases the final outcome of the parallel flipping.
+		],
+		align: bottom,
+		label: <parallel_flip_img>,
+	)
+
+
+=== Implementation
 	*Flipping*
 
 
@@ -716,7 +807,7 @@
 			  the runtime of the serial code with for a given number of points and with the
 			  runtime of the GPU code with the same number of points. Both implementaions 
 			  are run with single precision floating point arithmetic. Speedup here is defined
-			  as the ratio $"timeGPU" / "timeCPU"$.
+			  as the ratio $"timeCPU" / "timeGPU"$.
 	],
 ) <nptsVsSpeedup_plt>
 
@@ -727,18 +818,50 @@
 //)
 
 	#subpar.grid(
-		figure( image("main/plotting/serial_triangulation/tri1000.png", width: 100%), caption: [
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
 			Uniform distribution of unit square.
-		]), <a>,
+		]), <a0>,
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
+			Uniform distribution of unit square.
+		]), <a1>,
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
+			Uniform distribution of unit square.
+		]), <a2>,
 
-		figure( image("main/plotting/serial_triangulation/tri1000.png", width: 100%), caption: [
+
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
 			Uniform distribution of unit Disk.
-		]), <b>,
+		]), <b0>,
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
+			Uniform distribution of unit Disk.
+		]), <b1>,
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
+			Uniform distribution of unit Disk.
+		]), <b2>,
 
-		figure( image("main/plotting/serial_triangulation/tri1000.png", width: 100%), caption: [
+
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
+			Unit Sphere projected onto unit disk.
+		]), <c0>,
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
+			Unit Sphere projected onto unit disk.
+		]), <c1>,
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
+			Unit Sphere projected onto unit disk.
+		]), <c2>,
+
+
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
 			Gaussian distribution with mean 0 and variance 1.
-		]), <c>,
+		]), <d0>,
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
+			Gaussian distribution with mean 0 and variance 1.
+		]), <d1>,
+		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
+			Gaussian distribution with mean 0 and variance 1.
+		]), <d2>,
 
+		rows: (1fr, 1fr, 1fr, 1fr),
 		columns: (1fr, 1fr, 1fr),
 		caption: [Visualisations of Delaunay triangluations of various point distributions. ],
 		align: bottom,
