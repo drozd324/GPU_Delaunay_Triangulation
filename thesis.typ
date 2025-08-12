@@ -240,7 +240,7 @@
 	demanded by @delaunay_def, we are allowed to only perform a computation, involving finding a
 	circumcicle and performing one comparison which would involve determining whether the
 	point not shared by triangles circumcircle is contained inside the circumcircle or not.
-	Algorithms such as initially intruduced by Lawson@Lawson77 exist which do focus on angle
+	Algorithms such as initially intruduced by Lawson @Lawson77 exist which do focus on angle
 	comparisons but are not preferred as they do not introduce desired locality and are more
 	complex.
 
@@ -254,6 +254,8 @@
 		@Lawson72 
 	] <lawson_thrm>
 
+
+#pagebreak()
 = The GPU
 	The Graphical Processing Unit (GPU) is a type of hardware accelerator originally used to
 	significantly improve running video rendering tasks for example in video games through 
@@ -276,7 +278,7 @@
 
 
 	#figure(
-		image("images/array_processor.png", width: 80%),
+		image("images/array_processor.png"),
 		caption: [The _Single Instruction Multiple Threads (SIMT)_ classification, originally known
 				  as an _Array Processor_ as illustriated by Michael J. Flynn @FlynnsTaxonomy. The 
 				  control unit communicates instructions to the $N$ processing element with each
@@ -292,8 +294,8 @@
 	unit having its own memory allowing for more diverse proccessing of data.
 
 	#figure(
-		image("images/grid_of_thread_blocks.png", width: 80%),
-		caption: [An illustratino of the structure of the GPU programming model. As the lowest
+		image("images/grid_of_thread_blocks.png"),
+		caption: [An illustration of the structure of the GPU programming model. As the lowest
 				  compute instrcution we have a thread block consisting of a number
 				  threads $<=$ 1024. The thread blocks are contained in a grid.
 			  	  @CUDACPP]
@@ -314,6 +316,8 @@
 //   memory usage, (shared, texture), occupancy
 // compare it a bit to OMP and MPI
 
+
+#pagebreak()
 = Algorithms
 	
 	In this section we focus on two types of algorithms, serial and parallel, but with a focus on the 
@@ -422,6 +426,18 @@
 		align: bottom,
 		label: <s_pointinsertion_img>,
 	) 
+	
+	It might be nice to see results from just running the point insertion algorthim by itself, whithout 
+	the flipping which would take place inbetween which will be further explored in the next section. In
+	@insertion_only we see the result after the super triangle points and their corresponding triangles have
+	been removed. 
+
+	#figure(
+		image("images/insertion.png"), 
+		caption: [Output from only running the point insertion triangulation algorithm. The additional points
+				  added to form the super triangle and triangles containing these points are removed from this
+				  uniform distribution of points on a disk.]
+	) <insertion_only>
 
 === Flipping
 
@@ -472,13 +488,20 @@
 	The analysis in this section will be brief but I hope succint as the majority of the work done was 
 	involved in the paralleliezd verions of this algorithm showcased in the following sections. 
 
-				
+	In @s_nptsVsTime_plt below we can observe the time complexity of the serial algorithm. This algorithm
+	can theoretically achieve a complexity of $O(n log(n))$ however my naive implementaion does not achieve
+	this and we have a $O(n^2)$ scaling as seen by the non straight line in the log plot. Even though 
+	this is not the result I have expected, this is still a uselfull piece of code to compare the future
+	GPU implementaion with. I believe that a $O(n log(n))$ complexity can be achived by using a directed
+	acyclic graph structure (DAG) for faster memory access in finding in which triangles points are	contained
+	in.
 
 	#figure(
 		image("main/plotting/serial_nptsVsTime/serial_nptsVsTime.png", width: 70%),
 		caption: [Plot showing the amount of time it took serial code to run with respect
-				  to the number of points in the triangulation.],
-	) <nptsVsTime_plt>
+				  to the number of points in the triangulation. *NEED LOG PLOT*],
+	) <s_nptsVsTime_plt>
+
 
 == Parallel
 
@@ -533,9 +556,6 @@
 	not yet been instered not lie after the chages by the point insertion creating new triangles and flipping
 	changing the triangles themselves. 
 
-
-
-
 	@ppi_alg exploits the most parallizable aspects of the point insertion @ripiflip_alg, which are the 
 	point insertion, for which only one triangle is involved in at a time, and the flipping operation, which
 	can be parallized but some book keeping needs to be taken care of in order for confilicting flip to not
@@ -546,22 +566,22 @@
 	
 
 	#subpar.grid(
-		figure(image("images/s_insert1.png"), caption: [
-			insertion.
+		figure(image("images/pflip0.png"), caption: [
 		]), <a>,
 
-		figure(image("images/p_insert.png"), caption: [
-			After insertion.
+		figure(image("images/pflip1.png"), caption: [
 		]), <b>,
 
-		columns: (1fr, 1fr),
-		caption: [ Add flip conflic illustration here ],
+		figure(image("images/pflip2.png"), caption: [
+		]), <c>,
+
+		columns: (1fr, 1fr, 1fr),
+		caption: [Illustration of parallel flipping while accounting for flipping non conflicting 
+				  configurations. 
+		],
 		align: bottom,
 		label: <flipconflict_img>,
 	)
-
-		
-
 
 
 === Insertion
@@ -600,23 +620,6 @@
 	is mainly created for the purpose of an easier implementation. This _Quad_ strut will aid us in constructing
 	flipped cofiguartion. The the two new triagles are the written by one kernel and appropriate neighbours are
 	then updated in a separate kerel.
-
-	#subpar.grid(
-		figure(image("images/s_insert1.png"), caption: [
-			Before insertion.
-		]), <a>,
-
-		figure(image("images/p_insert.png"), caption: [
-			After insertion.
-		]), <b>,
-
-		columns: (1fr, 1fr),
-		caption: [Illustration for parallel flipping],
-		align: bottom,
-		label: <full>,
-	)
-
-
 
 === Implementation
 
@@ -801,11 +804,6 @@
 			};
 		```
 	) <quad_sruct>
-
-
-	
-
-
 
 #pagebreak()
 #bibliography("references.bib")
