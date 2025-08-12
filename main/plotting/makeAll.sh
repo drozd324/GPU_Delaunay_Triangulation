@@ -5,9 +5,11 @@ DIRS=("blockSizeVsTime" "nptsVsTime" "timeDistrib" "serial_nptsVsTime" "nptsVsSp
 for dir in "${DIRS[@]}"; do
 	cd $dir
 	pwd
-	#./makedata.sh
+	./makedata.sh
+
+	$HOME/.venv/bin/python3 plot.py 
+
 	#git add "$dir.png"
-	#echo "git add $dir.png"
-	python3 plot.py 
+
 	cd ..
 done

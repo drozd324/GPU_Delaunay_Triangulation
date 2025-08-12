@@ -5,8 +5,7 @@ cd "$GPUDIR" # need to run gpu code in this directory
 
 VOID=make 
 
-STARTN=10
-N=10000 # max num of points
+N=1000 # max num of points
 MAXS=1 # max seeds
 MINTPB=32
 MAXTPB=512
@@ -18,7 +17,7 @@ NDISTRIBITIONS=2
 
 EXEDIR="./bin/test"
 DATADIR="data/coredata.csv"
-PLOTDATA="../plotting/blocksizeVsTime/data.csv"
+PLOTDATA="../plotting/blockSizeVsTime/data.csv"
 > "$PLOTDATA"
 
 echo "$EXEDIR" -n "$N"
