@@ -1,18 +1,18 @@
 #!/bin/bash
 cd "${0%/*}" || exit 1  # Run from script's directory
 CPUDIR="../../serialIncPtInsertion"
-cd "$CPUDIR" # need to run gpu code in this directory
+cd "$CPUDIR" # need to run cpu code in this directory
 
 VOID=make 
 
-STARTN=10
-MAXN=50 # max num of points
-STEP=10 
-MAXS=2 # max seeds
+STARTN=100
+MAXN=5000 # max num of points
+STEP=100 
+MAXS=1 # max seeds
 
 NDISTRIBITIONS=2
 
-NTPB=128 # number of threads per block
+#NTPB=128 # number of threads per block
 
 #STZ="/usr/local/cuda-12.8/bin/compute-sanitizer"
 

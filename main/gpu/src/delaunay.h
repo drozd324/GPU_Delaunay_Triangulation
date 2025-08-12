@@ -24,10 +24,10 @@
  * Struct for creating a delaunay triangulation from a given vector of points. Consists of 
  */
 struct Delaunay {
-	int    npts[1]     ; int* npts_d;
-	Point* pts         ; Point* pts_d;
-	int nptsInserted[1]; int* nptsInserted_d;
-	int* ptsUninserted ; int* ptsUninserted_d; 
+	int    npts[1]        ; int* npts_d;
+	Point* pts            ; Point* pts_d;
+	int nptsInserted[1]   ; int* nptsInserted_d;
+	int* ptsUninserted    ; int* ptsUninserted_d; 
 	int nptsUninserted[1] ; int* nptsUninserted_d; 
 
 	int  nTri   [1]	 ; int* nTri_d; 
@@ -46,7 +46,7 @@ struct Delaunay {
 	bool verbose = false; // gives detail info to std out about state of the triangulation
 	bool saveHistory = true; 
 	bool info = true;
-	bool dataframe_out = false;
+	bool saveCSV = true;
 
 	FILE* trifile;
 	FILE* csvfile;
@@ -118,7 +118,7 @@ __device__ void updateNbrsAfterIsert(int i, Tri* triList, int newTriIdx, Tri* tr
 __global__ void checkInsertPoint(Tri* triList, int* triWithInsert, int* nTriWithInsert);
 __global__ void resetBiggestDistInTris(Tri* triList, int* nTriMax);
 
-__global__ void updatePtsUninsterted(int* npts, int* ptToTri, int* ptsUninserted, int* nptsUninserted);
+__global__ void updatePtsUninserted(int* npts, int* ptToTri, int* ptsUninserted, int* nptsUninserted);
 
 /* FLIP */
 __global__ void checkFlipKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);

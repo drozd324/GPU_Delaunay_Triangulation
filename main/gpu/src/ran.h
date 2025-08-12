@@ -20,8 +20,14 @@ struct Ran {
 	unsigned long long int64();
 	double doub();
 	float flot();
-	void circle(double& x, double& y);
-	void circle(float& x, float& y);
+	void disk(double& x, double& y);
+	void disk(float& x, float& y);
+
+	void proj_sphere(double& x, double& y);
+	void proj_sphere(float& x, float& y);
+		
+	void gaussian(double &x, double &y);
+	void gaussian(float &x, float &y);
 };
 
 void shuffle(int* array, int n, int seed);

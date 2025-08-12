@@ -20,7 +20,7 @@ NTPB=128 # number of threads per block
 
 EXEDIR="./bin/test"
 DATADIR="data/coredata.csv"
-PLOTDATA="../plotting/nptsVsSpeedup/dataCPU.csv"
+PLOTDATA="../plotting/nptsVsSpeedup/dataGPU.csv"
 > "$PLOTDATA"
 
 #"$STZ" "$EXEDIR" -n "$STARTN" -s 0 -d 0 -t "$NTPB"
