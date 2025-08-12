@@ -16,13 +16,69 @@ double Ran::doub() {
 	return 5.42101086242752217e-20 * int64();
 }
 
-void Ran::circle(double& x, double& y) {
+float Ran::flot() {
+	// Return random double-precision floating value in the range 0. to 1.
+	return (float)(5.42101086242752217e-20 * int64());
+}
+
+// ==================================================
+
+void Ran::disk(double& x, double& y) {
 	double r = sqrt(doub()); 
 	double theta = doub() * 2 * M_PI; 
 	
 	x = r*cos(theta);
 	y = r*sin(theta);
 }
+
+void Ran::disk(float& x, float& y) {
+	float r = sqrt(flot()); 
+	float theta = flot() * 2 * M_PI; 
+	
+	x = r*cos(theta);
+	y = r*sin(theta);
+}
+
+// ==================================================
+
+void Ran::proj_sphere(double& x, double& y) {
+	double r = 1; 
+	double theta = flot() * M_PI; 
+	double phi	= flot() * 2*M_PI; 
+	
+	x = r*sin(theta)*cos(phi);
+	y = r*sin(theta)*sin(phi);
+}
+
+void Ran::proj_sphere(float& x, float& y) {
+	float r = 1; 
+	float theta = flot() * M_PI; 
+	float phi	= flot() * 2*M_PI; 
+	
+	x = r*sin(theta)*cos(phi);
+	y = r*sin(theta)*sin(phi);
+}
+
+// ==================================================
+
+void Ran::gaussian(double &x, double &y) {
+	double u1 = doub(); 
+	double u2 = doub();
+		
+	x = sqrt(-2 * log(u1)) * cos(2*M_PI*u2);
+	y = sqrt(-2 * log(u1)) * sin(2*M_PI*u2);
+}
+
+
+void Ran::gaussian(float &x, float &y) {
+	float u1 = flot(); 
+	float u2 = flot();
+		
+	x = sqrt(-2 * log(u1)) * cos(2*M_PI*u2);
+	y = sqrt(-2 * log(u1)) * sin(2*M_PI*u2);
+}
+
+// ==================================================
 
 void shuffle(int* array, int n, int seed=69420) {
 	Ran ran(seed); 

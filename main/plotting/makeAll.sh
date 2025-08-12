@@ -6,8 +6,8 @@ for dir in "${DIRS[@]}"; do
 	cd $dir
 	pwd
 	#./makedata.sh
-	git add "$dir.png"
-	echo "git add $dir.png"
-	#python3 plot.py 
+	#git add "$dir.png"
+	#echo "git add $dir.png"
+	python3 plot.py 
 	cd ..
 done

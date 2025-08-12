@@ -425,7 +425,7 @@
 				  the edge of the neighbouring triangle and obtaining the index of the edge which has the 
 				  triangle currently being split. The index of the opposite point will allways be $0$ by
 				  construction. The neighbouring triangle is also updated similarly but with the appropriate
-				  index which will be the one of the triangle who's modifying the neighbour.
+				  index which will be the one of the triangle who's modifying the neighbouring triangle.
 				
 				  	
 		],
@@ -771,8 +771,13 @@
 === Analysis
 
 #figure(
-	image("main/plotting/blocksizeVsTime/blocksizeVsTime.png", width: 70%),
-	caption: [Analysis on finding the best block size to be use by all kerels.],
+	image("main/plotting/blocksizeVsTime/blocksizeVsTime.png", width: 80%),
+	caption: [Showing the time it took for the GPU DT code to run with $10000$ points while	
+			  varying the number of threads per block also know as the block size. This is a rather
+			  naiive way of finding the optimal number of threads per block as a better analysis *TODO* 
+			  would involve logically similar block of code to have their own block size. Currently
+			  the block size doesn't rationally affect the runtime.
+	],
 ) <blocksizeVsTime_plt>
 
 //#figure(
@@ -787,21 +792,21 @@
 //
 
 #figure(
-	image("main/plotting/nptsVsTime/nptsVsTime.png", width: 70%),
+	image("main/plotting/nptsVsTime/nptsVsTime.png", width: 80%),
 	caption: [Plot showing the amount of time it took the GPU code to run with respect
 			  to the number of points in the triangulation.],
 ) <nptsVsTime_plt>
 
 
 #figure(
-	image("main/plotting/timeDistrib/timeDistrib.png", width: 70%),
+	image("main/plotting/timeDistrib/timeDistrib.png", width: 80%),
 	caption: [Showing the proportions of time each function took as a percentage of the 
 			  total runtime.]
 ) <timeDistrib_plt>
 
 
 #figure(
-	image("main/plotting/nptsVsSpeedup/nptsVsSpeedup.png", width: 70%),
+	image("main/plotting/nptsVsSpeedup/nptsVsSpeedup.png", width: 80%),
 	caption: [Plot showing speedup of the GPU code with respect to the serial implemenation
 			  of the incremental point insertion @ripiflip_alg. The speedup here is comparing
 			  the runtime of the serial code with for a given number of points and with the
@@ -895,7 +900,7 @@
 	) <tri_struct>
 
 	#figure(
-		image("images/tri_struct.png", width: 40%),
+		image("images/tri_struct.png", width: 50%),
 		caption: [An illustration of the _Tri_ data structures main features. We describe the triangle $t_i$ 
 				  int the figure. Oriented counter clockwise points are stored as indexes an array
 				  containing two dimensional coordinate represeting the point. The neighbours are
