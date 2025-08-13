@@ -44,7 +44,7 @@ struct Delaunay {
 
 	int iter = 0;
 	bool verbose = false; // gives detail info to std out about state of the triangulation
-	bool saveHistory = true; 
+	bool saveHistory = false; 
 	bool info = true;
 	bool saveCSV = true;
 
