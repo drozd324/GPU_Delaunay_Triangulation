@@ -11,3 +11,7 @@ NDISTRIBITIONS=2
 ./makedataCPU.sh $STARTN $MAXN $STEP $MAXS $NDISTRIBITIONS
 ./makedataGPU.sh $STARTN $MAXN $STEP $MAXS $NDISTRIBITIONS
 
+cd "${0%/*}" || exit 1 
+pwd
+$HOME/.venv/bin/python3 plot.py
+

@@ -8,7 +8,7 @@ VOID=make
 N=1000 # max num of points
 MAXS=1 # max seeds
 MINTPB=32
-MAXTPB=512
+MAXTPB=32 #512
 #MAXTPB=1024
 
 NDISTRIBITIONS=2
@@ -35,3 +35,7 @@ for (( s=0; s<$MAXS; s++)); do
 		done
 	done
 done
+
+PLOTDIR="../plotting/blockSizeVsTime"
+cd $PLOTDIR
+$HOME/.venv/bin/python3 plot.py

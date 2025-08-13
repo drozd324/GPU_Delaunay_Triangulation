@@ -15,10 +15,15 @@ show_tri_labels = 0
 max_pts_for_show = 10000
 zoom = 0
 only_save_plot = 0
+savefile_name = "DT.png"
 
-if (len(sys.argv) > 1 and sys.argv[1] == "save"):
+if (len(sys.argv) > 2 and sys.argv[1] == "save"):
 	only_save_plot = 1
 	print("ONLY SAVING")
+if (len(sys.argv) == 3 and sys.argv[1] == "save"):
+	only_save_plot = 1
+	savefile_name = str(sys.argv[2])
+	print(f"ONLY SAVING WITH FILENAME {savefile_name}")
 		
 
 print("")
@@ -60,7 +65,7 @@ with open("tri.txt", "r") as data:
 			read_line(data)
 
 	# interactive plot loop
-	iter_idx = len(iter_line_num) - 1 if len(iter_line_num) > 100 else 1 
+	iter_idx = len(iter_line_num) - 1 if len(iter_line_num) > 100 else 0
 	run = True
 	show_nbr = -1
 	show_edges_to_flip = False 
@@ -169,7 +174,8 @@ with open("tri.txt", "r") as data:
 
 		if only_save_plot:
 			print("[SAVING PLOT]")
-			plt.savefig("delauay_triangluation.png", dpi=max(300, int(num_pts)))
+			plt.axis("off")
+			plt.savefig(savefile_name, dpi=max(300, int(num_pts)))
 			run = False
 		else:
 			plt.draw()

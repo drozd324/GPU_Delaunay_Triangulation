@@ -38,3 +38,5 @@ for (( s=0; s<$MAXS; s++)); do
 		done
 	done
 done
+
+$HOME/.venv/bin/python3 plot.py

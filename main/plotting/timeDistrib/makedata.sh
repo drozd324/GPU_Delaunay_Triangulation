@@ -30,3 +30,8 @@ for (( s=0; s<$MAXS; s++)); do
 		tail -n 1 "$DATADIR" >> "$PLOTDATA"
 	done
 done
+
+cd "${0%/*}" || exit 1 
+pwd
+$HOME/.venv/bin/python3 plot.py
+

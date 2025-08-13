@@ -38,3 +38,7 @@ for (( s=0; s<$MAXS; s++)); do
 		done
 	done
 done
+
+cd "${0%/*}" || exit 1 
+pwd
+$HOME/.venv/bin/python3 plot.py
