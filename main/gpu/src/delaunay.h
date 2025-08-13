@@ -42,6 +42,9 @@ struct Delaunay {
 	int nTriToFlip[1]; int* nTriToFlip_d;
 	int* triToFlip   ; int* triToFlip_d;
 
+	int* subtract_nTriToFlip_d;
+	Quad* quadList_d;
+
 	int iter = 0;
 	bool verbose = false; // gives detail info to std out about state of the triangulation
 	bool saveHistory = false; 

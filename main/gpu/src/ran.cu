@@ -51,8 +51,8 @@ void Ran::disk(float& x, float& y) {
 //}
 
 void Ran::proj_sphere(double& x, double& y) {
-	double r = sqrt(sqrt(flot())); 
-	double theta = flot() * 2 * M_PI; 
+	double r = sqrt(sqrt(doub())); 
+	double theta = doub() * 2 * M_PI; 
 	
 	x = r*cos(theta);
 	y = r*sin(theta);
@@ -60,7 +60,6 @@ void Ran::proj_sphere(double& x, double& y) {
 
 void Ran::proj_sphere(float& x, float& y) {
 	float r = sqrt(sqrt(flot())); 
-	r = r*r;
 	float theta = flot() * 2 * M_PI; 
 	
 	x = r*cos(theta);

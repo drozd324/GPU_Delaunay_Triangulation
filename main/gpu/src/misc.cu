@@ -38,32 +38,49 @@ __global__ void sortPass(int* array, int n, int parity, int* sorted) {
     }
 }
 
+
 /*
  * @param array Device pointer to array.
  * @param n Device pointer to length of array.
  */
 void gpuSort(int* array, int* n) {
-    int N;
-    cudaMemcpy(&N, n, sizeof(int), cudaMemcpyDeviceToHost);
+	thrust::device_ptr<int> thrust_ptr_d(array);
 
+	int N;
+    cudaMemcpy(&N, n, sizeof(int), cudaMemcpyDeviceToHost);
 	if (N <= 1) {
 		return;
 	}
 
-    int sorted[1];
-    int* sorted_d;
-    cudaMalloc(&sorted_d, sizeof(int));
-
-    dim3 threadsPerBlock(32);
-    dim3 numBlocks((N / 2 + threadsPerBlock.x - 1) / threadsPerBlock.x);
-
-    do {
-        *sorted = 0;
-        cudaMemcpy(sorted_d, sorted, sizeof(int), cudaMemcpyHostToDevice);
-        sortPass<<<numBlocks, threadsPerBlock>>>(array, N, 0, sorted_d);
-        sortPass<<<numBlocks, threadsPerBlock>>>(array, N, 1, sorted_d);
-        cudaMemcpy(sorted, sorted_d, sizeof(int), cudaMemcpyDeviceToHost);
-    } while (*sorted != 0); // continue while swaps occurred
-
-    cudaFree(sorted_d);
+    thrust::sort(thrust_ptr_d, thrust_ptr_d + N, thrust::greater<int>());
 }
+
+///*
+// * @param array Device pointer to array.
+// * @param n Device pointer to length of array.
+// */
+//void gpuSort(int* array, int* n) {
+//    int N;
+//    cudaMemcpy(&N, n, sizeof(int), cudaMemcpyDeviceToHost);
+//
+//	if (N <= 1) {
+//		return;
+//	}
+//
+//    int sorted[1];
+//    int* sorted_d;
+//    cudaMalloc(&sorted_d, sizeof(int));
+//
+//    dim3 threadsPerBlock(32);
+//    dim3 numBlocks((N / 2 + threadsPerBlock.x - 1) / threadsPerBlock.x);
+//
+//    do {
+//        *sorted = 0;
+//        cudaMemcpy(sorted_d, sorted, sizeof(int), cudaMemcpyHostToDevice);
+//        sortPass<<<numBlocks, threadsPerBlock>>>(array, N, 0, sorted_d);
+//        sortPass<<<numBlocks, threadsPerBlock>>>(array, N, 1, sorted_d);
+//        cudaMemcpy(sorted, sorted_d, sizeof(int), cudaMemcpyDeviceToHost);
+//    } while (*sorted != 0); // continue while swaps occurred
+//
+//    cudaFree(sorted_d);
+//}

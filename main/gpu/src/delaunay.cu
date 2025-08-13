@@ -67,7 +67,7 @@ void Delaunay::compute() {
 			printf("    time: %f\n", flipTime);
 		}
 
-		delaunayCheck();
+		//delaunayCheck();
 
 		updatePtsTime = timeGPU([this] () { updatePointLocations(); });
 		if (verbose == true) printInfo();
@@ -95,8 +95,8 @@ void Delaunay::compute() {
 			printf("Attempting to perform additional flips\n");
 		}
 
-		bruteFlip();
-		delaunayCheck();
+//		bruteFlip();
+//		delaunayCheck();
 	}
 
 	//cudaDeviceSynchronize();
@@ -269,8 +269,11 @@ void Delaunay::constructor(Point* points, int n) {
 	cudaMalloc(&nTriToFlip_d, sizeof(int));
 	cudaMalloc(&triToFlip_d, (*nTriMax) * sizeof(int));
 
+	cudaMalloc(&quadList_d, (((*nTriMax)/2) + 1) * sizeof(Quad));
+
 	// counters
 	cudaMalloc(&nTriWithInsert_d, sizeof(int));
+	cudaMalloc(&subtract_nTriToFlip_d, sizeof(int));
 
 	// copying exitsting info to gpu
 	cudaMemcpy(pts_d           , pts            , (*npts)    * sizeof(Point), cudaMemcpyHostToDevice);
@@ -338,6 +341,9 @@ Delaunay::~Delaunay() {
 	free(pts);
 	free(ptToTri);
 	free(triToFlip);
+
+	cudaFree(quadList_d);
+	cudaFree(subtract_nTriToFlip_d);
 }
 
 
@@ -1014,13 +1020,10 @@ void Delaunay::checkFlipConflicts() {
 	prepForConflicts       <<<numBlocks, threadsPerBlock>>>(triList_d, nTri_d, nTriMax_d);
 	setConfigIdx           <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d);
 	
-	int* subtract_nTriToFlip_d;
-	cudaMalloc(&subtract_nTriToFlip_d, sizeof(int));
 	cudaMemset(subtract_nTriToFlip_d, 0, sizeof(int));
 	storeNonConflictConfigs<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d, subtract_nTriToFlip_d);
 
 	arraySubVal<<<1, 1>>>(nTriToFlip_d, subtract_nTriToFlip_d, 1, 1); 
-	cudaFree(subtract_nTriToFlip_d);
 
 	gpuSort(triToFlip_d, nTri_d);
 
@@ -1324,15 +1327,9 @@ void Delaunay::quadFlip() {
 	dim3 threadsPerBlock(ntpb);
 	dim3 numBlocks(N/threadsPerBlock.x + (!(N % threadsPerBlock.x) ? 0:1));
 
-	Quad* quadList_d;
-	//cudaMalloc(&quadList_d, (*nTriToFlip) * sizeof(Quad));
-	cudaMalloc(&quadList_d, (*nTriMax) * sizeof(Quad));
-
 	writeQuadKernel          <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, quadList_d);
 	flipFromQuadKernel       <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, quadList_d);
 	updateNbrsAfterFlipKernel<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, quadList_d);
-
-	cudaFree(quadList_d);
 }
 
 __global__ void writeQuadKernel(int* triToFlip, int* nTriToFlip, Tri* triList, Quad* quadList) {
@@ -1580,7 +1577,7 @@ int Delaunay::bruteFlip() {
 		if (info == true) {
 			printf("    [Performing flip iteration %d]\n"     , flipIter);
 			printf("        Flipping %d configurations\n"     , N);
-			printf("        Iter : %d\n"                      , iter);
+			//printf("        Iter : %d\n"                      , iter);
 
 //			cudaMemcpy(triToFlip, triToFlip_d, (*nTriMax) * sizeof(int), cudaMemcpyDeviceToHost);
 //			cudaMemcpy(nTriToFlip, nTriToFlip_d, sizeof(int), cudaMemcpyDeviceToHost);

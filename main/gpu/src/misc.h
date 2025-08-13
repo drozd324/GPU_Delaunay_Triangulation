@@ -1,6 +1,9 @@
 #ifndef MISC_H
 #define MISC_H
 
+#include <thrust/sort.h>
+#include <thrust/device_ptr.h>
+
 __global__ void arrayAddVal(int* array, int* val, int mult, int n);
 __global__ void arraySubVal(int* array, int* val, int mult, int n);
 __global__ void sortPass(int* array, int n, int parity, int* sorted);
