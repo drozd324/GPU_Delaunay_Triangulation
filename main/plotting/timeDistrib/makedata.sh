@@ -31,7 +31,7 @@ for (( s=0; s<$MAXS; s++)); do
 	done
 done
 
-cd "${0%/*}" || exit 1 
-pwd
+PLOTDIR="../plotting/timeDistrib"
+cd $PLOTDIR
 $HOME/.venv/bin/python3 plot.py
 

@@ -39,4 +39,6 @@ for (( s=0; s<$MAXS; s++)); do
 	done
 done
 
+PLOTDIR="../plotting/serial_nptsVsTime"
+cd $PLOTDIR
 $HOME/.venv/bin/python3 plot.py

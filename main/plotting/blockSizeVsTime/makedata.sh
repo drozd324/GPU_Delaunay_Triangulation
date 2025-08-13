@@ -5,13 +5,13 @@ cd "$GPUDIR" # need to run gpu code in this directory
 
 VOID=make 
 
-N=1000 # max num of points
+N=5000 # max num of points
 MAXS=1 # max seeds
 MINTPB=32
-MAXTPB=32 #512
+MAXTPB=800
 #MAXTPB=1024
 
-NDISTRIBITIONS=2
+NDISTRIBITIONS=4
 
 #STZ="/usr/local/cuda-12.8/bin/compute-sanitizer"
 

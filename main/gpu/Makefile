@@ -3,7 +3,7 @@ CXXFLAGS := -Og -Wall -Wextra -std=c++20
 DEBUG := -g -fsanitize=address,undefined   #-lefence
 
 NVCC := nvcc
-NVCCFLAGS := -Wno-deprecated-gpu-targets -rdc=true -std=c++20 -O4 --use_fast_math --compiler-options -funroll-loops -arch=sm_75   -lcudadevrt
+NVCCFLAGS := -Wno-deprecated-gpu-targets -rdc=true -std=c++20 -O4 --use_fast_math --compiler-options -funroll-loops -arch=sm_75 -lcudadevrt --extended-lambda
 DEBUGNV = #-g -G #-Xcompiler -Wall #--ptxas-options=-v
 
 OBJDIR := obj

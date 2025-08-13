@@ -11,6 +11,9 @@
 #include <fstream>
 #include <random>	
 
+#include <thrust/device_ptr.h>
+#include <thrust/reduce.h>
+
 #include "macros.h"
 #include "types.h"
 #include "mymath.h"
@@ -99,6 +102,7 @@ __host__ __device__ void writeTri(Tri* tri, int* p, int* n, int* o);
 
 /* INIT */
 __global__ void sumPoints(Point* pts, int* npts, Point* avgPoint);
+//void sumPoints(Point* pts, int* npts, Point* avgPoint);
 __global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist);
 
 /* PREP FOR INSERT */

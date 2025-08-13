@@ -6,11 +6,11 @@ cd "$GPUDIR" # need to run gpu code in this directory
 VID=make 
 
 STARTN=100
-MAXN=1000 # max num of points
+MAXN=10000 # max num of points
 STEP=100 
 MAXS=1 # max seeds
 
-NDISTRIBITIONS=2
+NDISTRIBITIONS=4
 
 NTPB=128 # number of threads per block
 
@@ -39,6 +39,6 @@ for (( s=0; s<$MAXS; s++)); do
 	done
 done
 
-cd "${0%/*}" || exit 1 
-pwd
+PLOTDIR="../plotting/nptsVsTime"
+cd $PLOTDIR
 $HOME/.venv/bin/python3 plot.py

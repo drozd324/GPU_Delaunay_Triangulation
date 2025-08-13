@@ -375,6 +375,8 @@ void Delaunay::initSuperTri() {
 	avgPoint->x[0] /= npts[0];
 	avgPoint->x[1] /= npts[0];
 
+//	sumPoints(pts_d, npts_d, avgPoint);
+
 	// computing the largest distance bewtween two points
 	float largest_dist[1] = {0};
 	float *largest_dist_d;
@@ -386,7 +388,7 @@ void Delaunay::initSuperTri() {
 	//int ncomps = (*npts) * ((*npts) - 1) / 2; // total comparisons
 
 	dim3 threadsPerBlock2(ntpb);
-	dim3 numBlocks2((*npts)/threadsPerBlock1.x + (!((*npts) % threadsPerBlock1.x) ? 0:1));
+	dim3 numBlocks2((*npts)/threadsPerBlock2.x + (!((*npts) % threadsPerBlock2.x) ? 0:1));
 	computeMaxDistPts<<<numBlocks2, threadsPerBlock2>>>(pts_d, npts_d, largest_dist_d);
 
 	cudaMemcpy(largest_dist, largest_dist_d, sizeof(float), cudaMemcpyDeviceToHost);
@@ -445,6 +447,37 @@ __global__ void sumPoints(Point* pts, int* npts, Point *avgPoint) {
 	}
 }
 
+//__host__ __device__ Point sumpts(const Point &a, const Point &b) {
+//    Point c;
+//    c.x[0] = a.x[0] + b.x[0];
+//    c.x[1] = a.x[1] + b.x[1];
+//    return c;
+//}
+//
+///*
+// * Computes a vector sum of points provided in pts and stores them in avgPoint.
+// *
+// * @param pts Array of points (device memory).
+// * @param npts Number of points in pts (device memory).
+// * @param avgPoint Storage for average point (host memory).
+// */
+//void sumPoints(Point* pts, int* npts, Point *avgPoint) {
+//    thrust::device_ptr<Point> dev_ptr(pts);
+//
+//    int N;
+//    cudaMemcpy(&N, npts, sizeof(int), cudaMemcpyDeviceToHost);
+//
+//    // Reduce all points into one sum
+//    Point result = thrust::reduce(dev_ptr, dev_ptr + N, Point{0.0f, 0.0f}, sumpts);
+//
+//    // Compute average (on host)
+//    avgPoint->x[0] = result.x[0] / N;
+//    avgPoint->x[1] = result.x[1] / N;
+//
+//}
+
+
+
 /*
  * Computes the maximum distance bewteen two points in the array pts and stores this value in largest_dist.
  */
@@ -453,13 +486,7 @@ __global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist) {
 	float dist; 
 	float local_largest_dist = 0;
 
-	//int count = ((*npts)*((*npts) - 1)) / 2; 
-	//if (idx < count) {
 	if (idx < (*npts)) {
-		// conventient maths yoinked from a juila stack exchange
-//		i = (int)((2*(*npts) - 1 - sqrtf((2*(*npts) - 1) * (2*(*npts) - 1) - 8*idx)) / 2);
-//		j = idx - (i*(2*(*npts) - i - 1) / 2) + i + 1;
-	
 		int i = idx;
 		for (int j=0; j<(*npts); j++) {
 
@@ -474,6 +501,33 @@ __global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist) {
 
 	atomicMaxFloat(largest_dist, local_largest_dist); 
 }
+
+//
+///*
+// * Computes the maximum distance bewteen two points in the array pts and stores this value in largest_dist.
+// */
+//__global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist) {
+//	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+//	float dist; 
+//	float local_largest_dist = 0;
+//	int i, j;
+//
+//	int count = ((*npts)*((*npts) - 1)) / 2; 
+//	if (idx < count) {
+//		// conventient maths yoinked from a juila stack exchange
+//		i = (int)((2*(*npts) - 1 - sqrtf((2*(*npts) - 1) * (2*(*npts) - 1) - 8*idx)) / 2);
+//		j = idx - (i*(2*(*npts) - i - 1) / 2) + i + 1;
+//	
+//		dist = sqrtf( (pts[i].x[0] - pts[j].x[0])*(pts[i].x[0] - pts[j].x[0]) +
+//					  (pts[i].x[1] - pts[j].x[1])*(pts[i].x[1] - pts[j].x[1]));
+//
+//		if (dist > (local_largest_dist)) {
+//			local_largest_dist = dist; 
+//		}
+//	}
+//
+//	atomicMaxFloat(largest_dist, local_largest_dist); 
+//}
 
 __host__ __device__ void writeTri(Tri* tri, int* p, int* n, int* o) {
 	for (int i=0; i<3; i++) {
@@ -1535,7 +1589,7 @@ __global__ void delaunayCheckKernel(Tri* triList, int* nTri, Point* pts, int* nE
 				flip = flip && (a == min(a, b));
 				
 				edges_to_flip += flip;
-				if (flip) { printf("in tri: %d, edge: %d needs to flip\n", idx, edge); }
+				//if (flip) { printf("in tri: %d, edge: %d needs to flip\n", idx, edge); }
 			}
 		}
 
@@ -1796,9 +1850,9 @@ void Delaunay::saveToFile(bool end) {
 											 pts[triList[a].p[2      ]] ));
 
 					// if one of the edges should be flipped print it
-					if (flip) {
-						printf("tri: %d should have edge: %d flipped\n", a, e);
-					}
+//					if (flip) {
+//						printf("tri: %d should have edge: %d flipped\n", a, e);
+//					}
 				}
 			}
 
