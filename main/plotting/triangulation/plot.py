@@ -175,6 +175,7 @@ with open("tri.txt", "r") as data:
 		if only_save_plot:
 			print("[SAVING PLOT]")
 			plt.axis("off")
+			plt.title("")
 			plt.savefig(savefile_name, dpi=max(300, int(num_pts)))
 			run = False
 		else:
