@@ -8,8 +8,8 @@ STEP=100
 MAXS=1 # max seeds
 NDISTRIBITIONS=4
 
-./makedataCPU.sh $STARTN $MAXN $STEP $MAXS $NDISTRIBITIONS
 ./makedataGPU.sh $STARTN $MAXN $STEP $MAXS $NDISTRIBITIONS
+./makedataCPU.sh $STARTN $MAXN $STEP $MAXS $NDISTRIBITIONS
 
 cd "${0%/*}" || exit 1 
 pwd

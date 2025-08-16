@@ -50,7 +50,7 @@ struct Delaunay {
 
 	int iter = 0;
 	bool verbose = false; // gives detail info to std out about state of the triangulation
-	bool saveHistory = false; 
+	bool saveHistory = true; 
 	bool info = true;
 	bool saveCSV = true;
 
@@ -103,7 +103,8 @@ __host__ __device__ void writeTri(Tri* tri, int* p, int* n, int* o);
 /* INIT */
 __global__ void sumPoints(Point* pts, int* npts, Point* avgPoint);
 //void sumPoints(Point* pts, int* npts, Point* avgPoint);
-__global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist);
+void CalcAvgPoint(Point& avgPoint, Point* pts_d, int* npts);
+__global__ void computeMaxDistPts(Point* pts, int* npts, REAL* largest_dist);
 
 /* PREP FOR INSERT */
 __global__ void resetInsertPtInTris(Tri* triList, int* nTriMax);

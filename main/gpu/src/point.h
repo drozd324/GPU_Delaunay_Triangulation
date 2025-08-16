@@ -8,13 +8,13 @@
  * Basic 2d point stucture. 
  */
 struct Point {
-	float x[2];
+	REAL x[2];
 };
 
-//__host__ __device__ inline float dist(Point a, Point b);
+//__host__ __device__ inline REAL dist(Point a, Point b);
 
 
-__host__ __device__ inline float dist(Point a, Point b) {
+__host__ __device__ inline REAL dist(Point a, Point b) {
 	return sqrtf( (a.x[0] - b.x[0])*(a.x[0] - b.x[0])
 			    + (a.x[1] - b.x[1])*(a.x[1] - b.x[1]) );
 }

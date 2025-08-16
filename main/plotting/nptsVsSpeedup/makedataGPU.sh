@@ -6,7 +6,7 @@ cd "${0%/*}" || exit 1  # Run from script's directory
 GPUDIR="../../gpu"
 cd "$GPUDIR" # need to run gpu code in this directory
 
-VOID=make 
+make 
 
 STARTN=$1
 MAXN=$2 # max num of points
@@ -24,8 +24,8 @@ PLOTDATA="../plotting/nptsVsSpeedup/dataGPU.csv"
 > "$PLOTDATA"
 
 #"$STZ" "$EXEDIR" -n "$STARTN" -s 0 -d 0 -t "$NTPB"
-echo "$EXEDIR" -n "$STARTN" -s 0 -d 0 -t "$NTPB"
-RUN=$( { "$EXEDIR" -n "$STARTN" -s 0 -d 0 -t "$NTPB"; } )
+echo "$EXEDIR" -n "$STARTN"
+RUN=$( { "$EXEDIR" -n "$STARTN"; } )
 HEAD=$(head -n 1 "$DATADIR")
 echo "$HEAD" >> "$PLOTDATA"
 

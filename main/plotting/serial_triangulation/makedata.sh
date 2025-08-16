@@ -3,7 +3,7 @@ cd "${0%/*}" || exit 1  # Run from script's directory
 CPUDIR="../../serialIncPtInsertion"
 cd "$CPUDIR" # need to run gpu code in this directory
 
-VOID=make 
+make 
 
 N=1000 # max num of points
 SEED=69420

@@ -5,6 +5,7 @@
 #include "delaunay.h"
 #include "point.h"
 #include "ran.h"
+#include "types.h"
 
 int main(int argc, char *argv[]) {
   
@@ -35,16 +36,19 @@ int main(int argc, char *argv[]) {
 
 	Ran ran(seed);
 	switch (distribution) {
-		       case 0:
+		case 0:
 			for (int i=0; i<n; ++i) {
-				points[i].x[0] = ran.doub();
-				points[i].x[1] = ran.doub();
+				REAL x, y;
+				ran.disk(x, y, 1); // uniform
+
+				points[i].x[0] = x;
+				points[i].x[1] = y;
 			}
 
 		break; case 1:
 			for (int i=0; i<n; ++i) {
-				float x, y;
-				ran.disk(x, y);
+				REAL x, y;
+				ran.disk(x, y, 0); // more near center
 
 				points[i].x[0] = x;
 				points[i].x[1] = y;
@@ -52,8 +56,8 @@ int main(int argc, char *argv[]) {
 
 		break; case 2:
 			for (int i=0; i<n; ++i) {
-				float x, y;
-				ran.proj_sphere(x, y);
+				REAL x, y;
+				ran.disk(x, y, 2); // more near border
 
 				points[i].x[0] = x;
 				points[i].x[1] = y;
@@ -61,8 +65,8 @@ int main(int argc, char *argv[]) {
 
 		break; case 3:
 			for (int i=0; i<n; ++i) {
-				float x, y;
-				ran.gaussian(x, y);
+				REAL x, y;
+				ran.gaussian(x, y); // 2d gaussian
 
 				points[i].x[0] = x;
 				points[i].x[1] = y;

@@ -53,6 +53,7 @@ void Delaunay::compute() {
 			printf("    time: %f\n", insertTime);
 		}
 
+		#ifndef NOFLIP
 		if (saveHistory == true) { saveToFile(); }
 
 		//flipTime = timeGPU([this] () { flipAfterInsert(); });
@@ -66,6 +67,7 @@ void Delaunay::compute() {
 			printf("    No. of configurations flipped: %d\n", numConfigsFlipped);
 			printf("    time: %f\n", flipTime);
 		}
+		#endif
 
 		//delaunayCheck();
 
@@ -88,15 +90,8 @@ void Delaunay::compute() {
 	clock_t t1 = clock() - t0;
 	totalRuntime = (float)t1 / CLOCKS_PER_SEC;
 
-
-	//cudaDeviceSynchronize();
 	if (delaunayCheck() > 0) {
-		if (info == true) {
-			printf("Attempting to perform additional flips\n");
-		}
-
-//		bruteFlip();
-//		delaunayCheck();
+		if (info == true) { printf("Attempting to perform additional flips\n"); }
 	}
 
 	//cudaDeviceSynchronize();
@@ -120,8 +115,8 @@ void Delaunay::compute() {
 
 	//if (saveHistory == true) {
 	if (saveCSV == true) {
-		fprintf(csvfile, "ntpb,npts,nTriMax,totalRuntime,totalCPUTime,totalGPUTime,prepForInsertTimeTot,insertTimeTot,flipTimeTot,updatePtsTimeTot,seed,distribution,\n");
-		fprintf(csvfile, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%d,%d,\n", 
+		fprintf(csvfile, "ntpb,npts,nTriMax,totalRuntime,totalCPUTime,totalGPUTime,prepForInsertTimeTot,insertTimeTot,flipTimeTot,updatePtsTimeTot,seed,distribution\n");
+		fprintf(csvfile, "%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%d,%d\n", 
 		  ntpb, (*npts), (*nTriMax), totalRuntime, totalCPUTime, totalGPUTime, prepForInsertTimeTot, insertTimeTot, flipTimeTot, updatePtsTimeTot, seed, distribution);
 	}
 }
@@ -234,7 +229,7 @@ void Delaunay::constructor(Point* points, int n) {
 		triList[i].flip = -1;
 		triList[i].insert = 1;
 		triList[i].insertPt = -1;
-		triList[i].insertPt_dist = (float)(unsigned long)-1;
+		triList[i].insertPt_dist = (REAL)(unsigned long)-1;
 		triList[i].flipThisIter = -1;
 		triList[i].flipUsage = 0;
 
@@ -287,7 +282,7 @@ void Delaunay::constructor(Point* points, int n) {
 	cudaMemcpy(ptsUninserted_d , ptsUninserted  , (*npts) * sizeof(int)     , cudaMemcpyHostToDevice);
 	cudaMemcpy(nptsUninserted_d, nptsUninserted ,           sizeof(int)     , cudaMemcpyHostToDevice);
 
-	//printf("Total global memory used: %f GB \n", ((float)totMemAlloc_onDev) * 1e-9 );
+	//printf("Total global memory used: %f GB \n", ((REAL)totMemAlloc_onDev) * 1e-9 );
 
 	// ============= INITIALIZE ============ 
 
@@ -346,6 +341,28 @@ Delaunay::~Delaunay() {
 	cudaFree(subtract_nTriToFlip_d);
 }
 
+/* ================================== CHECK POINT SET ======================================== */
+
+//void Delaunay::checkPoints() {
+//	int N;
+//
+//	N = *npts;
+//	dim3 threadsPerBlock1(ntpb);
+//	dim3 numBlocks1(N/threadsPerBlock1.x + (!(N % threadsPerBlock1.x) ? 0:1));
+//
+//	colinear<<<numBlocks1, threadsPerBlock1>>>(Point* pts, int* npts);
+//}
+//
+//__global__ void colinear(Point* pts, int* npts) {
+//	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+//
+//
+//}
+//
+//__global__ void cocircular(Point* pts, int* npts) {
+//	int idx = blockIdx.x * blockDim.x + threadIdx.x;
+//
+//}
 
 /* ================================== INIT SUPERTRIANGLE ======================================== */
 
@@ -364,25 +381,25 @@ void Delaunay::initSuperTri() {
 	cudaMalloc(&avgPoint_d, sizeof(Point));
 	cudaMemcpy(avgPoint_d, avgPoint, sizeof(Point), cudaMemcpyHostToDevice);
 
-	int valsToAdd = 2*(*npts); 
-	dim3 threadsPerBlock1(ntpb);
-	dim3 numBlocks1(valsToAdd/threadsPerBlock1.x + (!(valsToAdd % threadsPerBlock1.x) ? 0:1));
+//	int valsToAdd = 2*(*npts); 
+//	dim3 threadsPerBlock1(ntpb);
+//	dim3 numBlocks1(valsToAdd/threadsPerBlock1.x + (!(valsToAdd % threadsPerBlock1.x) ? 0:1));
+//
+//	sumPoints<<<numBlocks1, threadsPerBlock1>>>(pts_d, npts_d, avgPoint_d);
+//
+//	cudaMemcpy(avgPoint, avgPoint_d, sizeof(Point), cudaMemcpyDeviceToHost);
+//
+//	avgPoint->x[0] /= npts[0];
+//	avgPoint->x[1] /= npts[0];
 
-	sumPoints<<<numBlocks1, threadsPerBlock1>>>(pts_d, npts_d, avgPoint_d);
-
-	cudaMemcpy(avgPoint, avgPoint_d, sizeof(Point), cudaMemcpyDeviceToHost);
-
-	avgPoint->x[0] /= npts[0];
-	avgPoint->x[1] /= npts[0];
-
-//	sumPoints(pts_d, npts_d, avgPoint);
+	CalcAvgPoint(*avgPoint, pts_d, npts);
 
 	// computing the largest distance bewtween two points
-	float largest_dist[1] = {0};
-	float *largest_dist_d;
-	cudaMalloc(&largest_dist_d, sizeof(float));
-	cudaMemcpy(largest_dist_d, largest_dist, sizeof(float), cudaMemcpyHostToDevice);
-	//cudaMemset(largest_dist_d, 0, sizeof(float));
+	REAL largest_dist[1] = {0};
+	REAL *largest_dist_d;
+	cudaMalloc(&largest_dist_d, sizeof(REAL));
+	cudaMemcpy(largest_dist_d, largest_dist, sizeof(REAL), cudaMemcpyHostToDevice);
+	//cudaMemset(largest_dist_d, 0, sizeof(REAL));
 
 	// computing the max distance, need for loop here as the number of threads it spaws is insane with large n
 	//int ncomps = (*npts) * ((*npts) - 1) / 2; // total comparisons
@@ -391,13 +408,13 @@ void Delaunay::initSuperTri() {
 	dim3 numBlocks2((*npts)/threadsPerBlock2.x + (!((*npts) % threadsPerBlock2.x) ? 0:1));
 	computeMaxDistPts<<<numBlocks2, threadsPerBlock2>>>(pts_d, npts_d, largest_dist_d);
 
-	cudaMemcpy(largest_dist, largest_dist_d, sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy(largest_dist, largest_dist_d, sizeof(REAL), cudaMemcpyDeviceToHost);
 	//*largest_dist = 2;
 
 	// writing supertriangle points to pts
-	float center_x = avgPoint->x[0];
-	float center_y = avgPoint->x[1];
-	float radius = *largest_dist;
+	REAL center_x = avgPoint->x[0];
+	REAL center_y = avgPoint->x[1];
+	REAL radius = *largest_dist;
 
 	pts[(*npts)    ].x[0] = center_x + radius*1.73205;
 	pts[(*npts)    ].x[1] = center_y - radius; 
@@ -443,48 +460,44 @@ __global__ void sumPoints(Point* pts, int* npts, Point *avgPoint) {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < 2*(*npts)) {
-		atomicAddFloat(&(avgPoint->x[idx%2]), pts[idx/2].x[idx%2]);
+		#ifdef REALFLOAT
+			atomicAddFloat(&(avgPoint->x[idx%2]), pts[idx/2].x[idx%2]);
+		#endif
+		#ifdef REALDOUBLE
+			atomicAddDouble(&(avgPoint->x[idx%2]), pts[idx/2].x[idx%2]);
+		#endif
 	}
 }
 
-//__host__ __device__ Point sumpts(const Point &a, const Point &b) {
-//    Point c;
-//    c.x[0] = a.x[0] + b.x[0];
-//    c.x[1] = a.x[1] + b.x[1];
-//    return c;
-//}
-//
-///*
-// * Computes a vector sum of points provided in pts and stores them in avgPoint.
-// *
-// * @param pts Array of points (device memory).
-// * @param npts Number of points in pts (device memory).
-// * @param avgPoint Storage for average point (host memory).
-// */
-//void sumPoints(Point* pts, int* npts, Point *avgPoint) {
-//    thrust::device_ptr<Point> dev_ptr(pts);
-//
-//    int N;
-//    cudaMemcpy(&N, npts, sizeof(int), cudaMemcpyDeviceToHost);
-//
-//    // Reduce all points into one sum
-//    Point result = thrust::reduce(dev_ptr, dev_ptr + N, Point{0.0f, 0.0f}, sumpts);
-//
-//    // Compute average (on host)
-//    avgPoint->x[0] = result.x[0] / N;
-//    avgPoint->x[1] = result.x[1] / N;
-//
-//}
+struct PointSum {
+    __host__ __device__
+    Point operator()(const Point &a, const Point &b) const {
+        Point res;
+        res.x[0] = a.x[0] + b.x[0];
+        res.x[1] = a.x[1] + b.x[1];
+        return res;
+    }
+};
 
+void CalcAvgPoint(Point& avgPoint, Point* pts_d, int* npts) {
+    int N = (*npts);
+
+    thrust::device_ptr<Point> thrust_pts(pts_d);
+
+    Point result = thrust::reduce(thrust_pts, thrust_pts + N, avgPoint, PointSum());
+
+	avgPoint.x[0] = avgPoint.x[0] / N;  
+	avgPoint.x[1] = avgPoint.x[1] / N;  
+}
 
 
 /*
  * Computes the maximum distance bewteen two points in the array pts and stores this value in largest_dist.
  */
-__global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist) {
+__global__ void computeMaxDistPts(Point* pts, int* npts, REAL* largest_dist) {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-	float dist; 
-	float local_largest_dist = 0;
+	REAL dist; 
+	REAL local_largest_dist = 0;
 
 	if (idx < (*npts)) {
 		int i = idx;
@@ -499,17 +512,22 @@ __global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist) {
 		}
 	}
 
-	atomicMaxFloat(largest_dist, local_largest_dist); 
+	#ifdef REALFLOAT
+		atomicMaxFloat(largest_dist, local_largest_dist); 
+	#endif
+	#ifdef REALDOUBLE
+		atomicMaxDouble(largest_dist, local_largest_dist); 
+	#endif
 }
 
 //
 ///*
 // * Computes the maximum distance bewteen two points in the array pts and stores this value in largest_dist.
 // */
-//__global__ void computeMaxDistPts(Point* pts, int* npts, float* largest_dist) {
+//__global__ void computeMaxDistPts(Point* pts, int* npts, REAL* largest_dist) {
 //	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-//	float dist; 
-//	float local_largest_dist = 0;
+//	REAL dist; 
+//	REAL local_largest_dist = 0;
 //	int i, j;
 //
 //	int count = ((*npts)*((*npts) - 1)) / 2; 
@@ -629,9 +647,14 @@ __global__ void setInsertPtsDistance(Point* pts, int* npts, Tri* triList, int* p
 		Point circumcenter;
 		circumcircle_center(pts[triList[idxTri].p[0]], pts[triList[idxTri].p[1]], pts[triList[idxTri].p[2]], &circumcenter);
 
-		//float ptDist = dist(circumcenter , pts[idx]); 
-		float ptDist = dist(circumcenter , pts[ptIdx]); 
-		atomicMinFloat(&(triList[idxTri].insertPt_dist), ptDist);
+		//REAL ptDist = dist(circumcenter , pts[idx]); 
+		REAL ptDist = dist(circumcenter , pts[ptIdx]); 
+		#ifdef REALFLOAT
+			atomicMinFloat(&(triList[idxTri].insertPt_dist), ptDist);
+		#endif
+		#ifdef REALDOUBLE
+			atomicMinDouble(&(triList[idxTri].insertPt_dist), ptDist);
+		#endif
 	}
 }
 
@@ -650,7 +673,7 @@ __global__ void setInsertPts(Point* pts, int* npts, Tri* triList, int* ptToTri, 
 		Point circumcenter;
 		circumcircle_center(pts[triList[idxTri].p[0]], pts[triList[idxTri].p[1]], pts[triList[idxTri].p[2]], &circumcenter);
 
-		float ptDist = dist(circumcenter, pts[ptIdx]); 
+		REAL ptDist = dist(circumcenter, pts[ptIdx]); 
 		if (ptDist == triList[idxTri].insertPt_dist) {
 			atomicExch(&(triList[idxTri].insertPt), ptIdx);
 		}
@@ -684,7 +707,7 @@ __global__ void resetBiggestDistInTris(Tri* triList, int* nTriMax) {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (idx < (*nTriMax)) {
-		triList[idx].insertPt_dist = (float)(unsigned long)-1;
+		triList[idx].insertPt_dist = (REAL)(unsigned long)-1;
 	}
 }
 
@@ -708,8 +731,8 @@ void Delaunay::insert() {
 	updateNbrsAfterIsertKernel<<<numBlocks, threadsPerBlock>>>(triList_d, triWithInsert_d, nTriWithInsert_d, nTri_d, triList_prev_d);
  
 	// update number of triangles in triList
-	arrayAddVal<<<1, 1>>>(nTri_d        , nTriWithInsert_d, 2, 1); 
-	arrayAddVal<<<1, 1>>>(nptsInserted_d, nTriWithInsert_d, 1, 1); 
+	arrayAddVal<<<1, 1>>>(nTri_d        , nTriWithInsert_d, 2, 1);
+	arrayAddVal<<<1, 1>>>(nptsInserted_d, nTriWithInsert_d, 1, 1);
 	
 	// reset triWithInsert_d for next iteraiton
 	cudaMemset(triWithInsert_d, -1, (*nTri) * sizeof(int));
@@ -850,10 +873,18 @@ __device__ void updateNbrsAfterIsert(int i, Tri* triList, int newTriIdx, Tri* tr
 void Delaunay::updatePointLocations() {
 	int N;
 
-	N = *npts;
+	cudaMemcpy(nptsUninserted, nptsUninserted_d, sizeof(int), cudaMemcpyDeviceToHost);
+	N = *nptsUninserted;
 	dim3 threadsPerBlock2(ntpb);
 	dim3 numBlocks2(N/threadsPerBlock2.x + (!(N % threadsPerBlock2.x) ? 0:1));
 	updatePointLocationsKernel<<<numBlocks2, threadsPerBlock2>>>(pts_d, npts_d, triList_d, nTri_d, ptToTri_d, ptsUninserted_d, nptsUninserted_d);
+
+//	cudaMemcpy(nTri, nTri_d, sizeof(int), cudaMemcpyDeviceToHost);
+//	cudaMemcpy(nptsUninserted, nptsUninserted_d, sizeof(int), cudaMemcpyDeviceToHost);
+//	N = (*nptsUninserted) * (*nTri);
+//	dim3 threadsPerBlock2(ntpb);
+//	dim3 numBlocks2(N/threadsPerBlock2.x + (!(N % threadsPerBlock2.x) ? 0:1));
+//	updatePointLocationsKernel<<<numBlocks2, threadsPerBlock2>>>(pts_d, npts_d, triList_d, nTri_d, ptToTri_d, ptsUninserted_d, nptsUninserted_d);
 }
 
 
@@ -873,17 +904,86 @@ __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, 
 	// definitely can optimize this part, reduce thread divergence
 	if (idx < (*nptsUninserted)) {
 		int ptIdx = ptsUninserted[idx];
+		int local_t = 0;
+		int used = 0;
+		//int cont;
 
 		// definitely can optimize this
 		for (int t=0; t<(*nTri); ++t) { // for each triangle check if point is contained inside it
 			if (contains(t, ptIdx, triList, pts) == 1) {
-				//printf("TRI: %d contains POINT: %d\n", t, idx);
-				ptToTri[ptIdx] = t;
-				//break;
+				used++;
+				local_t = t;
 			}
+//			int cont = (contains(t, ptIdx, triList, pts) == 1);
+//			used += cont;
+//			local_t = local_t*(cont == 0) + t*(cont == 1);
+		}
+
+		if (used > 1) {
+			printf("POINT %d LIES IN MORE THAN 1 TRIANGLE\n", ptIdx);
+		}
+		if (used == 1) {
+			//atomicExch(&(ptToTri[ptIdx]), local_t);
+			ptToTri[ptIdx] = local_t;
 		}
 	}
 }
+
+//__global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri, int* ptsUninserted, int* nptsUninserted) {
+//	int idx = blockIdx.x*blockDim.x + threadIdx.x;
+//
+//	// definitely can optimize this part, reduce thread divergence
+//	if (idx < ((*nptsUninserted) * (*nTri))) {
+//		int ptIdx = ptsUninserted[idx % (*nTri)];
+//		int t = idx / (*nTri);
+//
+//		if (contains(t, ptIdx, triList, pts) == 1) {
+//			//atomicExch(&(ptToTri[ptIdx]), t);
+//			ptToTri[ptIdx] = t;
+//		}
+//	}
+//}
+
+//__global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri, int* ptsUninserted, int* nptsUninserted) {
+//	int idx = blockIdx.x*blockDim.x + threadIdx.x;
+//
+//	// definitely can optimize this part, reduce thread divergence
+//	if (idx < (*nptsUninserted)) {
+//		int ptIdx = ptsUninserted[idx];
+//		int loc_ptToTri;
+//
+//
+//		// definitely can optimize this
+//		for (int t=0; t<(*nTri); ++t) { // for each triangle check if point is contained inside it
+//			if (contains(t, ptIdx, triList, pts) == 1) {
+//				loc_ptToTri = t;
+//			}
+//		}
+//
+//		ptToTri[ptIdx] = loc_ptToTri;
+//	}
+//}
+
+//__global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri, int* ptsUninserted, int* nptsUninserted) {
+//	int idx = blockIdx.x*blockDim.x + threadIdx.x;
+//
+//	// definitely can optimize this part, reduce thread divergence
+//	if (idx < (*nptsUninserted)) {
+//		int ptIdx = ptsUninserted[idx];
+//		int loc_ptToTri = 0;
+//		//ptToTri[ptIdx] = 0;
+//
+//		// definitely can optimize this
+//		for (int t=0; t<(*nTri); ++t) { // for each triangle check if point is contained inside it
+//			int in = (contains(t, ptIdx, triList, pts) == 1);
+//
+//			//ptToTri[ptIdx] = max(ptToTri[ptIdx] = 0, in*t);
+//			loc_ptToTri = max(loc_ptToTri, in*t);
+//		}
+//
+//		ptToTri[ptIdx] = loc_ptToTri;
+//	}
+//}
 
 /*
  * Checks if a triangle with index 't' contains point with index 'r'. Returns 1 if the
@@ -891,7 +991,7 @@ __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, 
  */
 __device__ int contains(int t, int r, Tri* triList, Point* pts) {
 
-	float area;
+	REAL area;
 	int i, j;
 	int not_contained = 0;
 

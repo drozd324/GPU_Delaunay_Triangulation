@@ -3,12 +3,12 @@ cd "${0%/*}" || exit 1  # Run from script's directory
 GPUDIR="../../gpu"
 cd "$GPUDIR" # need to run gpu code in this directory
 
-VOID=make 
+make 
 
 N=5000 # max num of points
 MAXS=1 # max seeds
 MINTPB=32
-MAXTPB=800
+MAXTPB=700
 #MAXTPB=1024
 
 NDISTRIBITIONS=4

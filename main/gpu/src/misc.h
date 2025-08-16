@@ -1,6 +1,7 @@
 #ifndef MISC_H
 #define MISC_H
 
+#include "types.h"
 #include <thrust/sort.h>
 #include <thrust/device_ptr.h>
 

@@ -30,3 +30,36 @@ __device__ float atomicMinFloat(float* address, float val) {
 	return __int_as_float(old);
 }
 
+
+
+
+__device__ double atomicAddDouble(double* address, double val) {
+	unsigned long long int* address_as_ull = (unsigned long long int*)address;
+	unsigned long long int old = *address_as_ull, assumed;
+	do {
+		assumed = old;
+		old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
+	} while (assumed != old);
+	return __longlong_as_double(old);
+}
+
+__device__ double atomicMaxDouble(double* address, double val) {
+	unsigned long long int* address_as_ull = (unsigned long long int*)address;
+	unsigned long long int old = *address_as_ull, assumed;
+	do {
+		assumed = old;
+		old = atomicCAS(address_as_ull, assumed,__double_as_longlong(max(val,__longlong_as_double(assumed))));
+	} while (assumed != old);
+	return __longlong_as_double(old);
+}
+
+__device__ double atomicMinDouble(double* address, double val) {
+	unsigned long long int* address_as_ull = (unsigned long long int*)address;
+	unsigned long long int old = *address_as_ull, assumed;
+	do {
+		assumed = old;
+		old = atomicCAS(address_as_ull, assumed,__double_as_longlong(min(val,__longlong_as_double(assumed))));
+	} while (assumed != old);
+	return __longlong_as_double(old);
+}
+
