@@ -16,21 +16,94 @@
 
 //==================================== DOC START =========================================
 
-#align(center, text(17pt)[
+// Set thesis metadata
+#let thesis = "MSc in High-performance Computing"
+#let school = "School of Mathematics"
+
+#let signaturefile = "./images/mysignature.png" // path to signature file
+
+#align(center, [
+	#image("./images/Trinity_Main_Logo.jpg", width: 90%)
+])
+
+// Title page
+#align(center, text(22pt)[
   *Delaunay Triangulations on the GPU*
 ])
 
-#align(center)[
-    Patryk Drozd\
-    Trinity College Dublin\
-    #link("mailto:drozdp@tcd.ie")
-]
+#align(center, text(15pt)[
+	In partial fulfillment of MSc in High-performance Computing in the School of Mathematics
+])
 
+//#align(center)[
+//    Patryk Drozd\
+//    Trinity College Dublin\
+//    #link("mailto:drozdp@tcd.ie")
+//]
 
-#figure(
-	image("main/plotting/serial_triangulation/tri1000.png", width: 100%),
-	//caption: [I like this font],
+#align(center, [
+	#image("main/plotting/triangulation_grid/tri1000_2.png", width: 100%)
+])
+	
+#table(
+	columns: 2,
+	stroke: none,
+	
+	[Name:], [Patryk Drozd],
+	[Student ID:], [24333177],
+	[Supervision:], [Jose Refojo],
+
+	[Date of Submission:], [25/09/2025],
+	[Project Code:], [https://github.com/drozd324/GPU_Delaunay_Triangulation],
 )
+
+
+// Plagiarism page
+#pagebreak()
+
+#align(center, [
+	#image("./images/Trinity_Main_Logo.jpg", width: 90%)
+])
+
+// Title page
+#align(center, text(20pt)[
+	*Declaration concerning plagiarism*
+])
+
+#align(center, [
+
+	I hereby declare that this thesis is my own work where appropriate
+	citations have been given and that it has not been submitted as an
+	exercise for a degree at this or any other university.
+
+	I have read and I understand the plagiarism provisions in the General Regulations
+	of the University Calendar for the current year, found at #link("http:www.tcd.ie/calendar").
+])
+
+#table(
+	columns: 2,
+	stroke: none,
+	
+	[Name:], [Patryk Drozd],
+	[Student ID:], [24333177],
+	[Signature:], [#image(signaturefile, width: 50%)],
+
+	[Date:], [25/09/2025],
+)
+
+
+
+#pagebreak()
+
+// Acknowledgements section
+= Acknowledgements
+Write acknowledgements to your supervisor, classmates, friends, family, partner… anyone who supported you during the MSc.
+#lorem(2)
+
+
+
+
+
 
 #pagebreak()
 
@@ -770,108 +843,153 @@
 
 === Analysis
 
-#figure(
-	image("main/plotting/blocksizeVsTime/blocksizeVsTime.png", width: 80%),
-	caption: [Showing the time it took for the GPU DT code to run with $10000$ points while	
-			  varying the number of threads per block also know as the block size. This is a rather
-			  naiive way of finding the optimal number of threads per block as a better analysis *TODO* 
-			  would involve logically similar block of code to have their own block size. Currently
-			  the block size doesn't rationally affect the runtime.
-	],
-) <blocksizeVsTime_plt>
+#pagebreak()
 
-//#figure(
-//	image("main/plotting/nflipsVsIter/nflipsVsIter.png", width: 70%),
-//	//caption: [I like this font],
-//)
-//
-//#figure(
-//	image("main/plotting/ninstertVsIter/ninstertVsIter.png", width: 70%),
-//	//caption: [I like this font],
-//)
-//
-
-#figure(
-	image("main/plotting/nptsVsTime/nptsVsTime.png", width: 80%),
-	caption: [Plot showing the amount of time it took the GPU code to run with respect
-			  to the number of points in the triangulation.],
-) <nptsVsTime_plt>
-
-
-#figure(
-	image("main/plotting/timeDistrib/timeDistrib.png", width: 80%),
-	caption: [Showing the proportions of time each function took as a percentage of the 
-			  total runtime.]
-) <timeDistrib_plt>
-
-
-#figure(
-	image("main/plotting/nptsVsSpeedup/nptsVsSpeedup.png", width: 80%),
-	caption: [Plot showing speedup of the GPU code with respect to the serial implemenation
-			  of the incremental point insertion @ripiflip_alg. The speedup here is comparing
-			  the runtime of the serial code with for a given number of points and with the
-			  runtime of the GPU code with the same number of points. Both implementaions 
-			  are run with single precision floating point arithmetic. Speedup here is defined
-			  as the ratio $"timeCPU" / "timeGPU"$.
-	],
-) <nptsVsSpeedup_plt>
-
-
-//#figure(
-//	image("main/plotting/triangulation/triangulation.png", width: 70%),
-//	//caption: [I like this font],
-//)
 
 	#subpar.grid(
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Uniform distribution of unit square.
-		]), <a0>,
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Uniform distribution of unit square.
-		]), <a1>,
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Uniform distribution of unit square.
-		]), <a2>,
+		figure( image("main/plotting/triangulation_history/DT_iter0.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter2.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter4.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter6.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter8.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter10.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter12.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter14.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter16.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter18.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter20.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter22.png", width: 135%), caption: [] ),
 
-
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Uniform distribution of unit Disk.
-		]), <b0>,
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Uniform distribution of unit Disk.
-		]), <b1>,
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Uniform distribution of unit Disk.
-		]), <b2>,
-
-
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Unit Sphere projected onto unit disk.
-		]), <c0>,
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Unit Sphere projected onto unit disk.
-		]), <c1>,
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Unit Sphere projected onto unit disk.
-		]), <c2>,
-
-
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Gaussian distribution with mean 0 and variance 1.
-		]), <d0>,
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Gaussian distribution with mean 0 and variance 1.
-		]), <d1>,
-		figure( image("main/plotting/serial_triangulation/tri1000.png"), caption: [
-			Gaussian distribution with mean 0 and variance 1.
-		]), <d2>,
-
-		rows: (1fr, 1fr, 1fr, 1fr),
-		columns: (1fr, 1fr, 1fr),
-		caption: [Visualisations of Delaunay triangluations of various point distributions. ],
+		//rows: (1fr, 1fr, 1fr, 1fr),
+		rows: (auto, auto, auto),
+		columns: (auto, auto, auto, auto),
+		//columns: (1fr, 1fr, 1fr),
+		caption: [This figure shows the history of the DT algorithm. The algorithm proceeds in the
+				  order of the label in alphabetical order.
+		],
 		align: bottom,
-		label: <triangulations>,
+		label: <triangulation_history>,
 	)
+
+
+	#subpar.grid(
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter1.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter2.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter3.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter4.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter5.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter6.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter7.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter8.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter9.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter10.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter11.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter12.png", width: 135%), caption: [] ),
+
+		//rows: (1fr, 1fr, 1fr, 1fr),
+		rows: (auto, auto, auto),
+		columns: (auto, auto, auto, auto),
+		//columns: (1fr, 1fr, 1fr),
+		caption: [This figure shows the history of the only the point insertion algorithm. 
+				  The algorithm proceeds in the order of the label in alphabetical order.
+		],
+		align: bottom,
+		label: <triangulation_onlyptins>,
+	)
+
+	#figure(
+		image("main/plotting/blocksizeVsTime/blocksizeVsTime.png", width: 80%),
+		caption: [Showing the time it took for the GPU DT code to run with $10000$ points while	
+				  varying the number of threads per block also know as the block size. This is a rather
+				  naiive way of finding the optimal number of threads per block as a better analysis *TODO* 
+				  would involve logically similar block of code to have their own block size. Currently
+				  the block size doesn't rationally affect the runtime.
+		],
+	) <blocksizeVsTime_plt>
+
+	//#figure(
+	//	image("main/plotting/nflipsVsIter/nflipsVsIter.png", width: 70%),
+	//	//caption: [I like this font],
+	//)
+	//
+	//#figure(
+	//	image("main/plotting/ninstertVsIter/ninstertVsIter.png", width: 70%),
+	//	//caption: [I like this font],
+	//)
+	//
+
+	#figure(
+		image("main/plotting/nptsVsTime/nptsVsTime.png", width: 80%),
+		caption: [Plot showing the amount of time it took the GPU code to run with respect
+				  to the number of points in the triangulation.],
+	) <nptsVsTime_plt>
+
+
+	#figure(
+		image("main/plotting/timeDistrib/timeDistrib.png", width: 80%),
+		caption: [Showing the proportions of time each function took as a percentage of the 
+				  total runtime.]
+	) <timeDistrib_plt>
+
+
+
+	#figure(
+		image("main/plotting/nptsVsSpeedup/nptsVsSpeedup.png", width: 80%),
+		caption: [Plot showing speedup of the GPU code with respect to the serial implemenation
+				  of the incremental point insertion @ripiflip_alg. The speedup here is comparing
+				  the runtime of the serial code with for a given number of points and with the
+				  runtime of the GPU code with the same number of points. Both implementaions 
+				  are run with single precision floating point arithmetic. Speedup here is defined
+				  as the ratio $"timeCPU" / "timeGPU"$.
+		],
+	) <nptsVsSpeedup_plt>
+
+
+	#figure(
+		image("main/plotting/floatVsDouble/floatVsDouble.png", width: 80%),
+		caption: [floatVsDouble]
+	) <floatVsDouble_plt>
+
+
+
+
+	//#figure(
+	//	image("main/plotting/triangulation/triangulation.png", width: 70%),
+	//	//caption: [I like this font],
+	//)
+	#pagebreak()
+		#subpar.grid(
+			figure( image("main/plotting/triangulation_grid/tri100_0.png", width: 135%) ),
+			figure( image("main/plotting/triangulation_grid/tri500_0.png", width: 135%) ),
+			figure( image("main/plotting/triangulation_grid/tri1000_0.png", width: 135%)),
+
+			figure( image("main/plotting/triangulation_grid/tri100_1.png", width: 135%) ),
+			figure( image("main/plotting/triangulation_grid/tri500_1.png", width: 135%) ),
+			figure( image("main/plotting/triangulation_grid/tri1000_1.png", width: 135%)),
+
+			figure( image("main/plotting/triangulation_grid/tri100_2.png", width: 135%) ),
+			figure( image("main/plotting/triangulation_grid/tri500_2.png", width: 135%) ),
+			figure( image("main/plotting/triangulation_grid/tri1000_2.png", width: 135%)),
+
+			figure( image("main/plotting/triangulation_grid/tri100_3.png", width: 135%) ),
+			figure( image("main/plotting/triangulation_grid/tri500_3.png", width: 135%) ),
+			figure( image("main/plotting/triangulation_grid/tri1000_3.png", width: 135%)),
+
+			//rows: (1fr, 1fr, 1fr, 1fr),
+			rows: (auto, auto, auto, auto),
+			columns: (auto, auto, auto),
+			//columns: (1fr, 1fr, 1fr),
+			caption: [Visualisations of Delaunay triangluations of various point distributions. 
+					  The grid should be read as follows. Along the horizontal the number of points
+					  involved increases gradually and with $100$, $500$, $1000$ point in the the	
+					  first second and third column respectively. In each row we draw from different 
+					  point distributions. The rows draw from a uniform unit sqare distribution, uniform
+					  disk, surface of a sphere projected onto the plane and gaussian distribution with
+					  mean $0$ and variance $1$, in rows 1, 2, 3 and 4 respectively.
+			],
+			align: bottom,
+			label: <triangulations>,
+		)
 
 	
 	
@@ -933,5 +1051,12 @@
 		```
 	) <quad_sruct>
 
+== Profiling Analysis
+== Comment on the Floating point arithmetic and how the maths is funny sometimes
+== Strong and weak scaling on GPUs?
+
+
 #pagebreak()
+
+
 #bibliography("references.bib")
