@@ -7,7 +7,7 @@ make
 
 N=10000 # num of points
 MAXS=1 # max seeds
-NDISTRIBITIONS=2
+NDISTRIBITIONS=4
 NTPB=128
 
 #STZ="/usr/local/cuda-12.8/bin/compute-sanitizer"

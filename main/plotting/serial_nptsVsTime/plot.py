@@ -6,8 +6,8 @@ df = pd.read_csv("./data.csv")
 
 avg_df = df.groupby('seed')['totalRuntime'].mean().reset_index()
 
-#dist_names = ["uniform square", "uniform disk", "gaussian"]
-dist_names = ["uniform square", "uniform disk"]
+colors = ["tab:blue", "tab:orange", "tab:green", "tab:red"]
+dist_names = ["uniform", "clustered center", "clustered boundary", "gaussian"]
 for i, dist in enumerate(dist_names):
 	df_distrib = df[ df["distribution"] == i ].groupby('npts')['totalRuntime'].mean().reset_index()
 	
