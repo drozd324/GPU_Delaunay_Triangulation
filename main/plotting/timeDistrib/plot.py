@@ -14,7 +14,7 @@ avg_df = df.groupby("distribution")[metrics].mean()
 normalized = avg_df.div(avg_df.sum(axis=1), axis=0)
 
 # Labels and styling
-dist_names = ["uniform", "clustered center", "clustered boundary", "gaussian"]
+distributions = ["uniform", "clustered center", "clustered boundary", "gaussian"]
 colors = ['forestgreen', 'gold', 'cornflowerblue', 'salmon']
 hatches = ['..', '//', '\\\\', 'xx']
 labels = ["prepForInsert", "insert", "flip", "updatePts"]
