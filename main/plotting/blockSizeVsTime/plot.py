@@ -6,12 +6,10 @@ df = pd.read_csv("./data.csv")
 
 avg_df = df.groupby('ntpb')['totalRuntime'].mean().reset_index()
 
-dist_names = ["uniform square", "uniform disk"]#, "gaussian"]
+dist_names = ["uniform", "clustered center", "clustered boudary", "gaussian"]
 for i, dist in enumerate(dist_names):
 	df_distrib = df[ df["distribution"] == i ].groupby('ntpb')['totalRuntime'].mean().reset_index()
 	
-#	ntpb = list(df_distrib.iloc[:, 0])
-#	time = list(df_distrib.iloc[:, 1])
 	ntpb = list(df_distrib["ntpb"])
 	time = list(df_distrib["totalRuntime"])
 

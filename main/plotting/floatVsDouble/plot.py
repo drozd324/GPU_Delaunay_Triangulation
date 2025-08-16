@@ -5,11 +5,7 @@ import pandas as pd
 dfFloat = pd.read_csv("./dataFloat.csv")
 dfDouble = pd.read_csv("./dataDouble.csv")
 
-#avg_dfDouble = dfDouble.groupby('seed')['totalRuntime'].mean().reset_index()
-#avg_dfFloat = dfFloat.groupby('seed')['totalRuntime'].mean().reset_index()
-
-#dist_names = ["uniform square", "uniform disk", "gaussian"]
-dist_names = ["uniform square", "uniform disk"]
+dist_names = ["uniform", "clustered center", "clustered boudary", "gaussian"]
 for i, dist in enumerate(dist_names):
 	dfDouble_distrib = dfDouble[ dfDouble["distribution"] == i ].groupby('npts')['totalRuntime'].mean().reset_index()
 	dfFloat_distrib = dfFloat[ dfFloat["distribution"] == i ].groupby('npts')['totalRuntime'].mean().reset_index()

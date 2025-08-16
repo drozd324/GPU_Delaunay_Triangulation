@@ -8,8 +8,7 @@ dfGPU = pd.read_csv("./dataGPU.csv")
 #avg_dfGPU = dfGPU.groupby('seed')['totalRuntime'].mean().reset_index()
 #avg_dfCPU = dfCPU.groupby('seed')['totalRuntime'].mean().reset_index()
 
-#dist_names = ["uniform square", "uniform disk", "gaussian"]
-dist_names = ["uniform square", "uniform disk"]
+dist_names = ["uniform", "clustered center", "clustered boudary", "gaussian"]
 for i, dist in enumerate(dist_names):
 	dfGPU_distrib = dfGPU[ dfGPU["distribution"] == i ].groupby('npts')['totalRuntime'].mean().reset_index()
 	dfCPU_distrib = dfCPU[ dfCPU["distribution"] == i ].groupby('npts')['totalRuntime'].mean().reset_index()

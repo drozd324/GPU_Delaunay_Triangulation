@@ -67,7 +67,8 @@ with open("tri.txt", "r") as data:
 			read_line(data)
 
 	# interactive plot loop
-	iter_idx = len(iter_line_num) - 1 if len(iter_line_num) > 100 else 0
+	#iter_idx = len(iter_line_num) - 1 if len(iter_line_num) > 100 else 0
+	iter_idx = len(iter_line_num) - 1 
 	run = True
 	show_nbr = -1
 	show_edges_to_flip = False 

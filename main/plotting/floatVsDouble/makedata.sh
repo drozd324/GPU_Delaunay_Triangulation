@@ -9,7 +9,7 @@ SIZESTEP=100
 
 MAXS=1
 
-NDISTRIBITIONS=1
+NDISTRIBITIONS=4
 
 NTPB=128 # number of threads per block
 
