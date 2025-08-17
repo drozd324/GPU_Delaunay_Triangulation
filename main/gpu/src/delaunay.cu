@@ -56,9 +56,6 @@ void Delaunay::compute() {
 		#ifndef NOFLIP
 		if (saveHistory == true) { saveToFile(); }
 
-		//flipTime = timeGPU([this] () { flipAfterInsert(); });
-		//flipTime = timeGPU([this, &numConfigsFlipped] () { numConfigsFlipped = flipAfterInsert(); });
-		//flipTime = timeGPU([this] () { bruteFlip(); });
 		flipTime = timeGPU([this, &numConfigsFlipped] () { numConfigsFlipped = bruteFlip(); });
 		numConfigsFlippedTot += numConfigsFlipped;
 		if (verbose == true) printInfo();
@@ -68,8 +65,6 @@ void Delaunay::compute() {
 			printf("    time: %f\n", flipTime);
 		}
 		#endif
-
-		//delaunayCheck();
 
 		updatePtsTime = timeGPU([this] () { updatePointLocations(); });
 		if (verbose == true) printInfo();
@@ -94,7 +89,6 @@ void Delaunay::compute() {
 		if (info == true) { printf("Attempting to perform additional flips\n"); }
 	}
 
-	//cudaDeviceSynchronize();
 	if (info == true) {
 
 		printf("All time measured in seconds\n");
@@ -284,11 +278,8 @@ void Delaunay::constructor(Point* points, int n) {
 
 	//printf("Total global memory used: %f GB \n", ((REAL)totMemAlloc_onDev) * 1e-9 );
 
-	// ============= INITIALIZE ============ 
-
 	initSuperTri();
 
-    // save points data to trifile
 	fprintf(trifile, "%d\n", (*npts) + 3);
 	for (int i=0; i<(*npts) + 3; ++i) {
 		fprintf(trifile, "%f %f\n", pts[i].x[0], pts[i].x[1]);
@@ -297,7 +288,6 @@ void Delaunay::constructor(Point* points, int n) {
 
 	if (saveHistory == true) { saveToFile(); }
 
-	// ============= COMPUTE ============ 
 	compute();
 
 	saveToFile(true);
@@ -305,14 +295,10 @@ void Delaunay::constructor(Point* points, int n) {
 
 Delaunay::~Delaunay() {
 
-	//if (saveHistory == true) {
 	fclose(trifile);
 	fclose(csvfile);
 	fclose(insertedPerIterfile);
 	fclose(flipedPerIterfile); 
-	//}
-
-//	fclose(errorfile); 
 
 	cudaFree(pts_d);
 	cudaFree(npts_d);
@@ -341,31 +327,6 @@ Delaunay::~Delaunay() {
 	cudaFree(subtract_nTriToFlip_d);
 }
 
-/* ================================== CHECK POINT SET ======================================== */
-
-//void Delaunay::checkPoints() {
-//	int N;
-//
-//	N = *npts;
-//	dim3 threadsPerBlock1(ntpb);
-//	dim3 numBlocks1(N/threadsPerBlock1.x + (!(N % threadsPerBlock1.x) ? 0:1));
-//
-//	colinear<<<numBlocks1, threadsPerBlock1>>>(Point* pts, int* npts);
-//}
-//
-//__global__ void colinear(Point* pts, int* npts) {
-//	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//
-//}
-//
-//__global__ void cocircular(Point* pts, int* npts) {
-//	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-//
-//}
-
-/* ================================== INIT SUPERTRIANGLE ======================================== */
-
 /*
  * Function to initialize the super triangle containing all points which will be involved in the
  * final triangulation.
@@ -380,17 +341,6 @@ void Delaunay::initSuperTri() {
 	avgPoint->x[1] = 0;
 	cudaMalloc(&avgPoint_d, sizeof(Point));
 	cudaMemcpy(avgPoint_d, avgPoint, sizeof(Point), cudaMemcpyHostToDevice);
-
-//	int valsToAdd = 2*(*npts); 
-//	dim3 threadsPerBlock1(ntpb);
-//	dim3 numBlocks1(valsToAdd/threadsPerBlock1.x + (!(valsToAdd % threadsPerBlock1.x) ? 0:1));
-//
-//	sumPoints<<<numBlocks1, threadsPerBlock1>>>(pts_d, npts_d, avgPoint_d);
-//
-//	cudaMemcpy(avgPoint, avgPoint_d, sizeof(Point), cudaMemcpyDeviceToHost);
-//
-//	avgPoint->x[0] /= npts[0];
-//	avgPoint->x[1] /= npts[0];
 
 	CalcAvgPoint(*avgPoint, pts_d, npts);
 
@@ -448,27 +398,6 @@ void Delaunay::initSuperTri() {
 	(*nTri)++;
 	cudaMemcpy(nTri_d, nTri, sizeof(int), cudaMemcpyHostToDevice);
 }
-
-/*
- * Computes a vector sum of points provided in pts and stores them in avgPoint.
- *
- * @param pts Array of points.
- * @param npts Number of points in pts.
- * @param avgPoint storage to average points.
- */
-__global__ void sumPoints(Point* pts, int* npts, Point *avgPoint) {
-	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (idx < 2*(*npts)) {
-		#ifdef REALFLOAT
-			atomicAddFloat(&(avgPoint->x[idx%2]), pts[idx/2].x[idx%2]);
-		#endif
-		#ifdef REALDOUBLE
-			atomicAddDouble(&(avgPoint->x[idx%2]), pts[idx/2].x[idx%2]);
-		#endif
-	}
-}
-
 struct PointSum {
     __host__ __device__
     Point operator()(const Point &a, const Point &b) const {
@@ -479,6 +408,14 @@ struct PointSum {
     }
 };
 
+
+/*
+ * Calculated the average point of a set of points.
+ *
+ * @param avgPoint storage to average points.
+ * @param pts Array of points.
+ * @param npts Number of points in pts.
+ */
 void CalcAvgPoint(Point& avgPoint, Point* pts_d, int* npts) {
     int N = (*npts);
 
@@ -493,6 +430,10 @@ void CalcAvgPoint(Point& avgPoint, Point* pts_d, int* npts) {
 
 /*
  * Computes the maximum distance bewteen two points in the array pts and stores this value in largest_dist.
+ *
+ * @param pts Array of Point structs on the device
+ * @param npts lenght of pts array on device
+ * @param laegrest_dist Should be initialized to be 0, this is output of the programms containing the largest distance bewtween all points pts 
  */
 __global__ void computeMaxDistPts(Point* pts, int* npts, REAL* largest_dist) {
 	int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -519,33 +460,6 @@ __global__ void computeMaxDistPts(Point* pts, int* npts, REAL* largest_dist) {
 		atomicMaxDouble(largest_dist, local_largest_dist); 
 	#endif
 }
-
-//
-///*
-// * Computes the maximum distance bewteen two points in the array pts and stores this value in largest_dist.
-// */
-//__global__ void computeMaxDistPts(Point* pts, int* npts, REAL* largest_dist) {
-//	int idx = blockIdx.x * blockDim.x + threadIdx.x;
-//	REAL dist; 
-//	REAL local_largest_dist = 0;
-//	int i, j;
-//
-//	int count = ((*npts)*((*npts) - 1)) / 2; 
-//	if (idx < count) {
-//		// conventient maths yoinked from a juila stack exchange
-//		i = (int)((2*(*npts) - 1 - sqrtf((2*(*npts) - 1) * (2*(*npts) - 1) - 8*idx)) / 2);
-//		j = idx - (i*(2*(*npts) - i - 1) / 2) + i + 1;
-//	
-//		dist = sqrtf( (pts[i].x[0] - pts[j].x[0])*(pts[i].x[0] - pts[j].x[0]) +
-//					  (pts[i].x[1] - pts[j].x[1])*(pts[i].x[1] - pts[j].x[1]));
-//
-//		if (dist > (local_largest_dist)) {
-//			local_largest_dist = dist; 
-//		}
-//	}
-//
-//	atomicMaxFloat(largest_dist, local_largest_dist); 
-//}
 
 __host__ __device__ void writeTri(Tri* tri, int* p, int* n, int* o) {
 	for (int i=0; i<3; i++) {
@@ -608,7 +522,6 @@ __global__ void resetInsertPtInTris(Tri* triList, int* nTriMax) {
 
 	if (idx < (*nTriMax)) {
 		triList[idx].insertPt = -1;
-		//triList[idx].nbrupdate = 0;
 	}
 }
 

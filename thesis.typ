@@ -393,13 +393,12 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 #pagebreak()
 = Algorithms
 	
-	In this section we focus on two types of algorithms, serial and parallel, but with a focus on the 
+	In this section we focus on two types of algorithms, serial and parallel, but with a major focus on the 
 	parallel algorithm. Commonly algorithms are first developed with a serialized verion and only 
 	later optimized into parallelized versions if possible. This is how I will be presenting my chosen
-	Delanay Triangulation algorithms in order to portray a chronolgical development of ideas used 
-	in all algorithms.
+	Delanay Triangulation (DT) algorithms in order to portray a chronolgical development of ideas used 
+	in all algorithms. And so we first begin by explaining the chosen serial verion of the DT algorithm.
 	 
-
 == Serial
 
 	The simplest type of DT algorithm can be stated as follows in @flipping_alg
@@ -419,11 +418,11 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 	This algorithm presents with a bit of ambiguity however I believe its a good algorithm to keep in mind
 	when progressing to more complex algorithms as it presents the most important feature in a DT algorithm,
-	that is, checking if an edge in the traingultion is legal and if not flipping it. Most DT algorithms take
-	this core concept and build a more optimized verions of it with as @flipping_alg has a complexity
+	that is, checking if an edge in the triangulation is legal, and if its not, we flip it. Most DT algorithms
+	take this core concept and build a more optimized verions of it with as @flipping_alg has a complexity
 	of $O(n^2)$ @ZurichDT.
 
-	The next best serial algorithm commonly presented by popular textbooks @CGAlgoApp@NumericalRecipies is the 
+	The next best serial algorithm commonly presented by popular textbooks @CGAlgoApp @NumericalRecipies is the 
 	_randomized incrimental point insertion_ @ripiflip_alg. When implemented properly this algorithm should
 	have a complexity of $O(n log(n))$ @CGAlgoApp. This algorithm is favoured for its relative low complexity
 	and ease of implementaion. The construction this algorithm is a bit mathematically involved however the 
@@ -436,7 +435,8 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		supplement: [Algorithm],
 
 		pseudocode-list(booktabs: true, numbered-title: [Randomized incremental point insertion])[
-		  Data: point set $P$
+		  Data: point set $P$ \
+		  Out: Delaunay triangulation $T$
 		  + Initialize $T$ with a triangle enclosing all points in $P$ 
 		  + Compute a random permutation of $P$
 		  + *for* $p in P$
@@ -468,13 +468,19 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	) <legedge_alg>
 
 
+	The contrustions neccesary to explain wyh the _LegalizeEdge_ routine created a DT is again slightly 
+	mathematically involved but is discussed in @CGAlgoApp.
 	In the following sections we will discuss the point insertion and flipping steps in more detail.
 
 === Point insertion
 
-	In the point instertion procedure there a point not yet insterted in the point set making up the 
-	final triagulation is chosen and then the triangle in which it lies in is found and selected for 
-	insertion. @s_pointinsertion_img illustrates this process.
+	Point instertion procedure goes as follows. An initial triangulation is neccesary to begin advance 
+	in the point insertion procedure. This is commonly done by adding 3 extra points to our triangulation
+	from which we will construct a _supertriangle_ which will contain all of the point in the set we wish 
+	to construct the DT. These extra 3 points will later be removed. In our triagulation if there is a point
+	not yet insterted we choose to use it to split the existing triangle in which this point lies in into 3
+	new triangles. This process is repreated untill no more points are left to insert. The point insertion
+	step would be followed by the _LegaiseEdge_ procedure. @s_pointinsertion_img illustrates this process.
 
 	
 	#subpar.grid(
@@ -509,7 +515,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	It might be nice to see results from just running the point insertion algorthim by itself, whithout 
 	the flipping which would take place inbetween which will be further explored in the next section. In
 	@insertion_only we see the result after the super triangle points and their corresponding triangles have
-	been removed. 
+	been removed. It is good to note that the point insertion algorithm is in general a triangluation algorithm. 
 
 	#figure(
 		image("images/insertion.png"), 
@@ -520,12 +526,12 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 === Flipping
 
-	Once the point insertion step is complete, appropirate flipping operations are then performed. @s_flip_img
+	Once a point insertion step is complete, appropriate flipping operations are then performed. @s_flip_img
 	illustrates this procedure. One can observe that the new edges introduced by the point insertion do not
 	need to be flipped as they their circumcircles will not contain the points opposite the edge by
 	construction @Guibas85 and also would interfere with other triangles if flipped as the
 	configurations are not convex. New edges are chosen to be ones which have not been previously flipped
-	surrounding the point insertion and only need to be checked once @Guibas85.
+	surrounding the point insertion and only need to be checked once.
 
 	#subpar.grid(
 		figure(image("images/insert_flip1.png"), caption: [
@@ -540,7 +546,16 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		caption: [Illustrating the flipping operation. In figure (a), point r has just been inserted
 				  and the orange edges are have been marked to be checked for flipping. Two of these
 				  end edges end up being flipped in (b). The edges inside would not qualify for flipping
-				  as any quadrilateral would not form a convex region.
+				  as any quadrilateral would not form a convex region. In order to perform the edge flipping
+				  algorithm we choose to construct the two new triangles which would form after the edge flip
+				  and the overwrite the two triangles which should no longer exist. A useful construction
+				  for ease of implementation and readability is to create a temporary _quad_ data structure
+				  which contains the necessary information for constructing the new triangles. The existing
+				  edge can be thought of a being rotated counter clockwise which lets us know where the 
+				  indexes of the previous triangles are being overwritten to in the array of _tri_ structures
+				  in later described in @tri_struct. Most of the triangles can be constructed internally but
+				  the neighbouring triangles also need to have their neighour information and 
+				  points are opposite the neigbouring edge updated. 
 		],
 		
 		align: bottom,
@@ -552,67 +567,49 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 === Implementation
 	
-	The implementaion was written in a C++ style, without excessive use of object oriented programmingn (OOP)
-	techniques for an gentler trinsition to a CUDA implementaion as CUDA heavily relies on pointer semantics
-	and doesnt not support some of the more convenient OOP. However as CUDA does support OOP features on the
-	host side so the I chose to write a _Delaunay_ class which holds most of the important features of the
-	computation as methods which are exectued in the constructor of the _Delaunay_ object.
-
-
+	The implementaion was written in C++ and was not written with a large amount of object oriented 
+	programming (OOP) techniques for an gentler transition to a CUDA implementaion as CUDA heavily relies
+	on pointer semantics and does not support some of the more convenient OOP feautres. However as CUDA
+	does support OOP features on the host side so the I chose to write a _Delaunay_ class which holds most
+	of the important features of the computation as methods which are exectued in the constructor of the
+	_Delaunay_ object.
+	
+	A quick demo of how to use the object is given below.
+	
 	#figure( 
-		caption: [ wow
+		caption: [A quick illustration of how the Delaunay class is called. This code and other relevant 
+				  source is located in _main/serialIncPtInsertion/src_. Construct an array of points and
+				  pass the pointer and the number of pointes generated as arguments to the Delaunay object.
+				  A file is created _main/serialIncPtInsertion/data/tri.txt_ with the history of and final
+				  result of the algorithm.
 		],
 
 		```c
-		__device__ void circumcircle(Point a, Point b, Point c, Point* center, float* r) {
+		#include "delaunay.h"
+		#include "point.h"
+		#include "ran.h"
 
-			float ba0 = b.x[0] - a.x[0];
-			float ba1 = b.x[1] - a.x[1];
-			float ca0 = c.x[0] - a.x[0];
-			float ca1 = c.x[1] - a.x[1];
+		int main(int argc, char *argv[]) {
+		  
+				int n = 100;
+				int seed = 69420;
 
-			float det = ba0*ca1 - ca0*ba1;
+				Point* points = (Point*) malloc(n * sizeof(Point));
 
-			det = 0.5 / det;
-			float asq = ba0*ba0 + ba1*ba1;
-			float csq = ca0*ca0 + ca1*ca1;
-			float ctr0 = det*(asq*ca1 - csq*ba1);
-			float ctr1 = det*(csq*ba0 - asq*ca0);
+				Ran ran(seed);
+				for (int i=0; i<n; ++i) {
+					points[i].x[0] = ran.doub();
+					points[i].x[1] = ran.doub();
+				}
 
-			*r = sqrt(ctr0*ctr0 + ctr1*ctr1);
-			center->x[0] = ctr0 + a.x[0];
-			center->x[1] = ctr1 + a.x[1];
+				Delaunay delaunay(points, n);
+
+				free(points);
+				return 0;
 		}
-
 		```
-	)
 
-
-
-	#figure( 
-		caption: [ wow
-		],
-
-		```c
-		__device__ float incircle(Point d, Point a, Point b, Point c){
-			// +: inside  | flip
-			// 0: on      |
-			// -: outside | dont flip
-
-			Point center;
-			float rad;
-			circumcircle(a, b, c, &center, &rad);
-
-			// distance from center to d
-			float dist_sqr = (d.x[0] - center.x[0])*(d.x[0] - center.x[0]) 
-						   + (d.x[1] - center.x[1])*(d.x[1] - center.x[1]); 
-
-			return (rad*rad - dist_sqr);
-		}
-
-		```
-	)
-
+	) <basic_serial>
 
 === Analysis
 
@@ -621,16 +618,17 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 	In @s_nptsVsTime_plt below we can observe the time complexity of the serial algorithm. This algorithm
 	can theoretically achieve a complexity of $O(n log(n))$ however my naive implementaion does not achieve
-	this and we have a $O(n^2)$ scaling as seen by the non straight line in the log plot. Even though 
-	this is not the result I have expected, this is still a uselfull piece of code to compare the future
+	this and we have a $O(n^2)$ scaling as seen by the straight line in the log plot. Even though 
+	this is not the result I have hoped for, this is still a uselfull piece of code to compare the future
 	GPU implementaion with. I believe that a $O(n log(n))$ complexity can be achived by using a directed
 	acyclic graph structure (DAG) for faster memory access in finding in which triangles points are	contained
 	in.
 
 	#figure(
-		image("main/plotting/serial_nptsVsTime/serial_nptsVsTime.png", width: 70%),
+		image("main/plotting/serial_nptsVsTime/serial_nptsVsTime.png", width: 80%),
 		caption: [Plot showing the amount of time it took serial code to run with respect
-				  to the number of points in the triangulation. *NEED LOG PLOT*],
+				  to the number of points in the triangulation. This is a loglog plot which
+				  shows us the algorithm has a complextiy of $O(n^2)$],
 	) <s_nptsVsTime_plt>
 
 
@@ -638,18 +636,20 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 	The parallelization of the DT is conceptually not very different than its serial counterpart. We will
 	be considering only parallelization with a GPU here which lends itself to algorithms which are created with 
-	their arichitecures in mind. This means that accesing data will be largely done by accessing global arrays
+	a GPUs architecture in mind. This means that accesing data will be largely done by accessing global arrays
 	which all threads of execution have access to. Methods akin to divide and conquer @DivAndConq would be
-	useful if we consider multi CPU or multi GPU systems but that is not in the scope of this project. An 
-	overview of the parallelized algorithm is in @ppi_alg mostly adapted from @gDel3D which is as of this
-	moment the fastest GPU delaunay triangluation algorithm. 
+	useful if we consider multi CPU or multi GPU systems but that is not in the scope of this project but would
+	be particulary interesing to see a multi GPU systems implementation for this algorithm made publicly 
+	available. An overview of the parallelized algorithm is in @ppi_alg mostly adapted from @gDel3D which
+	is to my understanding as of this moment the fastest GPU delaunay triangluation algorithm. 
 
 	#figure(
 	  kind: "algorithm",
 	  supplement: [Algorithm],
 
 	  pseudocode-list(booktabs: true, numbered-title: [Parallel point insertion and flipping])[
-		Data: A point set $P$
+		Data: A point set $P$ \
+		Out: Delaunay Triangluation $T$
 		+ Initialize $T$ with a triangle $t$ enclosing all points in $P$ 
 		+ Initialize locations of $p in P$ to all lie in $t$
 		+ *while* there are $p in P$ to insert 
@@ -670,14 +670,15 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	) <ppi_alg>
 
 	@ppi_alg is takes as input a point set $P$ for the triangluation to be constructed from and return
-	the DT from the transformed triangulation $T$. _(line 1)_ The triangultion is initialized as a triangle
-	enclosing all points in $P$ by adding 3 new points to the triangulation. These extra three points will
-	later be removed. _(line 2)_ Tells us to keep peforming the main work of the algorithm as long as there 
-	are points to be inserted into $T$. _(lines 3-4)_ We pick out points in parellel which can be inserted
+	the DT from the transformed triangulation $T$. _(line 1)_ The triangulation is initialized as a triangle
+	enclosing all points in $P$ by adding 3 new points to the triangulation and is constructed in a way such 
+	that all of the other points lie inside this triangle which is noted in _(line 2)_. These extra three points
+	will later be removed. _(line 3)_ Tells us to keep peforming the main work of the algorithm as long as there 
+	are points to be inserted into $T$. _(lines 4-5)_ We pick out points in parellel which can be inserted
 	into $T$ by checking in which triangle each point not yet inserted, if any, is closest to the circumcenter of
-	the triangle. This point will be inserted in the _(lines_5-6)_ in which for every triangle which has a 
+	the triangle. This point will be inserted in the _(lines_6-7)_ in which for every triangle which has a 
 	point inside it to be inserted we split the existing triangle $t$ into 3 new triangles which all contain 
-	the inserted point $p$. Now in _(lines 7-10)_ at this point, we have a non Delaunay mesh which needs to
+	the inserted point $p$. Now in _(lines 8-12)_ at this point, we have a non Delaunay mesh which needs to
 	be transformed and so we perform neccesary flipping operations in order for this to be a DT. For each
 	triangle we first check whether we should flip with any 3 any of its neighbours by checking if each edge
 	is illegal. If an edge is found to be illegal the first neighbouring triangle is marked to be flipped with.
@@ -699,7 +700,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 === Insertion
 
 	The parellel point insertion step is very well suited for parallelization. Parallel point insertion can be
-	performed without any interfernce with their
+	performed with minimal interfernce with their
 	neighbours. This procedure is performed independantly for each triangle with a point to insert. The only
 	complication arises in the updating of neighbouring triangles information about their newly updated
 	neighbours and opposite points. This must be done after all new triangles have been constructed and saved
@@ -733,7 +734,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	lies in which triangle. The point closest to the circumcenter of the triangle is chosen to be inserted. Two
 	CUDA kernels are used in this procedure, one to calculate the distances of each point to their corresponding
 	circumcentres and another to find the minimum distance. This procedure relies on computing the distance twice
-	as compute is cheap on GPU as opposed to copying memory of the triangle structures. In between all of this
+	as compute is cheap on GPU as opposed to copying memory of the triangle structures. In between all of these
 	arrays which contain information about uninserted points _ptsUninsterted_ are used throughout in order to
 	not waste resources in the form of threads which would obtain instructions to do nothing. The
 	_ptsUninsterted_ array is sorted in order to launch the minimum number of threads needed. A few other kerels
@@ -850,22 +851,32 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		figure( image("main/plotting/triangulation_history/DT_iter0.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_history/DT_iter2.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_history/DT_iter4.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_history/DT_iter6.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter5.png", width: 135%), caption: [] ),
+
+		figure( image("main/plotting/triangulation_history/DT_iter7.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_history/DT_iter8.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_history/DT_iter10.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter11.png", width: 135%), caption: [] ),
+
 		figure( image("main/plotting/triangulation_history/DT_iter12.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_history/DT_iter14.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter13.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter15.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_history/DT_iter16.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_history/DT_iter18.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_history/DT_iter20.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_history/DT_iter22.png", width: 135%), caption: [] ),
 
 		//rows: (1fr, 1fr, 1fr, 1fr),
 		rows: (auto, auto, auto),
 		columns: (auto, auto, auto, auto),
 		//columns: (1fr, 1fr, 1fr),
-		caption: [This figure shows the history of the DT algorithm. The algorithm proceeds in the
-				  order of the label in alphabetical order.
+		caption: [These figures show the history of the DT algorithm. The algorithm begins by initializing
+				  a super triangle (a) which is constructed to contain each point desired by the user. Here
+				  a uniform point distribution on a unit disk is used. In (b) and (c) a point insertion is 
+				  performed and in (c) certain edges are marked for parallel flipping for which the 
+				  result is displayed in (d). The algorithm proceeds in following subfigures with a series
+				  of point insertion followed by the required number of parallel flipping operations. In 
+				  the final result, triangles which contain the initialized supertriangle points are
+				  removed and we are left with the desired triangulation as can be seen in
+				  @triangulations_grid.
+
 		],
 		align: bottom,
 		label: <triangulation_history>,
@@ -876,22 +887,20 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		figure( image("main/plotting/triangulation_onlyptins/DT_iter1.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_onlyptins/DT_iter2.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_onlyptins/DT_iter3.png", width: 135%), caption: [] ),
+
 		figure( image("main/plotting/triangulation_onlyptins/DT_iter4.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_onlyptins/DT_iter5.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_onlyptins/DT_iter6.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter7.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter8.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter9.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter10.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter11.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter12.png", width: 135%), caption: [] ),
 
 		//rows: (1fr, 1fr, 1fr, 1fr),
-		rows: (auto, auto, auto),
-		columns: (auto, auto, auto, auto),
+		rows: (auto, auto),
+		columns: (auto, auto, auto),
 		//columns: (1fr, 1fr, 1fr),
-		caption: [This figure shows the history of the only the point insertion algorithm. 
-				  The algorithm proceeds in the order of the label in alphabetical order.
+		caption: [These figures show the evolution of the only the point insertion algorithm. 
+				  The point insertion proceeds in alphabetical order noting the labels of each 
+				  subfigure. During the computation points closest to the circumcenter of each 
+				  triangle are chosen to be inserted and split each existing triangle with a point
+				  to insert. These figures use a uniform point distribution on a unit disk.
 		],
 		align: bottom,
 		label: <triangulation_onlyptins>,
@@ -981,14 +990,15 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 			//columns: (1fr, 1fr, 1fr),
 			caption: [Visualisations of Delaunay triangluations of various point distributions. 
 					  The grid should be read as follows. Along the horizontal the number of points
-					  involved increases gradually and with $100$, $500$, $1000$ point in the the	
+					  involved increases gradually and with $100$, $500$, $1000$ points in the the	
 					  first second and third column respectively. In each row we draw from different 
-					  point distributions. The rows draw from a uniform unit sqare distribution, uniform
-					  disk, surface of a sphere projected onto the plane and gaussian distribution with
-					  mean $0$ and variance $1$, in rows 1, 2, 3 and 4 respectively.
+					  point distributions. The rows draw from a uniform unit disk distribution, a distribution
+					  on a disk with points clustered in the center, a distribution on a disk with points
+					  clustered near the boundary and a gaussiann distribution with mean $0$ and variance
+					  $1$, in rows 1, 2, 3 and 4 respectively.
 			],
 			align: bottom,
-			label: <triangulations>,
+			label: <triangulations_grid>,
 		)
 
 	
