@@ -27,11 +27,25 @@ availableDeviceModels_sorted = np.array(availableDeviceModels_sorted)
 times_sorted = np.array(times_sorted)
 normalization_sorted = np.array(normalization_sorted)
 
-plt.bar(availableDeviceModels_sorted, times_sorted)
-plt.plot(availableDeviceModels_sorted, times_sorted*normalization_sorted)
 
-plt.xlabel("Device")
-plt.ylabel("Normalized Time (seconds/((num cores) * (frequency mhz)) ")
-plt.title("")
+# Create figure and axis
+fig, ax1 = plt.subplots(figsize=(8,5))
+
+# Bar chart on left y-axis
+ax1.bar(availableDeviceModels_sorted, times_sorted, label="Total time")
+ax1.set_xlabel("Device")
+ax1.set_ylabel("Total Time (s)")
+ax1.tick_params(axis='y')
+
+# Create a second y-axis
+ax2 = ax1.twinx()
+ax2.plot(availableDeviceModels_sorted, times_sorted*normalization_sorted, color='red', marker='o', linestyle='-', label="Normalized time")
+ax2.set_ylabel("Normalized Time (s/#cores * MHz)")
+ax2.tick_params(axis='y')
+
+# Combine legends
+lines_1, labels_1 = ax1.get_legend_handles_labels()
+lines_2, labels_2 = ax2.get_legend_handles_labels()
+ax1.legend(lines_1 + lines_2, labels_1 + labels_2 )
 
 plt.savefig("gpuModelTest.png", dpi=200)

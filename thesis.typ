@@ -101,10 +101,6 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 #lorem(2)
 
 
-
-
-
-
 #pagebreak()
 
 // ================================== TABLE OF CONTENTS ======================================= 
@@ -738,77 +734,74 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	arrays which contain information about uninserted points _ptsUninsterted_ are used throughout in order to
 	not waste resources in the form of threads which would obtain instructions to do nothing. The
 	_ptsUninsterted_ array is sorted in order to launch the minimum number of threads needed. A few other kerels
-	are used for book keeping purposes which *arent?* explained. 
+	are used for book keeping purposes which constist of resetting certain values, for example the smallest distance
+	bewteen two points in each triangle is set to the maximumvalue as there are atomic min opertaions performed for
+	which this is neccesary in the next iteration of point insertion. We also keep an array which holds the
+	indexes of triangles triangles which how hold points to be inserted which again prevents unneccesary thread
+	lauches.
 
-	Once the preperation step is completed, which makes up the majority of the compute for point insertion
-	procedure (@timeDistrib_plt) we can now actually insert the points which have been pickout out. The logic
-	in the parallel point insertion step is as follows. The logic is mostly consistent as in 
-	@s_pointinsertion_img but needs to be adapted in order for it to be parallelized. For the creation and
-	rewriting involved in making the 3 new traingles stays the same except for the updating of the neighbouring
-	triangles before insertion. If a neighbouring triangle will not perform a point insertion
 
-//
-//	This parallelized version of the Incremental Point Instertion alogorithm @ripiflip_alg, as showcased 
-//	in @ppi_alg, is written in CUDA.
-//
-//	*Layout* 
-//	
-//	The majoriy of the code is wrapped in a _Delaunay_ class for the ease of readability and
-//	maintainability. The constructor once again performs the computaion however this time on any available GPU.
-//	This OOP approach was chosen because of the   
-//
-//	*Insertion*
-//	
-//	The parallel point insertion proceduce is implemented as two distinct operations. The _PrepForInsert_ method
-//	performs key steps to prepare the triangulation for the parallel insertion of new points. This method
-//
 	#figure(
 		kind: "algorithm",
 		supplement: [Algorithm],
 
 		pseudocode-list(booktabs: true, numbered-title: [prepForInsert])[
-			//+ resetInsertPtInTris
-			+ updatePtsUninsterted
-			+ gpuSort ptsUninserted_d;
+			+ Reset index of the point to insert in each triangle
 
-			+ setInsertPtsDistance
-			+ setInsertPts
+			+ Set counter for number of points uninserted to be 0
 
-			+ prepTriWithInsert
-			+ gpuSort triWithInsert_d nTriMax_d;
+			+ Writes uninserted point index to ptsUninserted 
+			+ Caclualtes and writes the smallest distance to circumcenter of triangle
+			+ Finds and writes the index of point with smallelst distance to circumcenter of triangle 
 
-			//+ resetBiggestDistInTris
+			+ Resets counter of the number of poinnts to insert
+			+ Counts the number of triangles which are marked for insertion
+
+			+ Sorts the array triWithInsert for efficient thread launches
+
+			+ Resets the value of the distance of point to circumcenter in each triangle 
 		]
 	) <pfinsert_alg>
 
+	Once the preperation step is completed, which makes up the majority of the compute for point insertion
+	procedure @timeDistrib_plt we can now actually insert the points which have been pickout out. The logic is
+	mostly consistent as in @s_pointinsertion_img but needs to be adapted in order for it to be parallelized.
+
+	For the creation and rewriting involved in making
+	the 3 new traingles stays the same except two things. First of which the locations in which the new triangles
+	are written in need cannot be simply written to the next unwritten location in the list of triangle structs. A
+	simple map can be created once we know how manya triangles will need to split. We use the index of each thread
+	to identify where we will place each newly created two triangles as we still overwrite the existing triangle with 
+	one of the new triangles that it is split into. We can use the following expression to know where to start writing
+	the two new triangles $"nTri" + 2*"idx"$ where $"nTri"$ represents the current number of triangles in the
+	triangulation and $"idx"$ the index of the thread.
+
+	Secondly, the updating of the neighbouring triangles also need some extra care. The splitting or point insertion
+	step is written as two CUDA kernels. One which writes the internal structure of the 3 new triangles and another
+	kernel takes care of updating the relevant neighbours of the 3 new triangles. It is necessary to split up this
+	procedure since if it was not split up the external neighbouring triangles could be overwritten while they are being
+	created. The algorithm relies on the neighbouring triangles already exsiting to find the relevant neighbour to update
+	which is done so by traversing the the split triangles counter clockwise in order to the relevant neighbouring triangle
+	*MAKE FIGURE FOR THIS*. It is also important to note that the $"nTri"$ variable, should only be updated after the
+	parallel point insertion procedure is complete as the updating it during this process have consequences on the
+	locations of the newly created triangles storage location.
 
 	#figure(
 		kind: "algorithm",
 		supplement: [Algorithm],
 
 		pseudocode-list(booktabs: true, numbered-title: [insert])[
-			+ insertKernel
-			+ updateNbrsAfterIsertKernel
+			+ Insert point in marked triangles   
+			+ Update neighbours
 
-			+ update num tri
-			+ update num pts inserted
+			+ Update number of triangles and number of points inserted
+			+ Reset triWithInsert for next iteraiton
+
 		]
 	) <par_insert_alg>
-//
-//
-//
-//	and following it the _insert_ method 
 
 
 === Flipping
-
-	As briefly mentiond earlier, flippig can be performed in a highly parallel manner however some care needs
-	to be taken. The logic within the flippig operation is split up into three main steps. The first one is the 
-	reading of triangles to be flipping in the corresponding configuraion into a _Quad_ data structure which here 
-	is mainly created for the purpose of an easier implementation. This _Quad_ strut will aid us in constructing
-	flipped cofiguartion. The the two new triagles are the written by one kernel and appropriate neighbours are
-	then updated in a separate kerel.
-
 
 	#subpar.grid(
 		figure(image("images/pflip0.png"), caption: [
@@ -837,14 +830,48 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		label: <parallel_flip_img>,
 	)
 
+	As briefly mentiond earlier, flipping can be performed in a highly parallel manner however some book keeping needs
+	to be taken care of. The logic within the flippig operation is split up into three main steps. The first one is the 
+	writing of triangles to be flipped each configuraion into a _Quad_ @quad_struct data structure which here 
+	is mainly created for the purpose of keeping steps in the whole procedure to be non conflicing more imortantly stores
+	relevant information about the previous state of the triangulation. This _Quad_ struct will aid us in constructing
+	the flipped cofiguartion. The the two new triagles created from the flip are the written by one kernel and appropriate
+	neighbours are then updated in a separate kerel. Splitting the writing of the new flipped triangles is once again
+	important as updating the neighbours relies on writing to the correct index of triangle since nighbouring triangles
+	could also be involved in a flip. @parallel_flip_img showcases the parallel flipping procedure.
 
-=== Implementation
-	*Flipping*
+	#figure(
+		kind: "algorithm",
+		supplement: [Algorithm],
 
+		pseudocode-list(booktabs: true, numbered-title: [Parallel flipping])[
+			+ Set array of triangles which should be flipped to -1	
+			+ Perform incircle checks on all triangles and mark sucessful triagles for flipping // checkIncircleAll();   
+			+ Check for possible flip conflicts and mark sucessful triagles for flipping // checkFlipConflicts(); 
+		
+			+ *while* there are configurations to flip
+				+ Write relevant quadrilaterals 
+				+ Overwrites new triangles internal structure
+				+ Updates neighbours information
+		
+				+ Perform incircle checks on all triangles and mark sucessful triagles for flipping // checkIncircleAll();   
+				+ Check for possible flip conflicts and mark sucessful triagles for flipping // checkFlipConflicts(); 
 
-=== Analysis
+			+ Reset mark for flipping in tri struct // resetTriToFlip
+		]
+	) <par_flip_alg>
+
 
 #pagebreak()
+=== Analysis
+
+	In this section we will analyze and visulaize some results and which we have produces for our DT algorithm.
+	All tests were run with a _NVIDIA GeForce RTX 3090_ as the GPU alongside an _AMD Ryzen Threadripper 3960X 
+	24-Core Processor_ CPU, with the execption of some results in @gpuModelTest_plt.
+	
+	We shall begin with some visualization of the algorithm. @triangulation_history displays the raw evolution
+	of the algorithm. We can follow the figures from left to right in alphabetical order to see the history
+	of the procedure.
 
 
 	#subpar.grid(
@@ -863,10 +890,8 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		figure( image("main/plotting/triangulation_history/DT_iter15.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_history/DT_iter16.png", width: 135%), caption: [] ),
 
-		//rows: (1fr, 1fr, 1fr, 1fr),
 		rows: (auto, auto, auto),
 		columns: (auto, auto, auto, auto),
-		//columns: (1fr, 1fr, 1fr),
 		caption: [These figures show the history of the DT algorithm. The algorithm begins by initializing
 				  a super triangle (a) which is constructed to contain each point desired by the user. Here
 				  a uniform point distribution on a unit disk is used. In (b) and (c) a point insertion is 
@@ -882,6 +907,34 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		label: <triangulation_history>,
 	)
 
+	In @nptsVsTime_plt we see the total runtime of the main compute in our algorithm, this excludes the
+	construction of the supertriangle as it is performed only one and does not contribute to the signifiant
+	parts of the algorithm.  
+
+	#figure(
+		image("main/plotting/nptsVsTime/nptsVsTime.png", width: 80%),
+		caption: [Plot showing the amount of time it took the GPU code to run with respect
+				  to the number of points in the triangulation. Different line colors show
+				  the code run with a different underlying point distribution.
+	],
+	) <nptsVsTime_plt>
+		
+
+	#figure(
+		image("main/plotting/nptsVsSpeedup/nptsVsSpeedup.png", width: 80%),
+		caption: [Plot showing speedup of the GPU code with respect to the serial implemenation
+				  of the incremental point insertion @ripiflip_alg. The speedup here is comparing
+				  the runtime of the serial code with for a given number of points and with the
+				  runtime of the GPU code with the same number of points. Both implementaions 
+				  are run with single precision floating point arithmetic. Speedup here is defined
+				  as the ratio $"timeCPU" / "timeGPU"$.
+		],
+	) <nptsVsSpeedup_plt>
+
+	@nptsVsSpeedup_plt displays the speedup by comparing the serial implementation with our GPU 
+	implemention. This comparison is quite unfair to the serial implementaion as we are not comparing
+	the same algorithms exactly since the GPU version needed a to be written with a deep understanding
+	of the GPU programming model and they are not the same algorithms to begin with. 
 
 	#subpar.grid(
 		figure( image("main/plotting/triangulation_onlyptins/DT_iter1.png", width: 135%), caption: [] ),
@@ -892,10 +945,8 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		figure( image("main/plotting/triangulation_onlyptins/DT_iter5.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_onlyptins/DT_iter6.png", width: 135%), caption: [] ),
 
-		//rows: (1fr, 1fr, 1fr, 1fr),
 		rows: (auto, auto),
 		columns: (auto, auto, auto),
-		//columns: (1fr, 1fr, 1fr),
 		caption: [These figures show the evolution of the only the point insertion algorithm. 
 				  The point insertion proceeds in alphabetical order noting the labels of each 
 				  subfigure. During the computation points closest to the circumcenter of each 
@@ -916,24 +967,6 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		],
 	) <blocksizeVsTime_plt>
 
-	//#figure(
-	//	image("main/plotting/nflipsVsIter/nflipsVsIter.png", width: 70%),
-	//	//caption: [I like this font],
-	//)
-	//
-	//#figure(
-	//	image("main/plotting/ninstertVsIter/ninstertVsIter.png", width: 70%),
-	//	//caption: [I like this font],
-	//)
-	//
-
-	#figure(
-		image("main/plotting/nptsVsTime/nptsVsTime.png", width: 80%),
-		caption: [Plot showing the amount of time it took the GPU code to run with respect
-				  to the number of points in the triangulation.],
-	) <nptsVsTime_plt>
-
-
 	#figure(
 		image("main/plotting/timeDistrib/timeDistrib.png", width: 80%),
 		caption: [Showing the proportions of time each function took as a percentage of the 
@@ -941,31 +974,35 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	) <timeDistrib_plt>
 
 
-
-	#figure(
-		image("main/plotting/nptsVsSpeedup/nptsVsSpeedup.png", width: 80%),
-		caption: [Plot showing speedup of the GPU code with respect to the serial implemenation
-				  of the incremental point insertion @ripiflip_alg. The speedup here is comparing
-				  the runtime of the serial code with for a given number of points and with the
-				  runtime of the GPU code with the same number of points. Both implementaions 
-				  are run with single precision floating point arithmetic. Speedup here is defined
-				  as the ratio $"timeCPU" / "timeGPU"$.
-		],
-	) <nptsVsSpeedup_plt>
-
+	When reaching sizes of around $10^6$ points, our DT algorithm begins to get stuck in flipping opertions.
+	This is due to the single precision floating point arithmetic used. This flaw is amended by tracking
+	if the algorithm is repeating the same flipping operations but this leaves us without being certain that
+	what we create is indeed a Delaunay triangulation. Hence the need for double precision arithmetic. Other
+	approches is adaptive methods to change the precision of the incircle checks when needed @gDel3D. We
+	implemented a way of changing the precision of the whole algorithm which allows the user to choose
+	bewteen calculating in single or double precision. In @floatVsDouble_plt we compare the runtime of
+	single and double precision codes with the number of points which construct the triangulation.
+	Unsuprisingly double precsion arithmetic takes longer than single precision however it could
+	be advantageous to run with double with a larger number of points if the precise nature of the
+	Delaunay triangulation is desired.
 
 	#figure(
 		image("main/plotting/floatVsDouble/floatVsDouble.png", width: 80%),
 		caption: [floatVsDouble]
 	) <floatVsDouble_plt>
 
+	When comparing how scalable an algorithm is in the world of parallel CPU programming, with concepts
+	such as strong and weak scaling, there is no standardized way of doing so for a single GPU code.
+	The strong and weak scaling approches of analysis can be usefull for GPUs when we have a multi
+	GPU code however we have not created a multi GPU code. 
 
 
+	#figure(
+		image("main/plotting/gpuModelTest/gpuModelTest.png", width: 80%),
+		caption: [devicee comp]
+	) <gpuModelTest_plt>
 
-	//#figure(
-	//	image("main/plotting/triangulation/triangulation.png", width: 70%),
-	//	//caption: [I like this font],
-	//)
+
 	#pagebreak()
 		#subpar.grid(
 			figure( image("main/plotting/triangulation_grid/tri100_0.png", width: 135%) ),
@@ -984,10 +1021,8 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 			figure( image("main/plotting/triangulation_grid/tri500_3.png", width: 135%) ),
 			figure( image("main/plotting/triangulation_grid/tri1000_3.png", width: 135%)),
 
-			//rows: (1fr, 1fr, 1fr, 1fr),
 			rows: (auto, auto, auto, auto),
 			columns: (auto, auto, auto),
-			//columns: (1fr, 1fr, 1fr),
 			caption: [Visualisations of Delaunay triangluations of various point distributions. 
 					  The grid should be read as follows. Along the horizontal the number of points
 					  involved increases gradually and with $100$, $500$, $1000$ points in the the	
@@ -1014,18 +1049,36 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	the construction of the trianulation and for performing point insertion and flipping operations.
 
 	#figure( 
-		caption: [Triangle data structure. Stores point index info, the indexes of its neighbouring triangles
-				  and the points opposite its edges by the index of that point in the corresponding neighbour.
+		caption: [Data structure needed for Point instertion algorithm. Its main features are
+			      that it holds a pointer to an array of points which will be used for the triangulation,
+			      the index of those points as ints which form this triangle, its daughter triangles 
+			      which are represented as ints which belong to an array of all triangle elements and
+			      whether this triangle is used in the trianglulation constructed so far. Aligned to
+			      64 bytes for more efficient accesing of memory.
 		],
 
 		```c
-			struct Tri {
-				int p[3]; // points
-				int n[3]; // neighours
-				int o[3]; // opposite points
+			struct __align__(64)  Tri {
+				int p[3]; // indexes of points in pts list
+				int n[3]; // idx to Tri neighbours of this triangle
+				int o[3]; // index in neigbouring tri of point opposite the egde
+
+				// takes values 0 or 1 for marking if it shouldn't or should be inserted into 
+				int insert;        
+				// the index of the point to insert
+				int insertPt;       
+				// entry for the minimum distance between point and circumcenter
+				REAL insertPt_dist; 
+				// marks an edge to flip 0,1 or 2
+				int flip;           
+				// mark whether this triangle should flip in the current iteration of flipping
+				int flipThisIter;   
+				// the minimum index for both triangles which could be involved in a flip  
+				int configIdx;      
 			};
 		``` 
 	) <tri_struct>
+	
 
 	#figure(
 		image("images/tri_struct.png", width: 50%),
@@ -1044,26 +1097,32 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	separating point and neighbour information into two different structs. 
 
 
-	The @quad_sruct below
+	The @quad_struct below is used in the flipping step of the algorithm and is only used as 
+	an intermediate representation of the triangles which will be created and the data needed 
+	to update its neighbours
 	
 	
 	#figure( 
-		caption: [Quad data structure. Stores point index info, the indexes of its neighbouring triangles
-				  and the points opposite its edges by the index of that point in the corresponding neighbour.
+		caption: [Data structure used in the flipping algorithm. This qualrilateral data structure
+			      holds information about the intermediate state of two triangles involved in a configuration
+			      currently being flipped. This struct is used in the construction of the two new triangles
+			      created and in the updating of neighbouring triangles data. Aligned to 64 bytes for more
+			      efficient accesing of memory.
 		],
 
 		```c
-			struct Quad {
-				int p[4];
-				int n[4];
-				int o[4];
-			};
+			struct __align__(64) Quad  {
+				int p[4]; // indexes of points in pts list
+				int n[4]; // idx to Tri neighbours across the edge
+				int o[4]; // index in neigbouring tri of point opposite the egde
+			}; 
 		```
-	) <quad_sruct>
+	) <quad_struct>
 
 == Profiling Analysis
 == Comment on the Floating point arithmetic and how the maths is funny sometimes
 == Strong and weak scaling on GPUs?
+== When does algorithm fail
 
 
 #pagebreak()
