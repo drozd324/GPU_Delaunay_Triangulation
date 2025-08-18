@@ -6,15 +6,18 @@ cd "$GPUDIR" # need to run gpu code in this directory
 make 
 
 N=100000 # num of points
-MAXS=10 # max seeds
-NDISTRIBITIONS=4
+MAXS=5 # max seeds
+NDISTRIBITIONS=1
 NTPB=128
-
-#STZ="/usr/local/cuda-12.8/bin/compute-sanitizer"
 
 EXEDIR="./bin/test"
 DATADIR="./data/coredata.csv"
-PLOTDATA="../plotting/timeDistrib/data.csv"
+
+GPUMODELNAME=$(nvidia-smi --query-gpu=name --format=csv,noheader -i 0)
+#GPUMODELNAME=${GPUMODELNAME// /_}
+echo "$GPUMODELNAME"
+
+PLOTDATA="../plotting/gpuModelTest/data_${GPUMODELNAME}.csv"
 > "$PLOTDATA"
 
 echo "$EXEDIR" -n "$N"
@@ -31,7 +34,7 @@ for (( s=0; s<$MAXS; s++)); do
 	done
 done
 
-PLOTDIR="../plotting/timeDistrib"
+PLOTDIR="../plotting/gpuModelTest"
 cd $PLOTDIR
 $HOME/.venv/bin/python3 plot.py
 

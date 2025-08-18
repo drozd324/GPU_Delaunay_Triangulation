@@ -3,14 +3,14 @@ cd "${0%/*}" || exit 1  # Run from script's directory
 CPUDIR="../../serialIncPtInsertion"
 cd "$CPUDIR" # need to run cpu code in this directory
 
-VOID=make 
+make 
 
 STARTN=100
-MAXN=1000 # max num of points
+MAXN=10000 # max num of points
 STEP=100 
-MAXS=1 # max seeds
+MAXS=5 # max seeds
 
-NDISTRIBITIONS=2
+NDISTRIBITIONS=4
 
 #NTPB=128 # number of threads per block
 

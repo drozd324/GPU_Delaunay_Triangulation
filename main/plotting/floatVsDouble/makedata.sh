@@ -4,10 +4,10 @@ GPUDIR="../../gpu"
 cd $GPUDIR
 
 MINSIZE=100
-MAXSIZE=1000
-SIZESTEP=100
+MAXSIZE=100000
+STEP=1000
 
-MAXS=1
+MAXS=10
 
 NDISTRIBITIONS=4
 
@@ -39,7 +39,7 @@ head -n 1 "$DATADIR" >> "$PLOTDATA_DOUBLE"
 
 
 for (( s=0; s<$MAXS; s++)); do
-	for (( n=$MINSIZE; n<=$MAXSIZE; n+=$SIZESTEP)); do
+	for (( n=$MINSIZE; n<=$MAXSIZE; n+=$STEP)); do
 		for (( d=0; d<$NDISTRIBITIONS; d++)); do
 			echo     "$EXEDIR" -n "$n" -s "$s" -d "$d" -t "$NTPB"
 			RUN=$( { "$EXEDIR" -n "$n" -s "$s" -d "$d" -t "$NTPB" ; } )
@@ -67,7 +67,7 @@ RUN=$( { "$EXEDIR" -n "$N" ;} )
 head -n 1 "$DATADIR" >> "$PLOTDATA_FLOAT"
 
 for (( s=0; s<$MAXS; s++)); do
-	for (( n=$MINSIZE; n<=$MAXSIZE; n+=$SIZESTEP)); do
+	for (( n=$MINSIZE; n<=$MAXSIZE; n+=$STEP)); do
 		for (( d=0; d<$NDISTRIBITIONS; d++)); do
 			echo     "$EXEDIR" -n "$n" -s "$s" -d "$d" -t "$NTPB"
 			RUN=$( { "$EXEDIR" -n "$n" -s "$s" -d "$d" -t "$NTPB" ; } )

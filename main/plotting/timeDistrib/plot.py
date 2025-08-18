@@ -14,7 +14,7 @@ avg_df = df.groupby("distribution")[metrics].mean()
 normalized = avg_df.div(avg_df.sum(axis=1), axis=0)
 
 # Labels and styling
-distributions = ["uniform", "clustered center", "clustered boundary", "gaussian"]
+distributions = ["Uniform", "Clustered center", "Clustered boundary", "Gaussian"]
 colors = ['forestgreen', 'gold', 'cornflowerblue', 'salmon']
 hatches = ['..', '//', '\\\\', 'xx']
 labels = ["prepForInsert", "insert", "flip", "updatePts"]
@@ -34,7 +34,7 @@ plt.yticks(y, distributions)
 plt.xlabel("Proportion of Total Time")
 plt.xlim(0, 1)
 plt.xticks(np.linspace(0, 1, 6), [f"{int(x*100)}%" for x in np.linspace(0, 1, 6)])
-plt.legend(loc="upper right", ncol=2)
+#plt.legend(loc="upper right", ncol=2)
 plt.tight_layout()
 
 plt.savefig("timeDistrib.png", dpi=200)

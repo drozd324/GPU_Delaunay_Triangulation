@@ -49,11 +49,11 @@ struct Delaunay {
 	Quad* quadList_d;
 
 	int iter = 0;
-	bool verbose = false; // gives detail info to std out about state of the triangulation
 	bool saveHistory = true; 
 	bool info = true;
 	bool saveCSV = true;
 
+	struct cudaDeviceProp device;
 	FILE* trifile;
 	FILE* csvfile;
 	FILE* insertedPerIterfile;
@@ -89,7 +89,7 @@ struct Delaunay {
 
 	int delaunayCheck();
 
-	int bruteFlip();
+	int flip();
 	void quadFlip();
 	void checkIncircleAll();
 
@@ -102,7 +102,6 @@ __host__ __device__ void writeTri(Tri* tri, int* p, int* n, int* o);
 
 /* INIT */
 __global__ void sumPoints(Point* pts, int* npts, Point* avgPoint);
-//void sumPoints(Point* pts, int* npts, Point* avgPoint);
 void CalcAvgPoint(Point& avgPoint, Point* pts_d, int* npts);
 __global__ void computeMaxDistPts(Point* pts, int* npts, REAL* largest_dist);
 
@@ -115,7 +114,6 @@ __global__ void prepTriWithInsert(Tri* triList, int* nTri, int* triWithInsert, i
 __global__ void resetFlipUsageInTris(Tri* triList, int* nTriMax);
 
 /* INSERT */
-//__global__ void insertKernel(Tri* triList, int* nTri, int* triWithInsert, int* nTriWithInsert, int* ptToTri);
 __global__ void insertKernel(Tri* triList, int* nTri, int* nTriMax, int* triWithInsert, int* nTriWithInsert, int* ptToTr, Tri* triList_previ);
 __device__ int insertInTri(int i, Tri* triList, int newTriIdx, int* ptToTri, Tri* triList_prev);
 __device__ int insertPtInTri(int r, int i, Tri* triList, int newTriIdx, Tri* triList_prev);
@@ -129,11 +127,7 @@ __global__ void resetBiggestDistInTris(Tri* triList, int* nTriMax);
 __global__ void updatePtsUninserted(int* npts, int* ptToTri, int* ptsUninserted, int* nptsUninserted);
 
 /* FLIP */
-__global__ void checkFlipKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);
-__device__ int checkFlip(int a, int flip_edge, int b, Tri* triList); 
-
-__global__ void checkLegalityKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);
-__device__ int checkLegality(int a, int flip_edge, int b, Tri* triList, Point* pts); 
+__global__ void checkIncircleAllKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);
 
 __global__ void prepForConflicts(Tri* triList, int* nTri, int* nTriMax);
 __global__ void setConfigIdx(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri);
@@ -142,20 +136,14 @@ __global__ void storeNonConflictConfigs(int* triToFlip, int* nTriToFlip, Tri* tr
 __global__ void resetTriToFlipThisIter(Tri* triList, int* nTri);
 __global__ void markTriToFlipThisIter(int* triToFlip, int* nTriToFlip, Tri* triList);
 
-__global__ void flipKernel(int* triToFlip, int* nTriToFlip, Tri* triList);
-__global__ void flipKernel(int* triToFlip, int* nTriToFlip, Tri* triList, Quad* quadList);
-__device__ void flip(int a, int e, int b, Tri* triList);
-__device__ void flip(int a, int e, int b, Tri* triList, Quad* quad);
-__device__ void writeQuad(Quad* quad, int* p, int* n, int* o);
-
 __global__ void updateNbrsAfterFlipKernel(int* triToFlip, int* nTriToFlip, Tri* triList, Quad* quad);
 __device__ void updateNbrsAfterFlip(int a, int e, int b, Tri* triList, Quad* quad);
 
 __global__ void resetTriToFlip(Tri* triList, int* nTri);
 
-// quadflip
 __global__ void writeQuadKernel(int* triToFlip, int* nTriToFlip, Tri* triList, Quad* quadList);
 __device__ void writeQuads(int a, int e, int b, Tri* triList, Quad* quad);
+__device__ void writeQuad(Quad* quad, int* p, int* n, int* o);
 __global__ void flipFromQuadKernel(int* triToFlip, int* nTriToFlip, Tri* triList, Quad* quadList);
 __device__ void flipFromQuad(int a, int e, int b, Tri* triList, Quad* quad);
 
@@ -163,13 +151,8 @@ __device__ void flipFromQuad(int a, int e, int b, Tri* triList, Quad* quad);
 __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri, int* ptsUninserted, int* nptsUninserted);
 __device__ int contains(int t, int r, Tri* triList, Point* pts);
 
-
 /* Delaunay Check */
 __global__ void delaunayCheckKernel(Tri* triList, int* nTri, Point* pts, int* nEdges);
-
-
-/* Brute force flip */
-__global__ void checkIncircleAllKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);
 
 /* Timing */
 float timeGPU(auto func);

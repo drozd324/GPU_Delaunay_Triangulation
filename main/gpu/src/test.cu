@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
   
 	int n = 5;
 	int seed = 69420;
-	int distribution = 1; // 0: uniform square, 1: uniform disk, 2: sphere disk  3: gaussian
+	int distribution = 0; // 0: uniform disk, 1: clustered center disk, 2: clustered boundary disk  3: gaussian
 	int ntpb = 128;
 
 	int option;
