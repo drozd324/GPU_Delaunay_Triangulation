@@ -7,7 +7,7 @@ make
 
 STARTN=100
 MAXN=10000 # max num of points
-STEP=100 
+STEP=2
 MAXS=5 # max seeds
 
 NDISTRIBITIONS=4
@@ -29,7 +29,7 @@ echo "$HEAD" >> "$PLOTDATA"
 
 # for each size
 for (( s=0; s<$MAXS; s++)); do
-	for (( n=$STARTN; n<=$MAXN; n+=$STEP)); do
+	for (( n=$STARTN; n<=$MAXN; n*=$STEP)); do
 		for (( d=0; d<$NDISTRIBITIONS; d++)); do
 			echo "$EXEDIR" -n "$n" -s "$s" -d "$d"
 			RUN=$( { "$EXEDIR" -n "$n" -s "$s" -d "$d"; } )

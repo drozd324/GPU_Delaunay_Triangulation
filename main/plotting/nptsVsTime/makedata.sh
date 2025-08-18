@@ -3,12 +3,12 @@ cd "${0%/*}" || exit 1  # Run from script's directory
 GPUDIR="../../gpu"
 cd "$GPUDIR" # need to run gpu code in this directory
 
-VID=make 
+make 
 
-STARTN=100
-MAXN=100000 # max num of points
-STEP=1000 
-MAXS=10 # max seeds
+STARTN=$((2 ** 2))
+MAXN=$((2 ** 20)) # max num of points
+STEP=2	
+MAXS=3 # max seeds
 
 NDISTRIBITIONS=4
 
@@ -29,7 +29,7 @@ echo "$HEAD" >> "$PLOTDATA"
 
 # for each size
 for (( s=0; s<$MAXS; s++)); do
-	for (( n=$STARTN; n<=$MAXN; n+=$STEP)); do
+	for (( n=$STARTN; n<=$MAXN; n*=$STEP)); do
 		for (( d=0 ; d<$NDISTRIBITIONS; d++)); do
 			echo "$EXEDIR" -n "$n" -s "$s" -d "$d" -t "$NTPB"
 			RUN=$( { "$EXEDIR" -n "$n" -s "$s" -d "$d" -t "$NTPB" ; } )

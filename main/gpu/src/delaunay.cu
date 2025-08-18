@@ -1,5 +1,7 @@
 #include "delaunay.h"
 
+int min_ntpb = 32;
+
 /*
  * Main compute function which strings together each parallel operation
  * involved in the parallel point insertion.
@@ -55,11 +57,13 @@ void Delaunay::compute() {
 
 		if (info == true) {
 			printf("============== [%d] FLIP ----------------- ==============\n", i);
-			printf("    No. of configurations flipped: %d\n", numConfigsFlipped);
-			printf("    time: %f\n", flipTime);
 		}
 		flipTime = timeGPU([this, &numConfigsFlipped] () { numConfigsFlipped = flip(); });
 		numConfigsFlippedTot += numConfigsFlipped;
+		if (info == true) {
+			printf("    No. of configurations flipped: %d\n", numConfigsFlipped);
+			printf("    time: %f\n", flipTime);
+		}
 		#endif
 
 		updatePtsTime = timeGPU([this] () { updatePointLocations(); });
@@ -931,13 +935,9 @@ int Delaunay::flip() {
 void Delaunay::checkIncircleAll() {
 	cudaMemcpy(nTri, nTri_d, sizeof(int), cudaMemcpyDeviceToHost);
 	int N = *nTri;
-	dim3 threadsPerBlock(ntpb);
+	dim3 threadsPerBlock(N < ntpb ? min_ntpb : ntpb);
 	dim3 numBlocks(N/threadsPerBlock.x + (!(N % threadsPerBlock.x) ? 0:1));
-	//for (int edge=0; edge<3; ++edge) {
 	checkIncircleAllKernel<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d, pts_d);
-	//}
-
-	//cudaDeviceSynchronize();
 	gpuSort(triToFlip_d, nTri_d);
 }
 
@@ -947,26 +947,29 @@ void Delaunay::checkIncircleAll() {
  */
 __global__ void checkIncircleAllKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts) {
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
-	int edges_to_flip = 0;
 	int edgeToFlip = -1;
 
 	// for each triangle
 	if (idx < (*nTri)) {
 		int a = idx;
+		int opp_idx;
+		int flip;
+		int b;
 
 		for (int edge=0; edge<3; ++edge) {
-			int b = triList[a].n[ edge ]; // b is the index of the triangle across the edge
+			b = triList[a].n[ edge ]; // b is the index of the triangle across the edge
 
 			if (b >= 0) { //true most of the time, nbr exists most of the time
-				int opp_idx = triList[a].o[ edge ]; // index of opposite point in neighbour
-				int flip = (0 < incircle(pts[triList[b].p[opp_idx]],
+				opp_idx = triList[a].o[ edge ]; // index of opposite point in neighbour
+				flip = (0 < incircle(pts[triList[b].p[opp_idx]],
 										 pts[triList[a].p[0      ]],
 										 pts[triList[a].p[1      ]],
 										 pts[triList[a].p[2      ]] ));
 
 				// if one of the edges should be flipped, mark it
-				edges_to_flip += flip;
-				if (flip) { edgeToFlip = edge; }
+				//edges_to_flip += flip;
+				//if (flip) { edgeToFlip = edge; }
+				edgeToFlip = (flip == 1)*edge + (flip == 0)*edgeToFlip; 
 
 			}
 		}
@@ -986,10 +989,13 @@ void Delaunay::checkFlipConflicts() {
 	int N;
 
 	N = *nTri;
+//	cudaMemcpy(nTriToFlip, nTriToFlip_d, sizeof(int), cudaMemcpyDeviceToHost);
+//	N = *nTriToFlip;
 	dim3 threadsPerBlock(ntpb);
 	dim3 numBlocks(N/threadsPerBlock.x + (!(N % threadsPerBlock.x) ? 0:1));
 
-	prepForConflicts       <<<numBlocks, threadsPerBlock>>>(triList_d, nTri_d, nTriMax_d);
+	//prepForConflicts       <<<numBlocks, threadsPerBlock>>>(triList_d, nTri_d, nTriMax_d);
+	prepForConflicts       <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTriMax_d);
 	setConfigIdx           <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d);
 	
 	cudaMemset(subtract_nTriToFlip_d, 0, sizeof(int));
@@ -999,7 +1005,8 @@ void Delaunay::checkFlipConflicts() {
 
 	gpuSort(triToFlip_d, nTri_d);
 
-	resetTriToFlipThisIter<<<numBlocks, threadsPerBlock>>>(triList_d, nTriMax_d);
+	//resetTriToFlipThisIter(int* triToFlip, int* nTriToFlip, Tri* triList) {
+	resetTriToFlipThisIter<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d);
 	markTriToFlipThisIter<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d);
 }
 
@@ -1007,11 +1014,14 @@ void Delaunay::checkFlipConflicts() {
  * Sets the configuration index of each triangle in triList with a default value, here the largest value it 
  * can be in this iteration.
  */
-__global__ void prepForConflicts(Tri* triList, int* nTri, int* nTriMax) {
+__global__ void prepForConflicts( int* triToFlip, int* nTriToFlip, Tri* triList, int* nTriMax) {
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 
-	if (idx < (*nTri)) {
-		triList[idx].configIdx = (*nTriMax);
+	//if (idx < (*nTri)) {
+	if (idx < (*nTriToFlip)) {
+		int a = triToFlip[idx];
+		triList[a].configIdx = (*nTriMax);
+		//triList[idx].configIdx = (*nTriMax);
 	}
 }
 
@@ -1055,11 +1065,14 @@ __global__ void storeNonConflictConfigs(int* triToFlip, int* nTriToFlip, Tri* tr
  * so that the followig kernel can mark the triangles which have been set for insertion
  * an iteraion of flipping.
  */
-__global__ void resetTriToFlipThisIter(Tri* triList, int* nTri) {
+__global__ void resetTriToFlipThisIter(int* triToFlip, int* nTriToFlip, Tri* triList) {
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 
-	if (idx < (*nTri)) {
-		triList[idx].flipThisIter = -1;
+	//if (idx < (*nTri)) {
+	if (idx < (*nTriToFlip)) {
+		int a = triToFlip[idx];
+		triList[a].flipThisIter = -1;
+		//triList[idx].flipThisIter = -1;
 	}
 }
 
@@ -1250,7 +1263,7 @@ int Delaunay::delaunayCheck() {
 	cudaMemcpy(nTri, nTri_d, sizeof(int), cudaMemcpyDeviceToHost);
 
 	int N = *nTri;
-	dim3 threadsPerBlock(ntpb);
+	dim3 threadsPerBlock(ntpb > 32 ? 32 : ntpb);
 	dim3 numBlocks(N/threadsPerBlock.x + (!(N % threadsPerBlock.x) ? 0:1));
 
 	int nEdges[1] = {0};

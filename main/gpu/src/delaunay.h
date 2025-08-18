@@ -129,11 +129,13 @@ __global__ void updatePtsUninserted(int* npts, int* ptToTri, int* ptsUninserted,
 /* FLIP */
 __global__ void checkIncircleAllKernel(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, Point* pts);
 
-__global__ void prepForConflicts(Tri* triList, int* nTri, int* nTriMax);
+//__global__ void prepForConflicts(Tri* triList, int* nTri, int* nTriMax);
+__global__ void prepForConflicts( int* triToFlip, int* nTriToFlip, Tri* triList, int* nTriMax);
 __global__ void setConfigIdx(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri);
 __global__ void storeNonConflictConfigs(int* triToFlip, int* nTriToFlip, Tri* triList, int* nTri, int* subtract_nTriToFlip);
 
-__global__ void resetTriToFlipThisIter(Tri* triList, int* nTri);
+__global__ void resetTriToFlipThisIter(int* triToFlip, int* nTriToFlip, Tri* triList);
+//__global__ void resetTriToFlipThisIter(Tri* triList, int* nTri);
 __global__ void markTriToFlipThisIter(int* triToFlip, int* nTriToFlip, Tri* triList);
 
 __global__ void updateNbrsAfterFlipKernel(int* triToFlip, int* nTriToFlip, Tri* triList, Quad* quad);
