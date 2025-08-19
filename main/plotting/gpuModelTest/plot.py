@@ -27,16 +27,19 @@ availableDeviceModels_sorted = np.array(availableDeviceModels_sorted)
 times_sorted = np.array(times_sorted)
 normalization_sorted = np.array(normalization_sorted)
 
-
 # Create figure and axis
 fig, ax1 = plt.subplots(figsize=(8,5))
 
 # Bar chart on left y-axis
-ax1.bar(availableDeviceModels_sorted, times_sorted, label="Total time")
+bars = ax1.bar(availableDeviceModels_sorted, times_sorted, label="Total time", edgecolor="black")
+for bar in bars:
+	bar.set_hatch("//")
+
 ax1.set_xlabel("Device")
 ax1.set_ylabel("Total Time (s)")
 ax1.tick_params(axis='y')
 
+#colors = ['forestgreen', 'gold', 'cornflowerblue', 'salmon']
 # Create a second y-axis
 ax2 = ax1.twinx()
 ax2.plot(availableDeviceModels_sorted, times_sorted*normalization_sorted, color='red', marker='o', linestyle='-', label="Normalized time")
