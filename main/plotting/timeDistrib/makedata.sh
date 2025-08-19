@@ -5,8 +5,8 @@ cd "$GPUDIR" # need to run gpu code in this directory
 
 make 
 
-N=100000 # num of points
-MAXS=10 # max seeds
+N=$((10 ** 5)) # num of points
+MAXS=3 # max seeds
 NDISTRIBITIONS=4
 NTPB=128
 

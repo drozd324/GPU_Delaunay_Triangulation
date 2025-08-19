@@ -5,8 +5,7 @@ cd "$GPUDIR" # need to run gpu code in this directory
 
 VOID=make 
 
-STARTN=10
-N=100 # max num of points
+N=$((10 ** 5)) # max num of points
 MAXS=1 # max seeds
 NTPB=128
 
@@ -18,6 +17,9 @@ EXEDIR="./bin/test"
 DATADIR="data/flipedPerIter.txt"
 PLOTDATA="../plotting/nflipsVsIter/flipedPerIter.txt"
 > "$PLOTDATA"
+
+echo     "$EXEDIR" -n "$N"
+RUN=$( { "$EXEDIR" -n "$N"; } )
 
 for (( s=0; s<$MAXS; s++)); do
 	for (( d=0 ; d<$NDISTRIBITIONS; d++)); do
