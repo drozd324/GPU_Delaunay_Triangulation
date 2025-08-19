@@ -25,6 +25,7 @@ nflips_initer = []
 iter = 0
 sum_nflips_initer = []
 
+plt.figure(figsize=(10, 4))
 with open("flipedPerIter.txt", "r") as data:
 	total_iter = len(data.readlines()) // 3
 	data.seek(0)
@@ -38,11 +39,16 @@ with open("flipedPerIter.txt", "r") as data:
 		sum_nflips_initer.append(arr2[1])
 
 plt.subplot(1, 2, 1)
-plt.title("Sum of flips in an iteration")
-plt.plot(np.arange(0, len(sum_nflips_initer), 1), sum_nflips_initer);
+plt.title("Total number of flips in an iteration")
+plt.bar(np.arange(0, len(sum_nflips_initer), 1, dtype=int), sum_nflips_initer);
+plt.xlabel("Total number of flips")
+plt.ylabel("Number of flips")
 
-plt.subplot(1, 2, 1)
-plt.title("Sum of flips in an iteration")
-plt.plot(np.arange(0, len(nflips_initer), 1), nflips_initer)
+plt.subplot(1, 2, 2)
+plt.title("Number of flips in each pass")
+plt.bar(np.arange(0, len(nflips_initer), 1, dtype=int), nflips_initer)
+plt.xlabel("Pass of paralell flipping")
+#plt.ylabel("Number of flips")
 
-plt.savefig("flipedPerIter.png", dpi=200)
+plt.savefig("nflipsVsIter.png", dpi=200)
+

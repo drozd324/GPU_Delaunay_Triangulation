@@ -693,6 +693,8 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	two different configurations of neighbouring triangles want to flip and these two configurations share
 	a triangle, as illustrated in @parallel_flip_img.
 	
+=== Construction of the super traingle
+
 === Insertion
 
 	The parellel point insertion step is very well suited for parallelization. Parallel point insertion can be
@@ -830,6 +832,8 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		label: <parallel_flip_img>,
 	)
 
+	*ADD BITS ON INCIRCLE AND CHECK CONFLICTS*
+
 	As briefly mentiond earlier, flipping can be performed in a highly parallel manner however some book keeping needs
 	to be taken care of. The logic within the flippig operation is split up into three main steps. The first one is the 
 	writing of triangles to be flipped each configuraion into a _Quad_ @quad_struct data structure which here 
@@ -912,7 +916,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	parts of the algorithm.  
 
 	#figure(
-		image("main/plotting/nptsVsTime/nptsVsTime.png", width: 80%),
+		image("main/plotting/nptsVsTime/nptsVsTime.png", width: 115%),
 		caption: [Plot showing the amount of time it took the GPU code to run with respect
 				  to the number of points in the triangulation. Different line colors show
 				  the code run with a different underlying point distribution.
@@ -968,10 +972,22 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	) <blocksizeVsTime_plt>
 
 	#figure(
-		image("main/plotting/timeDistrib/timeDistrib.png", width: 80%),
+		image("main/plotting/timeDistrib/timeDistrib.png", width: 115%),
 		caption: [Showing the proportions of time each function took as a percentage of the 
-				  total runtime.]
+				  total runtime. Each color represents]
 	) <timeDistrib_plt>
+
+
+	#figure(
+		image("main/plotting/ninsertVsIter/ninsertVsIter.png", width: 80%),
+		caption: [ninsertVsIter]
+	) <ninsertVsIter_plt>
+
+
+	#figure(
+		image("main/plotting/nflipsVsIter/nflipsVsIter.png", width: 115%),
+		caption: [nflipsVsIter]
+	) <nflipsVsIter_plt>
 
 
 	When reaching sizes of around $10^6$ points, our DT algorithm begins to get stuck in flipping opertions.
@@ -988,18 +1004,25 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 	#figure(
 		image("main/plotting/floatVsDouble/floatVsDouble.png", width: 80%),
-		caption: [floatVsDouble]
+		caption: [This figure displays the difference in runtime between the same GPU code in
+				  single and in double precision. Solid lines show the run time with their respective
+				  point distribution in single precision and dashed lines of the same color show
+				  the run time of the same distribtion but in double precision instead. 
+		]
 	) <floatVsDouble_plt>
 
 	When comparing how scalable an algorithm is in the world of parallel CPU programming, with concepts
 	such as strong and weak scaling, there is no standardized way of doing so for a single GPU code.
 	The strong and weak scaling approches of analysis can be usefull for GPUs when we have a multi
-	GPU code however we have not created a multi GPU code. 
-
+	GPU code however we have not created a multi GPU code. The next best approach we found, used 
+	by @gDel3D, is to instead compare run time on different GPUs. Alongside the run time we also 
+	calculate the a normalized run time defined by the run time divided by the product of
+	the numer of cores and the base clock frequency of the respective GPU. The normalized runtime is
+	a reasonable metric to consider as the divisor is a measure of how often a computation is performed.
 
 	#figure(
 		image("main/plotting/gpuModelTest/gpuModelTest.png", width: 80%),
-		caption: [devicee comp]
+		caption: [A comparison of the algorithm running on a variety of NVIDIA GPUs.]
 	) <gpuModelTest_plt>
 
 
@@ -1035,9 +1058,6 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 			align: bottom,
 			label: <triangulations_grid>,
 		)
-
-	
-	
 
 
 == Data Structures

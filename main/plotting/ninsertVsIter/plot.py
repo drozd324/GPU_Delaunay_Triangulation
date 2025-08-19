@@ -4,10 +4,9 @@ import pandas as pd
 
 nins = np.loadtxt("./insertedPerIter.txt", dtype=int)
 
-print(nins)
 iter = np.arange(0, len(nins), 1) 
 
-plt.plot(iter, nins)
+plt.bar(iter, nins)
 plt.xlabel("Iteration")
 plt.ylabel("Number of point insertions")
 

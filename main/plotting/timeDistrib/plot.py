@@ -34,7 +34,9 @@ plt.yticks(y, distributions)
 plt.xlabel("Proportion of Total Time")
 plt.xlim(0, 1)
 plt.xticks(np.linspace(0, 1, 6), [f"{int(x*100)}%" for x in np.linspace(0, 1, 6)])
-#plt.legend(loc="upper right", ncol=2)
+#plt.legend(loc="upper center", ncol=2)
+plt.legend(loc="upper center", bbox_to_anchor=(0.5, 1.25), ncol=2)
+
 plt.tight_layout()
 
 plt.savefig("timeDistrib.png", dpi=200)
