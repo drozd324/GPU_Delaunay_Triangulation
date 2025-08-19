@@ -35,6 +35,7 @@ struct Delaunay {
 
 	int  nTri   [1]	 ; int* nTri_d; 
 	int  nTriMax[1]  ; int* nTriMax_d; 
+	int  nEdgesMax[1];
 	Tri* triList     ; Tri* triList_d; 
 	Tri* triList_prev; Tri* triList_prev_d; 
 
@@ -67,6 +68,12 @@ struct Delaunay {
 	Delaunay(Point* points, int n, int numThreadsPerBlock);
 	Delaunay(Point* points, int n, int numThreadsPerBlock, int seed_mark, int distribution_mark);
 	void constructor(Point* points, int n);
+
+	Tri* triangles_;
+	int lenTriangles_;
+		
+//	int len() { return lenTriangles; }
+//	Tri* triangles() { return triangles_; }
 
 	~Delaunay();
 

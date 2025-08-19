@@ -190,6 +190,7 @@ void Delaunay::constructor(Point* points, int n) {
 	// alloc triangles
 	*nTri = 0;
 	*nTriMax = 2*((*npts)+3) - 2 - 3;
+	*nEdgesMax = 3*((*npts)+3) - 3 - 3;
 	triList = (Tri*) malloc((*nTriMax) * sizeof(Tri));
 	totMemAlloc += (*nTriMax) * sizeof(Tri);
 
@@ -876,7 +877,11 @@ int Delaunay::flip() {
 	int timesTheSame = 0; // safeguard for getting stuck in flipping
 	// While there are configurations to flip
 	int prev_nTriToFlip;
+	cudaEvent_t start, finish;
+	cudaEventCreate(&start);
+	cudaEventCreate(&finish);
 	while ((*nTriToFlip) > 0 && (timesTheSame < 2)) {
+		cudaEventRecord(start, 0);
 		timesTheSame += (prev_nTriToFlip == (*nTriToFlip));
 		prev_nTriToFlip = (*nTriToFlip); 
 		N = *nTriToFlip;
@@ -895,20 +900,32 @@ int Delaunay::flip() {
 			fprintf(flipedPerIterfile, "%d ", N);
 		}
 
-		// Flip marked configurations
-		quadFlip();
+		float quadFlipTime = timeGPU([this] () { quadFlip(); }); // Flip marked configurations
 
 		if (saveHistory == true) { saveToFile(); }
 
 		// Reset  nTriToFlip and triToFlip_d to -1 in each entry 
 		*nTriToFlip = 0;
-		cudaMemcpy(nTriToFlip_d, nTriToFlip, sizeof(int), cudaMemcpyHostToDevice);
+		//cudaMemcpy(nTriToFlip_d, nTriToFlip, sizeof(int), cudaMemcpyHostToDevice);
+		cudaMemset(nTriToFlip_d, 0, sizeof(int));
 		cudaMemset(triToFlip_d, -1, (*nTriMax) * sizeof(int));
 
-		checkIncircleAll();   // Perform incircle checks on all triangles
-		checkFlipConflicts(); // Take account for possible flip conflicts 
+		float checkIncircleAllTime   = timeGPU([this] () { checkIncircleAll()  ; }); // Perform incircle checks on all triangles
+		float checkFlipConflictsTime = timeGPU([this] () { checkFlipConflicts(); }); // Take account for possible flip conflicts 
 
 		cudaMemcpy(nTriToFlip, nTriToFlip_d, sizeof(int), cudaMemcpyDeviceToHost);
+
+		cudaEventRecord(finish, 0);
+		cudaEventSynchronize(start);
+		cudaEventSynchronize(finish);
+		float elapsedTime;
+		cudaEventElapsedTime(&elapsedTime, start, finish);
+		if (info == true) {
+			printf("        Time taken quadFlipTime           : %f\n", quadFlipTime);
+			printf("        Time taken checkIncircleAllTime   : %f\n", checkIncircleAllTime );
+			printf("        Time taken checkFlipConflictsTime : %f\n", checkFlipConflictsTime );
+			printf("        Total Time taken                  : %f\n", elapsedTime/1000.0);
+		}
 	}
 
 	if (saveHistory == true) {
@@ -1276,7 +1293,8 @@ int Delaunay::delaunayCheck() {
 	if ((*nEdges) > 0) {
 
 		if (info == true) {
-			printf("\nTriangulation is NOT Delaunay, with %d illegal edges\n\n", *nEdges);
+			//printf("\nTriangulation is NOT Delaunay, with %d illegal edges\n\n", *nEdges);
+			printf("\nTriangulation is NOT Delaunay, is %.4f%% Delaunay, with %d illegal edges\n\n", 100*((float)((*nEdgesMax) - (*nEdges)) / (float)(*nEdgesMax)) , *nEdges);
 		}
 	}
 	else {

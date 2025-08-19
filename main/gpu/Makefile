@@ -4,7 +4,9 @@ DEBUG := #-g -fsanitize=address,undefined   #-lefence
 
 NVCC := nvcc
 NVCCEXTRA := -Wno-deprecated-gpu-targets -rdc=true -std=c++20 -lcudadevrt --extended-lambda
-NVCCFLAGS := $(NVCCEXTRA) -O4 --use_fast_math --compiler-options -funroll-loops -arch=sm_86 --extra-device-vectorization
+#NVCCFLAGS := $(NVCCEXTRA) -O4 --use_fast_math --compiler-options -funroll-loops 
+#NVCCFLAGS := $(NVCCEXTRA) -O4 --use_fast_math --compiler-options -funroll-loops -arch=sm_86 --extra-device-vectorization
+NVCCFLAGS := $(NVCCEXTRA) -O4 --use_fast_math --compiler-options -funroll-loops -arch=sm_80
 #NVCCFLAGS := $(NVCCEXTRA) -O4 --use_fast_math -gencode arch=compute_85,code=sm_86 --extra-device-vectorization
 DEBUGNV = #-g -G #-Xcompiler -Wall #--ptxas-options=-v
 
