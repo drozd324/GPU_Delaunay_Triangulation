@@ -393,6 +393,17 @@ void Delaunay::initSuperTri() {
 	cudaMemcpy(nTri_d, nTri, sizeof(int), cudaMemcpyHostToDevice);
 }
 
+
+struct PointReduce {
+	__host__ __device__
+	Point operator()(const Point &a, const Point &b) {
+		Point res;
+		res.x[0] = a.x[0] + b.x[0];
+		res.x[1] = a.x[1] + b.x[1];
+		return res;
+	};
+};
+
 /*
  * Calculated the average point of a set of points.
  *
@@ -404,20 +415,14 @@ void CalcAvgPoint(Point& avgPoint, Point* pts_d, int* npts) {
     int N = (*npts);
 
     thrust::device_ptr<Point> thrust_pts(pts_d);
-
-	auto reduction = [=] __host__ __device__ (const Point &a, const Point &b) {
-		Point res;
-		res.x[0] = a.x[0] + b.x[0];
-		res.x[1] = a.x[1] + b.x[1];
-		return res;
-	};
+	PointReduce myreduce; 
 
     //Point result = thrust::reduce(thrust_pts, thrust_pts + N, avgPoint, PointSum());
     Point result = thrust::reduce(
 		thrust_pts,
 		thrust_pts + N,
 		avgPoint,
-		reduction
+		myreduce
 	);
 
 	avgPoint.x[0] = avgPoint.x[0] / N;  
@@ -824,9 +829,8 @@ __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, 
 //			local_t = local_t*(cont == 0) + t*(cont == 1);
 		}
 
-		if (used > 1) {
-			printf("POINT %d LIES IN MORE THAN 1 TRIANGLE\n", ptIdx);
-		}
+		if (used > 1) { printf("POINT %d LIES IN MORE THAN 1 TRIANGLE\n", ptIdx); }
+
 		if (used == 1) {
 			//atomicExch(&(ptToTri[ptIdx]), local_t);
 			ptToTri[ptIdx] = local_t;
@@ -929,13 +933,15 @@ int Delaunay::flip() {
 	}
 
 	if (saveHistory == true) {
-		if ( flipIter == 0) {
+		if (flipIter == 0) {
 			fprintf(flipedPerIterfile, "%d ", 0);
 		}
 		fprintf(flipedPerIterfile, "\n");
 		fprintf(flipedPerIterfile, "%d %d\n", flipIter, numConfigsFlipped);
+		//fprintf(flipedPerIterfile, "%f\n", flipIter, numConfigsFlipped);
 		fprintf(flipedPerIterfile, "\n");
 	}
+
 
 	N = *nTri;
 	dim3 threadsPerBlock2(ntpb);
@@ -1006,14 +1012,11 @@ void Delaunay::checkFlipConflicts() {
 	int N;
 
 	N = *nTri;
-//	cudaMemcpy(nTriToFlip, nTriToFlip_d, sizeof(int), cudaMemcpyDeviceToHost);
-//	N = *nTriToFlip;
 	dim3 threadsPerBlock(ntpb);
 	dim3 numBlocks(N/threadsPerBlock.x + (!(N % threadsPerBlock.x) ? 0:1));
 
-	//prepForConflicts       <<<numBlocks, threadsPerBlock>>>(triList_d, nTri_d, nTriMax_d);
-	prepForConflicts       <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTriMax_d);
-	setConfigIdx           <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d);
+	prepForConflicts<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTriMax_d);
+	setConfigIdx    <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d);
 	
 	cudaMemset(subtract_nTriToFlip_d, 0, sizeof(int));
 	storeNonConflictConfigs<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d, nTri_d, subtract_nTriToFlip_d);
@@ -1022,9 +1025,8 @@ void Delaunay::checkFlipConflicts() {
 
 	gpuSort(triToFlip_d, nTri_d);
 
-	//resetTriToFlipThisIter(int* triToFlip, int* nTriToFlip, Tri* triList) {
 	resetTriToFlipThisIter<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d);
-	markTriToFlipThisIter<<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d);
+	markTriToFlipThisIter <<<numBlocks, threadsPerBlock>>>(triToFlip_d, nTriToFlip_d, triList_d);
 }
 
 /*
@@ -1151,10 +1153,10 @@ __device__ void writeQuads(int a, int e, int b, Tri* triList, Quad* quad) {
 	// making sure nbr and opposite points are good and correcting then if not
 	for (int k=0; k<4; ++k) {
 		if (n[k] >= 0) { // true most of the time
-			if (triList[n[k]].flipThisIter == 1) {
+			if (triList[n[k]].flipThisIter == 1) { // uhhh
 				// the neighbouring flip will be performed in the direction of this flip, SCREAM
 				if (triList[n[k]].flip == ((o[k] + 1) % 3)) {
-					printf("CONFIG IDX %d | NEIGHBOURING TRIANGLE (%d) WILL FLIP INTO THIS CONFIGURATION (%d, %d)\n", triList[a].configIdx, n[k], a, b);
+					printf("[WARNING] CONFIG IDX %d | NEIGHBOURING TRIANGLE (%d) WILL FLIP INTO THIS CONFIGURATION (%d, %d)\n", triList[a].configIdx, n[k], a, b);
 				}
 
 				// in this case nbr will change in the neighbours flip
@@ -1268,6 +1270,14 @@ __global__ void resetTriToFlip(Tri* triList, int* nTri) {
 		triList[idx].flip = -1;
 	}
 }
+
+//__global__ void resetTriToFlip(Tri* triList, int* nTri) {
+//	int idx = blockIdx.x*blockDim.x + threadIdx.x;
+//
+//	if (idx < (*nTri)) {
+//		triList[idx].flip = -1;
+//	}
+//}
 
 
 // ========== DELAUNAY CHECK =========
