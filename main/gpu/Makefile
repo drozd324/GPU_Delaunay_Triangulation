@@ -13,6 +13,7 @@ DEBUGNV = #-g -G #-Xcompiler -Wall #--ptxas-options=-v
 OBJDIR := obj
 BINDIR := bin
 SRCDIR := src
+DATADIR := data
 
 EXEC_NAMES := test
 EXECS := $(addprefix $(BINDIR)/, $(EXEC_NAMES))
@@ -31,7 +32,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cu | $(OBJDIR)
 $(OBJDIR)/tri.o: $(SRCDIR)/tri.cu $(OBJDIR)/mymath.o $(OBJDIR)/point.o $(OBJDIR)/circle.o
 $(OBJDIR)/delaunay.o: $(SRCDIR)/delaunay.cu $(OBJDIR)/mymath.o $(OBJDIR)/point.o $(OBJDIR)/circle.o $(OBJDIR)/tri.o $(OBJDIR)/atomic.o $(OBJDIR)/misc.o 
 
-$(OBJDIR) $(BINDIR):
+$(OBJDIR) $(BINDIR) $(DATADIR):
 	mkdir -p $@
 
 .PHONY: clean

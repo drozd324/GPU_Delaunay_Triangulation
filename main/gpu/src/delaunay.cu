@@ -141,23 +141,6 @@ Delaunay::Delaunay(Point* points, int n, int numThreadsPerBlock, int seed_mark, 
  */
 void Delaunay::constructor(Point* points, int n) {
 
-	// ============= INITIALIZE FILES TO SAVE DATA TO ============  
-
-	trifile = fopen("./data/tri.txt", "w");
-	fclose(trifile);
-	trifile = fopen("./data/tri.txt", "a");
-
-	csvfile = fopen("./data/coredata.csv", "w");
-
-	FILE* iPIfile = fopen("./data/insertedPerIter.txt", "w");
-	insertedPerIterfile = iPIfile;
-	fclose(insertedPerIterfile);
-	insertedPerIterfile  = fopen("./data/insertedPerIter.txt", "a");
-
-	flipedPerIterfile = fopen("./data/flipedPerIter.txt", "w");
-	fclose(flipedPerIterfile);
-	flipedPerIterfile = fopen("./data/flipedPerIter.txt", "a");
-
 	// ============= DEVICE INFO ==================
 
 	//struct cudaDeviceProp device;
@@ -176,6 +159,23 @@ void Delaunay::constructor(Point* points, int n) {
 		printf("GPU model name: %s\n"           , device.name);
 		printf("\n");
 	}
+
+	// ============= INITIALIZE FILES TO SAVE DATA TO ============  
+
+	trifile = fopen("./data/tri.txt", "w");
+	fclose(trifile);
+	trifile = fopen("./data/tri.txt", "a");
+
+	csvfile = fopen("./data/coredata.csv", "w");
+
+	FILE* iPIfile = fopen("./data/insertedPerIter.txt", "w");
+	insertedPerIterfile = iPIfile;
+	fclose(insertedPerIterfile);
+	insertedPerIterfile  = fopen("./data/insertedPerIter.txt", "a");
+
+	flipedPerIterfile = fopen("./data/flipedPerIter.txt", "w");
+	fclose(flipedPerIterfile);
+	flipedPerIterfile = fopen("./data/flipedPerIter.txt", "a");
 
     // ============= ALLOCATION ON HOST ============  
     // alloc points
