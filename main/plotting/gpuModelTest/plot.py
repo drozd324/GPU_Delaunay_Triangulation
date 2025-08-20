@@ -31,7 +31,7 @@ normalization_sorted = np.array(normalization_sorted)
 fig, ax1 = plt.subplots(figsize=(8,5))
 
 # Bar chart on left y-axis
-bars = ax1.bar(availableDeviceModels_sorted, times_sorted, label="Total time", edgecolor="black")
+bars = ax1.bar(availableDeviceModels_sorted, times_sorted, label="Total time", edgecolor="black", color="cornflowerblue")
 for bar in bars:
 	bar.set_hatch("//")
 

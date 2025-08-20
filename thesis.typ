@@ -570,42 +570,42 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	of the important features of the computation as methods which are exectued in the constructor of the
 	_Delaunay_ object.
 	
-	A quick demo of how to use the object is given below.
-	
-	#figure( 
-		caption: [A quick illustration of how the Delaunay class is called. This code and other relevant 
-				  source is located in _main/serialIncPtInsertion/src_. Construct an array of points and
-				  pass the pointer and the number of pointes generated as arguments to the Delaunay object.
-				  A file is created _main/serialIncPtInsertion/data/tri.txt_ with the history of and final
-				  result of the algorithm.
-		],
-
-		```c
-		#include "delaunay.h"
-		#include "point.h"
-		#include "ran.h"
-
-		int main(int argc, char *argv[]) {
-		  
-				int n = 100;
-				int seed = 69420;
-
-				Point* points = (Point*) malloc(n * sizeof(Point));
-
-				Ran ran(seed);
-				for (int i=0; i<n; ++i) {
-					points[i].x[0] = ran.doub();
-					points[i].x[1] = ran.doub();
-				}
-
-				Delaunay delaunay(points, n);
-
-				free(points);
-				return 0;
-		}
-		```
-
-	) <basic_serial>
+//	A quick demo of how to use the object is given below.
+//	
+//	#figure( 
+//		caption: [A quick illustration of how the Delaunay class is called. This code and other relevant 
+//				  source is located in _main/serialIncPtInsertion/src_. Construct an array of points and
+//				  pass the pointer and the number of pointes generated as arguments to the Delaunay object.
+//				  A file is created _main/serialIncPtInsertion/data/tri.txt_ with the history of and final
+//				  result of the algorithm.
+//		],
+//
+//		```c
+//		#include "delaunay.h"
+//		#include "point.h"
+//		#include "ran.h"
+//
+//		int main(int argc, char *argv[]) {
+//		  
+//				int n = 100;
+//				int seed = 69420;
+//
+//				Point* points = (Point*) malloc(n * sizeof(Point));
+//
+//				Ran ran(seed);
+//				for (int i=0; i<n; ++i) {
+//					points[i].x[0] = ran.doub();
+//					points[i].x[1] = ran.doub();
+//				}
+//
+//				Delaunay delaunay(points, n);
+//
+//				free(points);
+//				return 0;
+//		}
+//		```
+//
+//	) <basic_serial>
 
 === Analysis
 
@@ -792,7 +792,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		kind: "algorithm",
 		supplement: [Algorithm],
 
-		pseudocode-list(booktabs: true, numbered-title: [insert])[
+		pseudocode-list(booktabs: true, numbered-title: [Parallel insert])[
 			+ Insert point in marked triangles   
 			+ Update neighbours
 
@@ -804,6 +804,16 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 
 === Flipping
+	As briefly mentiond earlier, flipping can be performed in a highly parallel manner however some book keeping needs
+	to be taken care of. The logic within the flippig operation is split up into three main steps. The first one is the 
+	writing of triangles to be flipped each configuraion into a _Quad_ @quad_struct data structure which here 
+	is mainly created for the purpose of keeping steps in the whole procedure to be non conflicing more imortantly stores
+	relevant information about the previous state of the triangulation. This _Quad_ struct will aid us in constructing
+	the flipped cofiguartion. The the two new triagles created from the flip are the written by one kernel and appropriate
+	neighbours are then updated in a separate kerel. Splitting the writing of the new flipped triangles is once again
+	important as updating the neighbours relies on writing to the correct index of triangle since nighbouring triangles
+	could also be involved in a flip. @parallel_flip_img showcases the parallel flipping procedure.
+
 
 	#subpar.grid(
 		figure(image("images/pflip0.png"), caption: [
@@ -832,17 +842,20 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		label: <parallel_flip_img>,
 	)
 
-	*ADD BITS ON INCIRCLE AND CHECK CONFLICTS*
-
-	As briefly mentiond earlier, flipping can be performed in a highly parallel manner however some book keeping needs
-	to be taken care of. The logic within the flippig operation is split up into three main steps. The first one is the 
-	writing of triangles to be flipped each configuraion into a _Quad_ @quad_struct data structure which here 
-	is mainly created for the purpose of keeping steps in the whole procedure to be non conflicing more imortantly stores
-	relevant information about the previous state of the triangulation. This _Quad_ struct will aid us in constructing
-	the flipped cofiguartion. The the two new triagles created from the flip are the written by one kernel and appropriate
-	neighbours are then updated in a separate kerel. Splitting the writing of the new flipped triangles is once again
-	important as updating the neighbours relies on writing to the correct index of triangle since nighbouring triangles
-	could also be involved in a flip. @parallel_flip_img showcases the parallel flipping procedure.
+	However before the we can perform our parallel flipping we need to know which triangles need to be flipped and
+	which triangles should be flipped in order for there to be no conflicts bewteen flips. In order to know which triangles
+	should be flipped a kernel is launched to perform an _incircle_ test on each edge of each triangle currently in the
+	triangulation. The _incircle_ test whether the point opposite each edge of each triangle is contained inside the
+	circumcircle created by the triangle associated with the thread of computation. This test directly follows from 
+	@emptyCirclyProp_thrm. Following this test, some configurtaions of triangles may have been marked in a way that 
+	two configurations will share a triangle they want to flip with. In order to avoid we give each configuration
+	of triangles a configuration index obtained by using the mininum index of both triangles and we write this to 
+	both triangles using an atomic min operation given a single triangles can be involved in more than one 
+	configuration. This is done by one CUDA kernel and is followed by another kernel which stores indexes of triangles which 
+	should perform a flipping operation into an auxillary array. Only triangles which are the smallest index of triangles
+	which will be involved in a flip and whose neighbour and itself both still hold the same configuration index are
+	allowed to flip in a given parallel flipping pass. Once this performing and _incircle_ test and making sure none
+	of our flips will conflict with eachother we can proceed to the parallel flipping procedure desribed previously.
 
 	#figure(
 		kind: "algorithm",
@@ -866,7 +879,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	) <par_flip_alg>
 
 
-#pagebreak()
+//#pagebreak()
 === Analysis
 
 	In this section we will analyze and visulaize some results and which we have produces for our DT algorithm.
@@ -916,7 +929,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	parts of the algorithm.  
 
 	#figure(
-		image("main/plotting/nptsVsTime/nptsVsTime.png", width: 115%),
+		image("main/plotting/nptsVsTime/nptsVsTime.png", width: 80%),
 		caption: [Plot showing the amount of time it took the GPU code to run with respect
 				  to the number of points in the triangulation. Different line colors show
 				  the code run with a different underlying point distribution.
@@ -937,8 +950,10 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 	@nptsVsSpeedup_plt displays the speedup by comparing the serial implementation with our GPU 
 	implemention. This comparison is quite unfair to the serial implementaion as we are not comparing
-	the same algorithms exactly since the GPU version needed a to be written with a deep understanding
-	of the GPU programming model and they are not the same algorithms to begin with. 
+	the same algorithms exactly. The GPU algorithm needed to be rewritten with a deep understanding
+	of the GPU programming model. By the end of the rewrite it is not the same algorithms started with. 
+	It is still a useful benchmark since it does show us that with a bit of work converting a simple
+	implementation into a highly parallelized version can give immense amounts of speedup.
 
 	#subpar.grid(
 		figure( image("main/plotting/triangulation_onlyptins/DT_iter1.png", width: 135%), caption: [] ),
@@ -971,24 +986,44 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		],
 	) <blocksizeVsTime_plt>
 
+	In order to profile the code we dice to measure how long each significant logical part of the algorithm
+	takes to complete in each pass of insertion and flipping @timeDistrib_plt. We add these values to
+	obtain the amount of time it took to run each logical chunk over the total runtime of the algorithm.
+	By a quick glance we can see that the flipping proceducures take up the majority of the runtime. This
+	is due to the fact that multiple iterations of flips are performed after each point insertion. What is
+	costly is that after the first two iterations of flips we see that there is an incredibly small amount
+	of configurations which need to be flipped @nflipsVsIter_plt. These are configurations which would
+	otherwise have conflicted with other configurations or were only possible after. What really
+	harms the speed of the algorithm is that each flipping iteration within the parallel flipping procedure
+	takes roughly the same amount of time to process, even if it is flipping a relatively small number of 
+	configurations *PLOT FOR RUNTIME OF EACH FLIPPING ITER*.
+	
+
 	#figure(
-		image("main/plotting/timeDistrib/timeDistrib.png", width: 115%),
+		image("main/plotting/timeDistrib/timeDistrib.png", width: 100%),
 		caption: [Showing the proportions of time each function took as a percentage of the 
 				  total runtime. Each color represents]
 	) <timeDistrib_plt>
 
+	Depending on the desired application of this algorithm one may use this in 
 
 	#figure(
 		image("main/plotting/ninsertVsIter/ninsertVsIter.png", width: 80%),
-		caption: [ninsertVsIter]
+		caption: [This figure shows the number of points inserted into the existing triangulation during 
+				  each pass of the algorithm. Algorithm performed on $10^5$ points and a uniform distribution	
+				  of points.
+		]
 	) <ninsertVsIter_plt>
 
 
 	#figure(
 		image("main/plotting/nflipsVsIter/nflipsVsIter.png", width: 115%),
-		caption: [nflipsVsIter]
+		caption: [Figures showing numbers of flips performed during during each call to the parallel flipping 
+				  function _flip()_ on the left and on the right the number of flips performed during each 
+				  pass of parallel flipping performed within the _flip()_ function. Algorithm performed
+				  on $10^5$ points and a uniform distribution of points.
+		]
 	) <nflipsVsIter_plt>
-
 
 	When reaching sizes of around $10^6$ points, our DT algorithm begins to get stuck in flipping opertions.
 	This is due to the single precision floating point arithmetic used. This flaw is amended by tracking
@@ -1084,13 +1119,13 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 				int o[3]; // index in neigbouring tri of point opposite the egde
 
 				// takes values 0 or 1 for marking if it shouldn't or should be inserted into 
-				int insert;        
+				int insert;
 				// the index of the point to insert
-				int insertPt;       
+				int insertPt;
 				// entry for the minimum distance between point and circumcenter
-				REAL insertPt_dist; 
+				REAL insertPt_dist;
 				// marks an edge to flip 0,1 or 2
-				int flip;           
+				int flip;
 				// mark whether this triangle should flip in the current iteration of flipping
 				int flipThisIter;   
 				// the minimum index for both triangles which could be involved in a flip  
@@ -1139,10 +1174,10 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		```
 	) <quad_struct>
 
-== Profiling Analysis
 == Comment on the Floating point arithmetic and how the maths is funny sometimes
 == Strong and weak scaling on GPUs?
-== When does algorithm fail
+== When does algorithm faill
+== Conclusion
 
 
 #pagebreak()
