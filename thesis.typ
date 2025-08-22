@@ -392,7 +392,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	In this section we focus on two types of algorithms, serial and parallel, but with a major focus on the 
 	parallel algorithm. Commonly algorithms are first developed with a serialized verion and only 
 	later optimized into parallelized versions if possible. This is how I will be presenting my chosen
-	Delanay Triangulation (DT) algorithms in order to portray a chronolgical development of ideas used 
+	Delaunay Triangulation (DT) algorithms in order to portray a chronolgical development of ideas used 
 	in all algorithms. And so we first begin by explaining the chosen serial verion of the DT algorithm.
 	 
 == Serial
@@ -530,13 +530,13 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	surrounding the point insertion and only need to be checked once.
 
 	#subpar.grid(
-		figure(image("images/insert_flip1.png"), caption: [
-			Before flipping.
-		]), <a>,
+		figure(image("images/insert_flip1.png"), 
+			caption: [ Before flipping. ],
+		), <a>,
 
-		figure(image("images/insert_flip2.png"), caption: [
-			After flipping.
-		]), <b>,
+		figure(image("images/insert_flip2.png"),
+			caption: [ After flipping. ],
+		), <b>,
 
 		columns: (1fr, 1fr),
 		caption: [Illustrating the flipping operation. In figure (a), point r has just been inserted
@@ -554,7 +554,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 				  points are opposite the neigbouring edge updated. 
 		],
 		
-		align: bottom,
+		align: top,
 		label: <s_flip_img>,
 	) 
 
@@ -573,7 +573,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 === Analysis
 
 	The analysis in this section will be brief but I hope succint as the majority of the work done was 
-	involved in the paralleliezd verions of this algorithm showcased in the following sections. 
+	involved in the parallelized verions of this algorithm showcased in the following sections. 
 
 	In @s_nptsVsTime_plt below we can observe the time complexity of the serial algorithm. This algorithm
 	can theoretically achieve a complexity of $O(n log(n))$ however my naive implementaion does not achieve
@@ -693,7 +693,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 === Insertion
 
-	The parellel point insertion step is very well suited for parallelization. Parallel point insertion can be
+	The point insertion step is very well suited for parallelization. Parallel point insertion can be
 	performed with minimal interfernce with their
 	neighbours. This procedure is performed independantly for each triangle with a point to insert. The only
 	complication arises in the updating of neighbouring triangles information about their newly updated
@@ -875,7 +875,87 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	) <par_flip_alg>
 
 
-//#pagebreak()
+#pagebreak()
+== Data Structures
+
+	The core data structure that is needed in this algorithm is one to represent a the triangulation itself.
+	There are a handful of different approaches to this problem inculding representing edges by the qaud
+	edge data structure @Guibas85 however we choose to represent the triangles in our triangulation by
+	explicit triangle structures @Nanjappa12 which hold neccesary information about their neighbours for 
+	the construction of the trianulation and for performing point insertion and flipping operations.
+
+	#figure( 
+		caption: [Data structure needed for Point instertion algorithm. Its main features are
+			      that it holds a pointer to an array of points which will be used for the triangulation,
+			      the index of those points as ints which form this triangle, its daughter triangles 
+			      which are represented as ints which belong to an array of all triangle elements and
+			      whether this triangle is used in the trianglulation constructed so far. Aligned to
+			      64 bytes for more efficient accesing of memory.
+		],
+
+		```c
+			struct __align__(64)  Tri {
+				int p[3]; // indexes of points in pts list
+				int n[3]; // idx to Tri neighbours of this triangle
+				int o[3]; // index in neigbouring tri of point opposite the egde
+
+				// takes values 0 or 1 for marking if it shouldn't or should be inserted into 
+				int insert;
+				// the index of the point to insert
+				int insertPt;
+				// entry for the minimum distance between point and circumcenter
+				REAL insertPt_dist;
+				// marks an edge to flip 0,1 or 2
+				int flip;
+				// mark whether this triangle should flip in the current iteration of flipping
+				int flipThisIter;   
+				// the minimum index for both triangles which could be involved in a flip  
+				int configIdx;      
+			};
+		``` 
+	) <tri_struct>
+	
+
+	#figure(
+		image("images/tri_struct.png", width: 50%),
+		caption: [An illustration of the _Tri_ data structures main features. We describe the triangle $t_i$ 
+				  int the figure. Oriented counter clockwise points are stored as indexes an array
+				  containing two dimensional coordinate represeting the point. The neighbours are
+				  assigned by using the right hand side of each edge using and index of the point
+				  as the start of the edge and following the edge in the CCW direction. The neighbours 
+				  index will by written in the corresponding entry in the structure. 
+		]
+	) <tri_stuct>
+
+	This data structure was chosen for the ease of implementation and as whenever we want to read a traigle
+	we will be a significant amount of data about it and this locality theoreitcally helps with memory
+	reads, as opposed to storing separate parts of date about the triangle in different structures, ie 
+	separating point and neighbour information into two different structs. 
+
+
+	The @quad_struct below is used in the flipping step of the algorithm and is only used as 
+	an intermediate representation of the triangles which will be created and the data needed 
+	to update its neighbours
+	
+	
+	#figure( 
+		caption: [Data structure used in the flipping algorithm. This qualrilateral data structure
+			      holds information about the intermediate state of two triangles involved in a configuration
+			      currently being flipped. This struct is used in the construction of the two new triangles
+			      created and in the updating of neighbouring triangles data. Aligned to 64 bytes for more
+			      efficient accesing of memory.
+		],
+
+		```c
+			struct __align__(64) Quad  {
+				int p[4]; // indexes of points in pts list
+				int n[4]; // idx to Tri neighbours across the edge
+				int o[4]; // index in neigbouring tri of point opposite the egde
+			}; 
+		```
+	) <quad_struct>
+
+#pagebreak()
 === Analysis
 
 	In this section we will analyze and visulaize some results and which we have produces for our DT algorithm.
@@ -978,7 +1058,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 	#figure(
 		image("main/plotting/blocksizeVsTime/blocksizeVsTime.png", width: 80%),
-		caption: [Showing the time it took for the GPU DT code to run with $10000$ points while	
+		caption: [Showing the time it took for the GPU DT code to run with $10^5$ points while	
 				  varying the number of threads per block also know as the block size. This is a rather
 				  naiive way of finding the optimal number of threads per block as a better analysis *TODO* 
 				  would involve logically similar block of code to have their own block size. Currently
@@ -996,14 +1076,19 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	otherwise have conflicted with other configurations or were only possible after. What really
 	harms the speed of the algorithm is that each flipping iteration within the parallel flipping procedure
 	takes roughly the same amount of time to process, even if it is flipping a relatively small number of 
-	configurations *PLOT FOR RUNTIME OF EACH FLIPPING ITER*.
+	configurations.
 	
 
 	#figure(
 		image("main/plotting/timeDistrib/timeDistrib.png", width: 100%),
 		caption: [Showing the proportions of time each function took as a percentage of the 
-				  total runtime. Each color represents]
+				  total runtime. Each color represents a different set opteration which perform
+				  a task.]
 	) <timeDistrib_plt>
+
+	The profling in @timeDistrib_plt gives us only an impression of how the code as a whole performs in 
+	terms of time spent. This includes both the host and device runtimes in the respective function calls.
+	Another 	
 
 	Depending on the desired application of this algorithm one may use this in 
 
@@ -1056,125 +1141,44 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	a reasonable metric to consider as the divisor is a measure of how often a computation is performed.
 
 	#figure(
-		image("main/plotting/gpuModelTest/gpuModelTest.png", width: 80%),
+		image("main/plotting/gpuModelTest/gpuModelTest.png", width: 100%),
 		caption: [A comparison of the algorithm running on a variety of NVIDIA GPUs. This benchmark is 
 				  performed by averaging 5 runs of the DT algorithm on a unfiform set of $10 ^ 5$ points. 
 		]
 	) <gpuModelTest_plt>
 
+	#subpar.grid(
+		figure( image("main/plotting/triangulation_grid/tri100_0.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri500_0.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri1000_0.png", width: 135%)),
 
-	#pagebreak()
-		#subpar.grid(
-			figure( image("main/plotting/triangulation_grid/tri100_0.png", width: 135%) ),
-			figure( image("main/plotting/triangulation_grid/tri500_0.png", width: 135%) ),
-			figure( image("main/plotting/triangulation_grid/tri1000_0.png", width: 135%)),
+		figure( image("main/plotting/triangulation_grid/tri100_1.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri500_1.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri1000_1.png", width: 135%)),
 
-			figure( image("main/plotting/triangulation_grid/tri100_1.png", width: 135%) ),
-			figure( image("main/plotting/triangulation_grid/tri500_1.png", width: 135%) ),
-			figure( image("main/plotting/triangulation_grid/tri1000_1.png", width: 135%)),
+		figure( image("main/plotting/triangulation_grid/tri100_2.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri500_2.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri1000_2.png", width: 135%)),
 
-			figure( image("main/plotting/triangulation_grid/tri100_2.png", width: 135%) ),
-			figure( image("main/plotting/triangulation_grid/tri500_2.png", width: 135%) ),
-			figure( image("main/plotting/triangulation_grid/tri1000_2.png", width: 135%)),
+		figure( image("main/plotting/triangulation_grid/tri100_3.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri500_3.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri1000_3.png", width: 135%)),
 
-			figure( image("main/plotting/triangulation_grid/tri100_3.png", width: 135%) ),
-			figure( image("main/plotting/triangulation_grid/tri500_3.png", width: 135%) ),
-			figure( image("main/plotting/triangulation_grid/tri1000_3.png", width: 135%)),
-
-			rows: (auto, auto, auto, auto),
-			columns: (auto, auto, auto),
-			caption: [Visualisations of Delaunay triangluations of various point distributions. 
-					  The grid should be read as follows. Along the horizontal the number of points
-					  involved increases gradually and with $100$, $500$, $1000$ points in the the	
-					  first second and third column respectively. In each row we draw from different 
-					  point distributions. The rows draw from a uniform unit disk distribution, a distribution
-					  on a disk with points clustered in the center, a distribution on a disk with points
-					  clustered near the boundary and a gaussiann distribution with mean $0$ and variance
-					  $1$, in rows 1, 2, 3 and 4 respectively.
-			],
-			align: bottom,
-			label: <triangulations_grid>,
-		)
-
-
-== Data Structures
-
-	The core data structure that is needed in this algorithm is one to represent a the triangulation itself.
-	There are a handful of different approaches to this problem inculding representing edges by the qaud
-	edge data structure @Guibas85 however we choose to represent the triangles in our triangulation by
-	explicit triangle structures @Nanjappa12 which hold neccesary information about their neighbours for 
-	the construction of the trianulation and for performing point insertion and flipping operations.
-
-	#figure( 
-		caption: [Data structure needed for Point instertion algorithm. Its main features are
-			      that it holds a pointer to an array of points which will be used for the triangulation,
-			      the index of those points as ints which form this triangle, its daughter triangles 
-			      which are represented as ints which belong to an array of all triangle elements and
-			      whether this triangle is used in the trianglulation constructed so far. Aligned to
-			      64 bytes for more efficient accesing of memory.
+		rows: (auto, auto, auto, auto),
+		columns: (auto, auto, auto),
+		caption: [Visualisations of Delaunay triangluations of various point distributions. 
+				  The grid should be read as follows. Along the horizontal the number of points
+				  involved increases gradually and with $100$, $500$, $1000$ points in the the	
+				  first second and third column respectively. In each row we draw from different 
+				  point distributions. The rows draw from a uniform unit disk distribution, a distribution
+				  on a disk with points clustered in the center, a distribution on a disk with points
+				  clustered near the boundary and a gaussiann distribution with mean $0$ and variance
+				  $1$, in rows 1, 2, 3 and 4 respectively.
 		],
+		align: bottom,
+		label: <triangulations_grid>,
+	)
 
-		```c
-			struct __align__(64)  Tri {
-				int p[3]; // indexes of points in pts list
-				int n[3]; // idx to Tri neighbours of this triangle
-				int o[3]; // index in neigbouring tri of point opposite the egde
-
-				// takes values 0 or 1 for marking if it shouldn't or should be inserted into 
-				int insert;
-				// the index of the point to insert
-				int insertPt;
-				// entry for the minimum distance between point and circumcenter
-				REAL insertPt_dist;
-				// marks an edge to flip 0,1 or 2
-				int flip;
-				// mark whether this triangle should flip in the current iteration of flipping
-				int flipThisIter;   
-				// the minimum index for both triangles which could be involved in a flip  
-				int configIdx;      
-			};
-		``` 
-	) <tri_struct>
-	
-
-	#figure(
-		image("images/tri_struct.png", width: 50%),
-		caption: [An illustration of the _Tri_ data structures main features. We describe the triangle $t_i$ 
-				  int the figure. Oriented counter clockwise points are stored as indexes an array
-				  containing two dimensional coordinate represeting the point. The neighbours are
-				  assigned by using the right hand side of each edge using and index of the point
-				  as the start of the edge and following the edge in the CCW direction. The neighbours 
-				  index will by written in the corresponding entry in the structure. 
-		]
-	) <tri_stuct>
-
-	This data structure was chosen for the ease of implementation and as whenever we want to read a traigle
-	we will be a significant amount of data about it and this locality theoreitcally helps with memory
-	reads, as opposed to storing separate parts of date about the triangle in different structures, ie 
-	separating point and neighbour information into two different structs. 
-
-
-	The @quad_struct below is used in the flipping step of the algorithm and is only used as 
-	an intermediate representation of the triangles which will be created and the data needed 
-	to update its neighbours
-	
-	
-	#figure( 
-		caption: [Data structure used in the flipping algorithm. This qualrilateral data structure
-			      holds information about the intermediate state of two triangles involved in a configuration
-			      currently being flipped. This struct is used in the construction of the two new triangles
-			      created and in the updating of neighbouring triangles data. Aligned to 64 bytes for more
-			      efficient accesing of memory.
-		],
-
-		```c
-			struct __align__(64) Quad  {
-				int p[4]; // indexes of points in pts list
-				int n[4]; // idx to Tri neighbours across the edge
-				int o[4]; // index in neigbouring tri of point opposite the egde
-			}; 
-		```
-	) <quad_struct>
 
 == User Guide 
 
