@@ -20,8 +20,10 @@ for i, dist in enumerate(dist_names):
 	timeFloat = np.array(dfFloat_distrib["totalRuntime"])
 
 	#plt.subplot(1, 2, 1)
-	plt.plot(nptsDouble, timeDouble, label=f"{dist} double", linestyle="--", color=colors[i])
-	plt.plot(nptsFloat,  timeFloat, label=f"{dist} float"  , linestyle="-" , color=colors[i])
+#	plt.plot(nptsDouble, timeDouble, label=f"{dist} double", linestyle="--", color=colors[i])
+#	plt.plot(nptsFloat,  timeFloat, label=f"{dist} float"  , linestyle="-" , color=colors[i])
+	plt.loglog(nptsDouble, timeDouble, label=f"{dist} double", linestyle="--", color=colors[i])
+	plt.loglog(nptsFloat,  timeFloat, label=f"{dist} float"  , linestyle="-" , color=colors[i])
 
 #	plt.subplot(1, 2, 2)
 #	plt.loglog(nptsDouble, timeDouble, label=f"{dist} double", linestyle="--", color=colors[i])

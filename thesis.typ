@@ -570,43 +570,6 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	of the important features of the computation as methods which are exectued in the constructor of the
 	_Delaunay_ object.
 	
-//	A quick demo of how to use the object is given below.
-//	
-//	#figure( 
-//		caption: [A quick illustration of how the Delaunay class is called. This code and other relevant 
-//				  source is located in _main/serialIncPtInsertion/src_. Construct an array of points and
-//				  pass the pointer and the number of pointes generated as arguments to the Delaunay object.
-//				  A file is created _main/serialIncPtInsertion/data/tri.txt_ with the history of and final
-//				  result of the algorithm.
-//		],
-//
-//		```c
-//		#include "delaunay.h"
-//		#include "point.h"
-//		#include "ran.h"
-//
-//		int main(int argc, char *argv[]) {
-//		  
-//				int n = 100;
-//				int seed = 69420;
-//
-//				Point* points = (Point*) malloc(n * sizeof(Point));
-//
-//				Ran ran(seed);
-//				for (int i=0; i<n; ++i) {
-//					points[i].x[0] = ran.doub();
-//					points[i].x[1] = ran.doub();
-//				}
-//
-//				Delaunay delaunay(points, n);
-//
-//				free(points);
-//				return 0;
-//		}
-//		```
-//
-//	) <basic_serial>
-
 === Analysis
 
 	The analysis in this section will be brief but I hope succint as the majority of the work done was 
@@ -693,7 +656,40 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	two different configurations of neighbouring triangles want to flip and these two configurations share
 	a triangle, as illustrated in @parallel_flip_img.
 	
-=== Construction of the super traingle
+=== Constructing the super traingle
+	
+	In order to be able to begin our DT algorithm, a _supertriangle_ needs to be constructed. This only
+	needs to be done only once throughout the duration of the algorithm. Two routines in this algorithm
+	deserve to be paralellized, computing the average point and computing the largest distance between two
+	points. Computing the average point involves calculating the total sum of all points by a reduction which
+	is followed by a division in each coordinate by the number of points in the set. When computing the maximum
+	distance bewteen two points a CUDA kernel is lauched which spaws a thread for each point which then compares
+	every other point to it by calculating the distacnce between them and stores the maximum distance within the
+	memory in each thread. Within this computation each point is compared to itself once which is concious decision
+	since compute on the GPU is cheap and otherwise each thread would be recieving different instructions which
+	is not friendly to the SIMT programming model on the GPU.
+	Once these calculations are finished an atomic max opertation is performed to shared
+	memory and then another atomic max to global memory which gives us our final value of the maximum distance.
+	These two quantities are then used to construct a _supertriagle_ which will encompass all points in the
+	set of points we provide. The maximum distance is the radius and the average point is center to a circle
+	which will be the incircle of an equilateral triangle which becomes our constructed _supertriagle_. 
+	@constructsupt_alg outlines this process.
+
+	#figure(
+		kind: "algorithm",
+		supplement: [Algorithm],
+
+		pseudocode-list(booktabs: true, numbered-title: [Parallel super triangle construction])[
+			Data: point set $P$
+			+ Compute the average point // CalcAvgPoint(*avgPoint, pts_d, npts);
+			+ Compute the largest distance bewtween two points in $P$ // computeMaxDistPts
+
+			+ Set center to average point
+			+ Set radius to largest distance
+			+ Construct triangle from circle as incircle
+		]
+	) <constructsupt_alg>
+
 
 === Insertion
 
@@ -970,7 +966,11 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 				  The point insertion proceeds in alphabetical order noting the labels of each 
 				  subfigure. During the computation points closest to the circumcenter of each 
 				  triangle are chosen to be inserted and split each existing triangle with a point
-				  to insert. These figures use a uniform point distribution on a unit disk.
+				  to insert. These figures use a uniform point distribution on a unit disk. This figure
+				  aids to portray the DT as the angle maximizing triangulation which lacktherof can be
+				  seen here in the last few figures with lines drawn which appear to be thick. The 
+				  triangles in these figures also appear, for the most part, alot more narrow than
+				  their counterparts in @triangulation_history.
 		],
 		align: bottom,
 		label: <triangulation_onlyptins>,
@@ -1057,7 +1057,9 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 	#figure(
 		image("main/plotting/gpuModelTest/gpuModelTest.png", width: 80%),
-		caption: [A comparison of the algorithm running on a variety of NVIDIA GPUs.]
+		caption: [A comparison of the algorithm running on a variety of NVIDIA GPUs. This benchmark is 
+				  performed by averaging 5 runs of the DT algorithm on a unfiform set of $10 ^ 5$ points. 
+		]
 	) <gpuModelTest_plt>
 
 
@@ -1174,13 +1176,52 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		```
 	) <quad_struct>
 
-== Comment on the Floating point arithmetic and how the maths is funny sometimes
-== Strong and weak scaling on GPUs?
-== When does algorithm faill
-== Conclusion
+== User Guide 
+
+	A quick demo of how to use the object is given below.
+	
+	#figure( 
+		caption: [A quick illustration of how the Delaunay class is called. This code and other relevant 
+				  source is located in _main/serialIncPtInsertion/src_. Construct an array of points and
+				  pass the pointer and the number of pointes generated as arguments to the Delaunay object.
+				  A file is created _main/serialIncPtInsertion/data/tri.txt_ with the history of and final
+				  result of the algorithm.
+		],
+
+		```c
+		#include "delaunay.h"
+		#include "point.h"
+		#include "ran.h"
+
+		int main(int argc, char *argv[]) {
+		  
+				int n = 100;
+				int seed = 69420;
+
+				Point* points = (Point*) malloc(n * sizeof(Point));
+
+				Ran ran(seed);
+				for (int i=0; i<n; ++i) {
+					points[i].x[0] = ran.doub();
+					points[i].x[1] = ran.doub();
+				}
+
+				Delaunay delaunay(points, n);
+
+				free(points);
+				return 0;
+		}
+		```
+
+	) <basic_serial>
+
+
+= Improvements
+#pagebreak()
+= Conclusion
+
+#lorem(100)
 
 
 #pagebreak()
-
-
 #bibliography("references.bib")
