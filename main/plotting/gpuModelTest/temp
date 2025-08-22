@@ -1,0 +1,4 @@
+would anyone with an nvidia gpu be willing to run a (should be quick) benchmark for my code?
+clone this repo https://github.com/drozd324/GPU_Delaunay_Triangulation.git
+
+and run the bash script /home/drozdtux/MScHPC/project/main/main/plotting/gpuModelTest/makedata.sh

@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-deviceModels = ["NVIDIA GeForce RTX 2080 SUPER", "NVIDIA GeForce RTX 3090", "NVIDIA A100-PCIE-40GB", "NVIDIA A100-SXM4-80GB"]
-# the following entry computes 1 / ((num of cores) * (frequency MHz)) for each model above. Source https://www.techpowerup.com 
-normalization = [1/(3072*1650), 1/(10496*1395), 1/(6912*765), 1/(6912*1275)]
+deviceModels = ["NVIDIA GeForce GTX 1080 Ti", "NVIDIA GeForce RTX 2080 SUPER", "NVIDIA GeForce RTX 3090", "NVIDIA A100-PCIE-40GB", "NVIDIA A100-SXM4-80GB"]
+# the following entry computes 1 / ((num of cores) * (clock frequency MHz)) for each model above. Source https://www.techpowerup.com 
+normalization = [1/(35841*1481), 1/(3072*1650), 1/(10496*1395), 1/(6912*765), 1/(6912*1275)]
+# the following entry computes 1 / ((num of cores) * (clock frequency memory MHz)) for each model above. Source https://www.techpowerup.com 
+#normalization_mem = [1/(35841*), 1/(3072*), 1/(10496*), 1/(6912*), 1/(6912*)]
 
 availableDeviceModels = [] 
 times = []
@@ -28,7 +30,7 @@ times_sorted = np.array(times_sorted)
 normalization_sorted = np.array(normalization_sorted)
 
 # Create figure and axis
-fig, ax1 = plt.subplots(figsize=(8,5))
+fig, ax1 = plt.subplots(figsize=(12,5))
 
 # Bar chart on left y-axis
 bars = ax1.bar(availableDeviceModels_sorted, times_sorted, label="Total time", edgecolor="black", color="cornflowerblue")
