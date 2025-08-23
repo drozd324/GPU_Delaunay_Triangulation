@@ -1,4 +1,6 @@
-would anyone with an nvidia gpu be willing to run a (should be quick) benchmark for my code?
-clone this repo https://github.com/drozd324/GPU_Delaunay_Triangulation.git
-
-and run the bash script /home/drozdtux/MScHPC/project/main/main/plotting/gpuModelTest/makedata.sh
+ntpb,npts,nTriMax,totalRuntime,totalCPUTime,totalGPUTime,prepForInsertTimeTot,insertTimeTot,flipTimeTot,updatePtsTimeTot,seed,distribution,deviceName
+128,100000,200001,0.321294,0.000689,0.320605,0.008499,0.000988,0.031742,0.279376,0,0,NVIDIA A100-SXM4-80GB
+128,100000,200001,0.319610,0.000850,0.318760,0.008517,0.001008,0.029935,0.279301,1,0,NVIDIA A100-SXM4-80GB
+128,100000,200001,0.272486,0.000803,0.271683,0.007808,0.000972,0.028516,0.234387,2,0,NVIDIA A100-SXM4-80GB
+128,100000,200001,0.320412,0.000843,0.319569,0.008916,0.001039,0.030270,0.279343,3,0,NVIDIA A100-SXM4-80GB
+128,100000,200001,0.320188,0.000795,0.319393,0.008469,0.001009,0.030536,0.279380,4,0,NVIDIA A100-SXM4-80GB
