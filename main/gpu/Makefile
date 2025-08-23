@@ -37,4 +37,4 @@ $(OBJDIR) $(BINDIR) $(DATADIR):
 
 .PHONY: clean
 clean:
-	rm -f $(OBJDIR)/*.o $(EXECS) ./data/*
+	rm -f $(OBJDIR)/*.o $(EXECS) $(DATDIR)/*.csv $(DATDIR)/*.txt

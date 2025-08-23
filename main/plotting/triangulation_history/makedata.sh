@@ -2,7 +2,6 @@
 cd "${0%/*}" || exit 1  # Run from script's directory
 GPUDIR="../../gpu"
 
-make 
 
 SIZESN=("100")
 SEED=69420
@@ -15,6 +14,12 @@ EXEDIR="./bin/test"
 DATADIR="data/tri.txt"
 PLOTDATA="../plotting/triangulation_history/tri.txt"
 PLOTDIR="../plotting/triangulation_history"
+
+cd "$GPUDIR"
+make clean
+sed -i 's/bool saveHistory = false/bool saveHistory = true/' ./src/delaunay.h
+make 
+cd "$PLOTDIR"
 
 #"$STZ" "$EXEDIR" -n "$STARTN" -s 0 -d 0 -t "$NTPB"
 
@@ -31,5 +36,10 @@ for n in "${SIZESN[@]}"; do
 		$HOME/.venv/bin/python3 plot.py iter all
 	done
 done
+
+cd "$GPUDIR"
+make clean
+sed -i 's/bool saveHistory = true/bool saveHistory = false/' ./src/delaunay.h
+cd "$PLOTDIR"
 
 rm tri.txt

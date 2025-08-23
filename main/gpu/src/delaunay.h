@@ -50,7 +50,7 @@ struct Delaunay {
 	Quad* quadList_d;
 
 	int iter = 0;
-	bool saveHistory = true; 
+	bool saveHistory = false; 
 	bool info = true;
 	bool saveCSV = true;
 
@@ -159,6 +159,7 @@ __device__ void flipFromQuad(int a, int e, int b, Tri* triList, Quad* quad);
 /* UPDATE POINTS */
 __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri, int* ptsUninserted, int* nptsUninserted);
 __device__ int contains(int t, int r, Tri* triList, Point* pts);
+__device__ int contains(Tri* tri, int r, Point* pts);
 
 /* Delaunay Check */
 __global__ void delaunayCheckKernel(Tri* triList, int* nTri, Point* pts, int* nEdges);

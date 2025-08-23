@@ -7,7 +7,7 @@ MINSIZE=$((2 ** 2))
 MAXSIZE=$((2 ** 20))
 STEP=2
 
-MAXS=3
+MAXS=2
 
 NDISTRIBITIONS=4
 
