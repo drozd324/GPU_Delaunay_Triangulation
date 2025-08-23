@@ -21,7 +21,7 @@ EXECS := $(addprefix $(BINDIR)/, $(EXEC_NAMES))
 CU_SOURCES := test.cu mymath.cu point.cu circle.cu tri.cu delaunay.cu ran.cu atomic.cu misc.cu
 ALL_OBJS := $(addprefix $(OBJDIR)/, $(patsubst %.cu, %.o, $(CU_SOURCES)))
 
-all: $(EXECS)
+all: $(EXECS) $(OBJDIR) $(BINDIR) $(DATADIR)
 
 $(BINDIR)/test: $(ALL_OBJS)   | $(BINDIR)
 	$(NVCC) $(NVCCFLAGS) $(DEBUGNV) -o $@ $^ -lm
