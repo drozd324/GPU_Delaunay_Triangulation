@@ -18,8 +18,8 @@ for i, dist in enumerate(dist_names):
 plt.gca().xaxis.set_major_locator(MultipleLocator(64))
 
 
-plt.xlabel("number of threads per block")
-plt.ylabel("time (seconds)")
+plt.xlabel("Number of threads per block")
+plt.ylabel("Time (s)")
 plt.legend()
 plt.savefig("blockSizeVsTime.png", dpi=200)
 #plt.show()
