@@ -5,10 +5,10 @@ cd "$CPUDIR" # need to run cpu code in this directory
 
 make 
 
-STARTN=100
-MAXN=10000 # max num of points
+STARTN=$((2 ** 2))
+MAXN=$((2 ** 20)) # max num of points
 STEP=2
-MAXS=5 # max seeds
+MAXS=3 # max seeds
 
 NDISTRIBITIONS=4
 
