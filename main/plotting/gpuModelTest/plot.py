@@ -3,15 +3,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
-deviceModels = ["NVIDIA GeForce GTX 1080 Ti", "NVIDIA GeForce RTX 2080 SUPER", "NVIDIA GeForce RTX 3090", "NVIDIA A100-PCIE-40GB", "NVIDIA A100-SXM4-80GB"]
+deviceModels = [
+	#"NVIDIA GeForce GTX 1080 Ti",
+	"NVIDIA GeForce RTX 2080 SUPER",
+	"NVIDIA GeForce RTX 3090",
+	"NVIDIA A100-PCIE-40GB",
+	"NVIDIA A100-SXM4-80GB"
+]
+
 # the following entry computes 1 / ((num of cores) * (clock frequency MHz)) for each model above. Source https://www.techpowerup.com 
-normalization = [1/(35841*1481), 1/(3072*1650), 1/(10496*1395), 1/(6912*765), 1/(6912*1275)]
+normalization = [
+	#1/(3584*1481),
+	1/(3072*1650),
+	1/(10496*1395),
+	1/(6912*765),
+	1/(6912*1275)
+]
+
 # the following entry computes 1 / ((num of cores) * (clock frequency memory MHz)) for each model above. Source https://www.techpowerup.com 
 #normalization_mem = [1/(35841*), 1/(3072*), 1/(10496*), 1/(6912*), 1/(6912*)]
 
 availableDeviceModels = [] 
+availableNormalization = [] 
 times = []
-for name in deviceModels:
+for i, name in enumerate(deviceModels):
 	filepath = f"./data_{name}.csv"
 	if not os.path.exists(filepath):
 		continue
@@ -22,12 +37,13 @@ for name in deviceModels:
 
 	availableDeviceModels.append(name)
 	times.append(*avg_df["totalRuntime"])
+	availableNormalization.append(normalization[i])
 
-availableDeviceModels_sorted, times_sorted, normalization_sorted = zip(*sorted(zip(availableDeviceModels, times, normalization)))
+times_sorted, availableDeviceModels_sorted, availableNormalization_sorted = zip(*sorted(zip(times, availableDeviceModels, normalization), reverse=True))
 
-availableDeviceModels_sorted = np.array(availableDeviceModels_sorted)
+availableDeviceModels_sorted = availableDeviceModels_sorted
 times_sorted = np.array(times_sorted)
-normalization_sorted = np.array(normalization_sorted)
+availableNormalization_sorted = np.array(availableNormalization_sorted)
 
 # Create figure and axis
 fig, ax1 = plt.subplots(figsize=(12,5))
@@ -44,7 +60,7 @@ ax1.tick_params(axis='y')
 #colors = ['forestgreen', 'gold', 'cornflowerblue', 'salmon']
 # Create a second y-axis
 ax2 = ax1.twinx()
-ax2.plot(availableDeviceModels_sorted, times_sorted*normalization_sorted, color='red', marker='o', linestyle='-', label="Normalized time")
+ax2.plot(availableDeviceModels_sorted, times_sorted*availableNormalization_sorted, color='red', marker='o', linestyle='-', label="Normalized time")
 ax2.set_ylabel("Normalized Time (s/#cores * MHz)")
 ax2.tick_params(axis='y')
 

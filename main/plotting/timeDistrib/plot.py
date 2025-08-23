@@ -17,7 +17,7 @@ normalized = avg_df.div(avg_df.sum(axis=1), axis=0)
 distributions = ["Uniform", "Clustered center", "Clustered boundary", "Gaussian"]
 colors = ['forestgreen', 'gold', 'cornflowerblue', 'salmon']
 hatches = ['..', '//', '\\\\', 'xx']
-labels = ["prepForInsert", "insert", "flip", "updatePts"]
+labels = ["prepForInsert", "insert", "flip", "updatePointLocations"]
 
 # Plotting
 y = np.arange(len(distributions))

@@ -35,12 +35,6 @@
 	In partial fulfillment of MSc in High-performance Computing in the School of Mathematics
 ])
 
-//#align(center)[
-//    Patryk Drozd\
-//    Trinity College Dublin\
-//    #link("mailto:drozdp@tcd.ie")
-//]
-
 #align(center, [
 	#image("main/plotting/triangulation_grid/tri1000_2.png", width: 100%)
 ])
@@ -100,7 +94,6 @@
 Write acknowledgements to your supervisor, classmates, friends, family, partnerâ€¦ anyone who supported you during the MSc.
 #lorem(2)
 
-
 #pagebreak()
 
 // ================================== TABLE OF CONTENTS ======================================= 
@@ -111,10 +104,6 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 #pagebreak()
 
 // ====================================== WRITING =============================================
-
-
-// Delaunay triangluations are interesing because: FEM simulation, Computational geometry, 
-// i think the maths is interesting
 
 
 //	An exploration of the synthesis and implementation of Delaunay triangulation algorithms
@@ -875,6 +864,9 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	) <par_flip_alg>
 
 
+=== Updating point locations
+
+
 #pagebreak()
 == Data Structures
 
@@ -1078,14 +1070,24 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	otherwise have conflicted with other configurations or were only possible after. What really
 	harms the speed of the algorithm is that each flipping iteration within the parallel flipping procedure
 	takes roughly the same amount of time to process, even if it is flipping a relatively small number of 
-	configurations.
-	
+	configurations. The profling in @timeDistrib_plt gives us an impression of how the code as a whole
+	performs in terms of time spent. This includes both the host and device runtimes in the respective
+	function calls.
 
 	#figure(
 		image("main/plotting/timeDistrib/timeDistrib.png", width: 100%),
 		caption: [Showing the proportions of time each function took as a percentage of the 
 				  total runtime. Each color represents a different set opteration which perform
-				  a task.]
+				  a task. The _prepForInsert_ routine performs necessary steps for to be followed
+				  up by the insertion step. This involves the calculation and writing of which point
+				  is nearest the circumcenter of each triangle and other neccesary resetting of 
+				  values. _insert_ simply inserts the points which were chosen in the prevous step.
+				  The _flip_ procedure performs passes of parallel flipping by calculating which 
+				  configurations should be flipped and prevents and flipping conflics from occuring.
+				  Finally _upadtePointLocations_ checks for each uninserted point for which index of
+				  triangle it lies in. The algorithm for this plot was performed on a uniform distribution
+				  of $10^3$ points.
+		]
 	) <timeDistrib_plt>
 
 
@@ -1123,17 +1125,21 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	)
 
 
-	The profling in @timeDistrib_plt gives us only an impression of how the code as a whole performs in 
-	terms of time spent. This includes both the host and device runtimes in the respective function calls.
-	Another 	
-
-	Depending on the desired application of this algorithm one may use it to obtain only a near dealaunay
+	Depending on the desired application of this algorithm one may use it to obtain only a near Delaunay
 	triangulation. How close a triangulation is to being a DT can be calculated by counting all of the non
-	dealaunay edges. The sum of these edges can be used to compare with the total number of edges in the
+	Delaunay edges. The sum of these edges can be compared with the total number of edges in the
 	triangulation. This is caclulated and printed at the end of running our code alongside checking 
-	if the triangulation produced is indeed a DT.
+	if the triangulation produced is indeed a DT. Taking a look at @nflipsVsIter_plt we have the number
+	of configurations of triangles flipped for every iteration of the algorithm on the left and the
+	total number of flips for each pass within the _flip_ function. The majority of flips being performed
+	during the execution of the algorithm are performed in the later stages of the algorithm but what can
+	be noticed in the rightmost figure is that, for each pass of parallel flipping, only the first two or
+	three passes constribute significantly to the triangluation performing the majority the the flips.
+	Following these flips we are left flipping a relatively tiny number of configurations. One could choose
+	to only perform 2 passes of parallel flipping and the algorithm would process the majority of flipable
+	configurations. This would in turn significantly reduce the amount of time spent on the flipping 
+	precedures as each pass of parallel flipping lasts about the same amount of time for a given iteration.
 	
-
 	#figure(
 		image("main/plotting/ninsertVsIter/ninsertVsIter.png", width: 80%),
 		caption: [This figure shows the number of points inserted into the existing triangulation during 
@@ -1146,8 +1152,8 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	#figure(
 		image("main/plotting/nflipsVsIter/nflipsVsIter.png", width: 115%),
 		caption: [Figures showing numbers of flips performed during during each call to the parallel flipping 
-				  function _flip()_ on the left and on the right the number of flips performed during each 
-				  pass of parallel flipping performed within the _flip()_ function. Algorithm performed
+				  function _flip_ on the left and on the right the number of flips performed during each 
+				  pass of parallel flipping performed within the _flip_ function. Algorithm performed
 				  on $10^5$ points and a uniform distribution of points.
 		]
 	) <nflipsVsIter_plt>
@@ -1186,6 +1192,11 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		image("main/plotting/gpuModelTest/gpuModelTest.png", width: 100%),
 		caption: [A comparison of the algorithm running on a variety of NVIDIA GPUs. This benchmark is 
 				  performed by averaging 5 runs of the DT algorithm on a unfiform set of $10 ^ 5$ points. 
+				  From this figure we can see that this algorithm doesn't scale well as we would like for the
+				  red line (normalized time) to decrease along with the bars (real time). What we can deduce
+				  from this plot is that our algorithm scales well on RTX GPUs but not so well on the A100
+				  GPUs since we can see the red line decreasing for the RTX GPUs and not for the A100s.
+				  *EXPLENATION ON ARCHITECTURES MAYBE?*
 		]
 	) <gpuModelTest_plt>
 
