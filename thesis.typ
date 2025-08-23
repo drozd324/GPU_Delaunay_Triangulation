@@ -1053,10 +1053,13 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		caption: [Showing the time it took for the GPU DT code to run with $10^5$ points while	
 				  varying the number of threads per block which is also known as the block size.
 				  We clearly see increasing the number of threads per block decreases performance.
-				  This is likely due to the way we imlemented some features of the code
-				  using shared memory, which in this case with a larger block size more atomic
-				  opertaions will lead to serialized behaviour with the exception of very small 
-				  block sizes. 
+				  This is due to the way we implemented some features of the code
+				  using shared memory for which in this case with a larger block size, more atomic
+				  opertaions be trying to act on the same memory location and this will lead to
+				  serialized behaviour with the exception of very small block sizes. Hence by 
+				  observing the figure we can deduce that the most effective block sizes are in
+				  between $64$ and $192$. A block size of $128$ was for performing all experiments
+				  shown in each figure in this report.
 		],
 	) <blocksizeVsTime_plt>
 
