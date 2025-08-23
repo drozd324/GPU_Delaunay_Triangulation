@@ -968,7 +968,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 
 	#subpar.grid(
-		figure( image("main/plotting/triangulation_history/DT_iter0.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_history/DT_iter1.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_history/DT_iter2.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_history/DT_iter4.png", width: 135%), caption: [] ),
 		figure( image("main/plotting/triangulation_history/DT_iter5.png", width: 135%), caption: [] ),
@@ -1059,10 +1059,12 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	#figure(
 		image("main/plotting/blocksizeVsTime/blocksizeVsTime.png", width: 80%),
 		caption: [Showing the time it took for the GPU DT code to run with $10^5$ points while	
-				  varying the number of threads per block also know as the block size. This is a rather
-				  naiive way of finding the optimal number of threads per block as a better analysis *TODO* 
-				  would involve logically similar block of code to have their own block size. Currently
-				  the block size doesn't rationally affect the runtime.
+				  varying the number of threads per block which is also known as the block size.
+				  We clearly see increasing the number of threads per block decreases performance.
+				  This is likely due to the way we imlemented some features of the code
+				  using shared memory, which in this case with a larger block size more atomic
+				  opertaions will lead to serialized behaviour with the exception of very small 
+				  block sizes. 
 		],
 	) <blocksizeVsTime_plt>
 
@@ -1086,11 +1088,51 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 				  a task.]
 	) <timeDistrib_plt>
 
+
+
+	#subpar.grid(
+		figure( image("main/plotting/triangulation_grid/tri100_0.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri500_0.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri1000_0.png", width: 135%)),
+
+		figure( image("main/plotting/triangulation_grid/tri100_1.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri500_1.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri1000_1.png", width: 135%)),
+
+		figure( image("main/plotting/triangulation_grid/tri100_2.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri500_2.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri1000_2.png", width: 135%)),
+
+		figure( image("main/plotting/triangulation_grid/tri100_3.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri500_3.png", width: 135%) ),
+		figure( image("main/plotting/triangulation_grid/tri1000_3.png", width: 135%)),
+
+		rows: (auto, auto, auto, auto),
+		columns: (auto, auto, auto),
+		caption: [Visualisations of Delaunay triangluations of various point distributions. 
+				  The grid should be read as follows. Along the horizontal the number of points
+				  involved increases gradually and with $100$, $500$, $1000$ points in the the	
+				  first second and third column respectively. In each row we draw from different 
+				  point distributions. The rows draw from a uniform unit disk distribution, a distribution
+				  on a disk with points clustered in the center, a distribution on a disk with points
+				  clustered near the boundary and a gaussiann distribution with mean $0$ and variance
+				  $1$, in rows 1, 2, 3 and 4 respectively.
+		],
+		align: bottom,
+		label: <triangulations_grid>,
+	)
+
+
 	The profling in @timeDistrib_plt gives us only an impression of how the code as a whole performs in 
 	terms of time spent. This includes both the host and device runtimes in the respective function calls.
 	Another 	
 
-	Depending on the desired application of this algorithm one may use this in 
+	Depending on the desired application of this algorithm one may use it to obtain only a near dealaunay
+	triangulation. How close a triangulation is to being a DT can be calculated by counting all of the non
+	dealaunay edges. The sum of these edges can be used to compare with the total number of edges in the
+	triangulation. This is caclulated and printed at the end of running our code alongside checking 
+	if the triangulation produced is indeed a DT.
+	
 
 	#figure(
 		image("main/plotting/ninsertVsIter/ninsertVsIter.png", width: 80%),
@@ -1147,39 +1189,6 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		]
 	) <gpuModelTest_plt>
 
-	#subpar.grid(
-		figure( image("main/plotting/triangulation_grid/tri100_0.png", width: 135%) ),
-		figure( image("main/plotting/triangulation_grid/tri500_0.png", width: 135%) ),
-		figure( image("main/plotting/triangulation_grid/tri1000_0.png", width: 135%)),
-
-		figure( image("main/plotting/triangulation_grid/tri100_1.png", width: 135%) ),
-		figure( image("main/plotting/triangulation_grid/tri500_1.png", width: 135%) ),
-		figure( image("main/plotting/triangulation_grid/tri1000_1.png", width: 135%)),
-
-		figure( image("main/plotting/triangulation_grid/tri100_2.png", width: 135%) ),
-		figure( image("main/plotting/triangulation_grid/tri500_2.png", width: 135%) ),
-		figure( image("main/plotting/triangulation_grid/tri1000_2.png", width: 135%)),
-
-		figure( image("main/plotting/triangulation_grid/tri100_3.png", width: 135%) ),
-		figure( image("main/plotting/triangulation_grid/tri500_3.png", width: 135%) ),
-		figure( image("main/plotting/triangulation_grid/tri1000_3.png", width: 135%)),
-
-		rows: (auto, auto, auto, auto),
-		columns: (auto, auto, auto),
-		caption: [Visualisations of Delaunay triangluations of various point distributions. 
-				  The grid should be read as follows. Along the horizontal the number of points
-				  involved increases gradually and with $100$, $500$, $1000$ points in the the	
-				  first second and third column respectively. In each row we draw from different 
-				  point distributions. The rows draw from a uniform unit disk distribution, a distribution
-				  on a disk with points clustered in the center, a distribution on a disk with points
-				  clustered near the boundary and a gaussiann distribution with mean $0$ and variance
-				  $1$, in rows 1, 2, 3 and 4 respectively.
-		],
-		align: bottom,
-		label: <triangulations_grid>,
-	)
-
-
 == User Guide 
 
 	A quick demo of how to use the object is given below.
@@ -1221,6 +1230,9 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 
 = Improvements
+write to save history asynchronously
+use DAG
+
 #pagebreak()
 = Conclusion
 

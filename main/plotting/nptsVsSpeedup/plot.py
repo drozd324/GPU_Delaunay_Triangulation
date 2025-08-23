@@ -19,8 +19,8 @@ for i, dist in enumerate(dist_names):
 	speedup = timeCPU / timeGPU[:len(timeCPU)]   
 
 	#plt.plot(nptsGPU, speedup, label=dist)
-	plt.plot(nptsCPU, speedup, label=dist)
-	#plt.loglog(nptsCPU, speedup, label=dist)
+	#plt.plot(nptsCPU, speedup, label=dist)
+	plt.loglog(nptsCPU, speedup, label=dist)
 	#plt.semilogx(nptsCPU, speedup, label=dist)
 
 plt.xlabel("Number of points")
