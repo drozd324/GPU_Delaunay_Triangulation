@@ -23,40 +23,26 @@ float Ran::flot() {
 
 // ==================================================
 
-void Ran::disk(double& x, double& y) {
-	double r = sqrt(doub()); 
+void Ran::disk(double& x, double& y, int p) {
+	double r = doub(); 
+	for (int i=0; i<p; i++) {
+		r = sqrt(r); 
+	}
 	double theta = doub() * 2 * M_PI; 
 	
 	x = r*cos(theta);
 	y = r*sin(theta);
 }
 
-void Ran::disk(float& x, float& y) {
-	float r = sqrt(flot()); 
+void Ran::disk(float& x, float& y, int p) {
+	float r = flot();
+	for (int i=0; i<p; i++) {
+		r = sqrt(r); 
+	}
 	float theta = flot() * 2 * M_PI; 
 	
 	x = r*cos(theta);
 	y = r*sin(theta);
-}
-
-// ==================================================
-
-void Ran::proj_sphere(double& x, double& y) {
-	double r = 1; 
-	double theta = flot() * M_PI; 
-	double phi	= flot() * 2*M_PI; 
-	
-	x = r*sin(theta)*cos(phi);
-	y = r*sin(theta)*sin(phi);
-}
-
-void Ran::proj_sphere(float& x, float& y) {
-	float r = 1; 
-	float theta = flot() * M_PI; 
-	float phi	= flot() * 2*M_PI; 
-	
-	x = r*sin(theta)*cos(phi);
-	y = r*sin(theta)*sin(phi);
 }
 
 // ==================================================

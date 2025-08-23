@@ -47,7 +47,7 @@ void Delaunay::constructor(Point* points, int n) {
 	}
 	fprintf(trifile, "\n");
 
-	saveToFile();
+	//saveToFile();
 	// main compute which performs the incremental point insertion
 	clock_t t0 = clock();
 
@@ -58,17 +58,13 @@ void Delaunay::constructor(Point* points, int n) {
 
 
 	// check if triangulation is delaunay
-	int nflips = -1;
-	while (nflips != 0) {
-		if ((nflips = legalize()) == 0) {
-			break;
-		} else {
-			std::cout << "Triangluation is NOT Delaunay\n";
-		}
-		std::cout << "Performed	" << nflips  << " additional flips\n"; 
+	int nflips; 
+	if ((nflips = legalize()) == 0) {
+		std::cout << "Triangluation is Delaunay\n";
+	} else {
+		std::cout << "Triangluation is NOT Delaunay with " << nflips << " edges to flip\n";
 	}
 
-	std::cout << "Triangluation is Delaunay\n";
 
 	// saves final triangulion with extra points removed
 	saveToFile(true);
@@ -170,7 +166,7 @@ int Delaunay::flip(int a, int e) {
 		triList[n[3]].o[(o[3]+1)%3] = 0;	
 	}
 
-	saveToFile();
+	//saveToFile();
 	return 1;
 }
 
@@ -213,7 +209,7 @@ int Delaunay::flip_after_insert() {
 
 			triList[i].flip = 1;
 			triList[triList[i].n[2]].flip = 0;
-			saveToFile();
+			//saveToFile();
 		}
 		else {                                  // else mark for no flipping
 			triList[i].flip = -1;
@@ -304,7 +300,7 @@ int Delaunay::insertPtInTri(int r, int i) {
 	nTri += 2;		
 
 	// try to make some ascii art diagrams maybe good for explenation
-	saveToFile();
+	//saveToFile();
 	return 2;
 }
 
