@@ -183,7 +183,7 @@
 	] <triangulation_def>
 
 	This is a somewhat technical but precise definition. The most important point in @triangulation_def is 
-	that it is a _maximal_ set of non crossing egdes which for us means that we will not have any other shapes
+	that it is a _maximal_ set of non crossing edges which for us means that we will not have any other shapes
 	than triangles in this structure. 
 
 	#subpar.grid(
@@ -444,7 +444,7 @@
 
 	) <ripiflip_alg>
 
-	A signficant part of this algorithmis the FlipEdge function in @legedge_alg. This function performs	
+	A significant part of this algorithms the FlipEdge function in @legedge_alg. This function performs	
 	the necessary flips, both number of and on the correct edges, for the triangulation in the current
 	iteration of point insertion to become a DT.
 
@@ -456,25 +456,25 @@
 		  Data: egde $e$, triangle $t_a$
 		  + *if* $e$ is illegal
 			+ _flip_ with triangle $t_b$ across edge $e$
-			+ let $e_1$, $e_2$ be the outward facing egdes of $t_b$
+			+ let $e_1$, $e_2$ be the outward facing edges of $t_b$
 			+ LegalizeEdge($e_1$, $t_b$)
 			+ LegalizeEdge($e_2$, $t_b$)
 		]
 	) <legedge_alg>
 
 
-	The contrustions neccesary to explain why the _LegalizeEdge_ routine created a DT is again slightly 
+	The constructions necessary to explain why the _LegalizeEdge_ routine created a DT is again slightly 
 	mathematically involved but is discussed in @CGAlgoApp.
 	In the following sections we will discuss the point insertion and flipping steps in more detail.
 
 === Point insertion
 
-	Point instertion procedure goes as follows. An initial triangulation is neccesary to begin advance 
+	Point insertion procedure goes as follows. An initial triangulation is necessary to begin advance 
 	in the point insertion procedure. This is commonly done by adding 3 extra points to our triangulation
 	from which we will construct a _supertriangle_ which will contain all of the point in the set we wish 
-	to construct the DT. These extra 3 points will later be removed. In our triagulation if there is a point
-	not yet insterted we choose to use it to split the existing triangle in which this point lies in into 3
-	new triangles. This process is repreated untill no more points are left to insert. The point insertion
+	to construct the DT. These extra 3 points will later be removed. In our triangulation if there is a point
+	not yet inserted we choose to use it to split the existing triangle in which this point lies in into 3
+	new triangles. This process is repeated until no more points are left to insert. The point insertion
 	step would be followed by the _LegaiseEdge_ procedure. @s_pointinsertion_img illustrates this process.
 
 	
@@ -492,12 +492,12 @@
 				  center most triangle $t_i$ will be then triangle in which a point will be chosen for
 				  insertion. Triangle $t_i$ knows its neighbours across each edge represented by the green
 				  arrows and knows the points opposite each of these edges. After the point it inserted (b), 
-				  $t_i$ is moved and two new triangles $t_j$, $t_k$ are created to accomodate the new point.
-				  Each new trianlge $t_i$, $t_j$, $t_k$ can be fully constructed from the previously existing
+				  $t_i$ is moved and two new triangles $t_j$, $t_k$ are created to accommodate the new point.
+				  Each new triangle $t_i$, $t_j$, $t_k$ can be fully constructed from the previously existing
 				  $t_i$ and each neighbour of $t_i$ in (a) has its neighbours updated to reflect the insertion.
-				  The neighbouring triangles opposite points are updated by accesing the opposite point across
+				  The neighbouring triangles opposite points are updated by accessing the opposite point across
 				  the edge of the neighbouring triangle and obtaining the index of the edge which has the 
-				  triangle currently being split. The index of the opposite point will allways be $0$ by
+				  triangle currently being split. The index of the opposite point will always be $0$ by
 				  construction. The neighbouring triangle is also updated similarly but with the appropriate
 				  index which will be the one of the triangle who's modifying the neighbouring triangle.
 				
@@ -507,10 +507,10 @@
 		label: <s_pointinsertion_img>,
 	) 
 	
-	It might be nice to see results from just running the point insertion algorthim by itself, whithout 
-	the flipping which would take place inbetween which will be further explored in the next section. In
+	It might be nice to see results from just running the point insertion algorthim by itself, without 
+	the flipping which would take place in between which will be further explored in the next section. In
 	@insertion_only we see the result after the super triangle points and their corresponding triangles have
-	been removed. It is good to note that the point insertion algorithm is in general a triangluation algorithm. 
+	been removed. It is good to note that the point insertion algorithm is in general a triangulation algorithm. 
 	The state of the triangulation in @insertion_only is not particularly useful in any applications I seen
 	but I thought I must include it in order to show an intermediate step in the process of the construction
 	of the complete algorithm.
@@ -552,31 +552,31 @@
 				  edge can be thought of a being rotated counter clockwise which lets us know where the 
 				  indexes of the previous triangles are being overwritten to in the array of _tri_ structures
 				  in later described in @tri_struct. Most of the triangles can be constructed internally but
-				  the neighbouring triangles also need to have their neighour information and 
-				  points are opposite the neigbouring edge updated. 
+				  the neighbouring triangles also need to have their neighbour information and 
+				  points are opposite the neighbouring edge updated. 
 		],
 		
 		align: bottom,
 		label: <s_flip_img>,
 	) 
 
-	The implementaion was written in C++ and was not written with a large amount of object oriented 
-	programming (OOP) techniques for an gentler transition to a CUDA implementaion as CUDA heavily relies
-	on pointer semantics and does not support some of the more convenient OOP feautres. However as CUDA
+	The implementation  was written in C++ and was not written with a large amount of object oriented 
+	programming (OOP) techniques for an gentler transition to a CUDA implementation as CUDA heavily relies
+	on pointer semantics and does not support some of the more convenient OOP features. However as CUDA
 	does support OOP features on the host side so the I chose to write a _Delaunay_ class which holds most
-	of the important features of the computation as methods which are exectued in the constructor of the
+	of the important features of the computation as methods which are executed in the constructor of the
 	_Delaunay_ object.
 	
 === Analysis
 
-	The analysis in this section will be brief but I hope succint as the majority of the work done was 
-	involved in the parallelized verions of this algorithm showcased in the following sections. 
+	The analysis in this section will be brief but I hope succinct as the majority of the work done was 
+	involved in the parallelized versions of this algorithm showcased in the following sections. 
 
 	In @s_nptsVsTime_plt below we can observe the time complexity of the serial algorithm. This algorithm
-	can theoretically achieve a complexity of $O(n log(n))$ however my naive implementaion does not achieve
+	can theoretically achieve a complexity of $O(n log(n))$ however my naive implementation does not achieve
 	this and we have a $O(n^2)$ scaling as seen by the straight line in the log plot. Even though 
-	this is not the result I have hoped for, this is still a uselfull piece of code to compare the future
-	GPU implementaion with. I believe that a $O(n log(n))$ complexity can be achived by using a directed
+	this is not the result I have hoped for, this is still a useful piece of code to compare the future
+	GPU implementation with. I believe that a $O(n log(n))$ complexity can be achieved by using a directed
 	acyclic graph structure (DAG) for faster memory access in finding in which triangles points are	contained
 	in.
 
@@ -587,10 +587,10 @@
 				  see that when run with different point distributions the algorithm takes
 				  essentially the same amount of time to complete. The nature of the algorithm is
 				  to pick a point each iteration and perform the same operations around it so 
-				  it is not surprising that different point distributions dont affect the runtime.
+				  it is not surprising that different point distributions don't affect the runtime.
 				  The slight increase in change of runtime noticed between $10$ and $10^2$ is
 				  due to the increased memory demands of the executable and is reflected by the
-				  increased time accesing memory from other cache locations. 
+				  increased time accessing memory from other cache locations. 
 		],
 	) <s_nptsVsTime_plt>
 
@@ -599,12 +599,12 @@
 
 	The parallelization of the DT is conceptually not very different than its serial counterpart. We will
 	be considering only parallelization with a GPU here which lends itself to algorithms which are created with 
-	a GPUs architecture in mind. This means that accesing data will be largely done by accessing global arrays
+	a GPUs architecture in mind. This means that accessing data will be largely done by accessing global arrays
 	which all threads of execution have access to. Methods akin to divide and conquer @DivAndConq would be
 	useful if we consider multi CPU or multi GPU systems but that is not in the scope of this project but would
-	be particularly interesing to see a multi GPU systems implementation for this algorithm made publicly 
+	be particularly interesting to see a multi GPU systems implementation for this algorithm made publicly 
 	available. An overview of the parallelized algorithm is in @ppi_alg mostly adapted from @gDel3D which
-	is to my understanding as of this moment the fastest GPU delaunay triangluation algorithm. 
+	is to my understanding as of this moment the fastest GPU DT algorithm. 
 
 	#figure(
 	  kind: "algorithm",
@@ -632,31 +632,31 @@
 	  ]
 	) <ppi_alg>
 
-	@ppi_alg is takes as input a point set $P$ for the triangluation to be constructed from and return
+	@ppi_alg is takes as input a point set $P$ for the triangulation to be constructed from and return
 	the DT from the transformed triangulation $T$. _(line 1)_ The triangulation is initialized as a triangle
 	enclosing all points in $P$ by adding 3 new points to the triangulation and is constructed in a way such 
 	that all of the other points lie inside this triangle which is noted in _(line 2)_. These extra three points
-	will later be removed. _(line 3)_ Tells us to keep peforming the main work of the algorithm as long as there 
-	are points to be inserted into $T$. _(lines 4-5)_ We pick out points in parellel which can be inserted
+	will later be removed. _(line 3)_ Tells us to keep performing the main work of the algorithm as long as there
+	are points to be inserted into $T$. _(lines 4-5)_ We pick out points in parallel which can be inserted
 	into $T$ by checking in which triangle each point not yet inserted, if any, is closest to the circumcenter of
 	the triangle. This point will be inserted in the _(lines_6-7)_ in which for every triangle which has a 
 	point inside it to be inserted we split the existing triangle $t$ into 3 new triangles which all contain 
 	the inserted point $p$. Now in _(lines 8-12)_ at this point, we have a non Delaunay mesh which needs to
-	be transformed and so we perform neccesary flipping operations in order for this to be a DT. For each
+	be transformed and so we perform necessary flipping operations in order for this to be a DT. For each
 	triangle we first check whether we should flip with any 3 any of its neighbours by checking if each edge
 	is illegal. If an edge is found to be illegal the first neighbouring triangle is marked to be flipped with.
-	Following this we check whether any triangles marked for flipping would be conlflicting with any other
+	Following this we check whether any triangles marked for flipping would be conflicting with any other
 	configuration flipping, and if so, it is discarded for this iteration of the while loop. 
 	In _(lines 11-12)_ we perform the flipping operation for each triangle which wont have any conflicts.
-	At the end of the outermost while loop in _(line 13)_ we update our knowlege of where points which have
-	not yet been instered not lie after the chages by the point insertion creating new triangles and flipping
+	At the end of the outermost while loop in _(line 13)_ we update our knowledge of where points which have
+	not yet been inserted not lie after the changes by the point insertion creating new triangles and flipping
 	changing the triangles themselves. 
 
-	@ppi_alg exploits the most parallizable aspects of the point insertion @ripiflip_alg, which are the 
+	@ppi_alg exploits the most parallelisable aspects of the point insertion @ripiflip_alg, which are the 
 	point insertion, for which only one triangle is involved in at a time, and the flipping operation, which
-	can be parallized but some book keeping needs to be taken care of in order for confilicting flip to not
-	be performed. With a large point set this parallelization allows for a massively alogorithm as a large 
-	number of point insertions and flips can be performed in parallel. Flipping conlficts can happen when
+	can be parallised but some book keeping needs to be taken care of in order for conflicting flip to not
+	be performed. With a large point set this parallelization allows for a massively algorithm as a large 
+	number of point insertions and flips can be performed in parallel. Flipping conflicts can happen when
 	two different configurations of neighbouring triangles want to flip and these two configurations share
 	a triangle, as illustrated in @parallel_flip_img.
 	
@@ -667,12 +667,12 @@
 	deserve to be parallelized, computing the average point and computing the largest distance between two
 	points. Computing the average point involves calculating the total sum of all points by a reduction which
 	is followed by a division in each coordinate by the number of points in the set. When computing the maximum
-	distance bewteen two points a CUDA kernel is lauched which spaws a thread for each point which then compares
-	every other point to it by calculating the distacnce between them and stores the maximum distance within the
-	memory in each thread. Within this computation each point is compared to itself once which is concious decision
+	distance between two points a CUDA kernel is launched which spawns a thread for each point which then compares
+	every other point to it by calculating the distance between them and stores the maximum distance within the
+	memory in each thread. Within this computation each point is compared to itself once which is conscious decision
 	since compute on the GPU is cheap and otherwise each thread would be recieving different instructions which
 	is not friendly to the SIMT programming model on the GPU.
-	Once these calculations are finished an atomic max opertation is performed to shared
+	Once these calculations are finished an atomic max operation is performed to shared
 	memory and then another atomic max to global memory which gives us our final value of the maximum distance.
 	These two quantities are then used to construct a _supertriagle_ which will encompass all points in the
 	set of points we provide. The maximum distance is the radius and the average point is center to a circle
@@ -686,7 +686,7 @@
 		pseudocode-list(booktabs: true, numbered-title: [Parallel super triangle construction])[
 			Data: point set $P$
 			+ Compute the average point // CalcAvgPoint(*avgPoint, pts_d, npts);
-			+ Compute the largest distance bewtween two points in $P$ // computeMaxDistPts
+			+ Compute the largest distance between two points in $P$ // computeMaxDistPts
 
 			+ Set center to average point
 			+ Set radius to largest distance
@@ -698,12 +698,12 @@
 === Point insertion
 
 	The point insertion step is very well suited for parallelization. Parallel point insertion can be
-	performed with minimal interfernce with their
-	neighbours. This procedure is performed independantly for each triangle with a point to insert. The only
+	performed with minimal interference with their
+	neighbours. This procedure is performed independently for each triangle with a point to insert. The only
 	complication arises in the updating of neighbouring triangles information about their newly updated
 	neighbours and opposite points. This must be done after all new triangles have been constructed and saved
 	to memory. Only then you can exploit the data structure and traverse the neighbouring triangle to a update
-	the correct triangles appropirate edge. 
+	the correct triangles appropriate edge. 
 
 	#subpar.grid(
 		figure(image("images/s_insert1.png"), caption: [
@@ -720,11 +720,11 @@
 		label: <full>,
 	)
 
-	The implemenation of the parallel point insertion algorithm relies on two steps, preparation of points to be
+	The implementation of the parallel point insertion algorithm relies on two steps, preparation of points to be
 	inserted and the insertion of points. If only the point insertion procedure is performed we also need to 
 	update point locations which is normally done after the flipping operations needed. 
 
-	The preparation step ivolves a handful of checks or verifications to find out which point should be inserted
+	The preparation step involves a handful of checks or verifications to find out which point should be inserted
 	into each triangle. In this algorithm we wish to find the most suitable point for each triangle to have 
 	inserted into it. We do this by finding out which point, which is not yet inserted into the triangulation
 	lies in which triangle. The point closest to the circumcenter of the triangle is chosen to be inserted. Two
@@ -733,12 +733,12 @@
 	as compute is cheap on GPU as opposed to copying memory of the triangle structures. In between all of these
 	arrays which contain information about uninserted points _ptsUninsterted_ are used throughout in order to
 	not waste resources in the form of threads which would obtain instructions to do nothing. The
-	_ptsUninsterted_ array is sorted in order to launch the minimum number of threads needed. A few other kerels
-	are used for book keeping purposes which constist of resetting certain values, for example the smallest distance
-	bewteen two points in each triangle is set to the maximumvalue as there are atomic min opertaions performed for
-	which this is neccesary in the next iteration of point insertion. We also keep an array which holds the
-	indexes of triangles triangles which how hold points to be inserted which again prevents unneccesary thread
-	lauches.
+	_ptsUninsterted_ array is sorted in order to launch the minimum number of threads needed. A few other kernels
+	are used for book keeping purposes which consist of resetting certain values, for example the smallest distance
+	between two points in each triangle is set to the maximum value as there are atomic min operations performed for
+	which this is necessary in the next iteration of point insertion. We also keep an array which holds the
+	indexes of triangles triangles which how hold points to be inserted which again prevents unnecessary thread
+	launches.
 
 
 	#figure(
@@ -751,10 +751,10 @@
 			+ Set counter for number of points uninserted to be 0
 
 			+ Writes uninserted point index to ptsUninserted 
-			+ Caclualtes and writes the smallest distance to circumcenter of triangle
-			+ Finds and writes the index of point with smallelst distance to circumcenter of triangle 
+			+ Calculates and writes the smallest distance to circumcenter of triangle
+			+ Finds and writes the index of point with smallest distance to circumcenter of triangle 
 
-			+ Resets counter of the number of poinnts to insert
+			+ Resets counter of the number of points to insert
 			+ Counts the number of triangles which are marked for insertion
 
 			+ Sorts the array triWithInsert for efficient thread launches
@@ -763,14 +763,14 @@
 		]
 	) <pfinsert_alg>
 
-	Once the preperation step is completed, which makes up the majority of the compute for point insertion
-	procedure @timeDistrib_plt we can now actually insert the points which have been pickout out. The logic is
+	Once the preparation step is completed, which makes up the majority of the compute for point insertion
+	procedure @timeDistrib_plt we can now actually insert the points which have been pick out. The logic is
 	mostly consistent as in @s_pointinsertion_img but needs to be adapted in order for it to be parallelized.
 
 	For the creation and rewriting involved in making
-	the 3 new traingles stays the same except two things. First of which the locations in which the new triangles
+	the 3 new triangles stays the same except two things. First of which the locations in which the new triangles
 	are written in need cannot be simply written to the next unwritten location in the list of triangle structs. A
-	simple map can be created once we know how manya triangles will need to split. We use the index of each thread
+	simple map can be created once we know how many triangles will need to split. We use the index of each thread
 	to identify where we will place each newly created two triangles as we still overwrite the existing triangle with 
 	one of the new triangles that it is split into. We can use the following expression to know where to start writing
 	the two new triangles $"nTri" + 2*"idx"$ where $"nTri"$ represents the current number of triangles in the
@@ -780,7 +780,7 @@
 	step is written as two CUDA kernels. One which writes the internal structure of the 3 new triangles and another
 	kernel takes care of updating the relevant neighbours of the 3 new triangles. It is necessary to split up this
 	procedure since if it was not split up the external neighbouring triangles could be overwritten while they are being
-	created. The algorithm relies on the neighbouring triangles already exsiting to find the relevant neighbour to update
+	created. The algorithm relies on the neighbouring triangles already existing to find the relevant neighbour to update
 	which is done so by traversing the split triangles counter clockwise in order to the relevant neighbouring triangle.
 	It is also important to note that the $"nTri"$ variable, should only be updated after the
 	parallel point insertion procedure is complete as the updating it during this process have consequences on the
@@ -802,14 +802,14 @@
 
 
 === Flipping
-	As briefly mentiond earlier, flipping can be performed in a highly parallel manner however some book keeping needs
-	to be taken care of. The logic within the flippig operation is split up into three main steps. The first one is the 
-	writing of triangles to be flipped each configuraion into a _Quad_ @quad_struct data structure which here 
-	is mainly created for the purpose of keeping steps in the whole procedure to be non conflicing more imortantly stores
+	As briefly mentioned earlier, flipping can be performed in a highly parallel manner however some book keeping needs
+	to be taken care of. The logic within the flipping operation is split up into three main steps. The first one is the 
+	writing of triangles to be flipped each configuration into a _Quad_ @quad_struct data structure which here 
+	is mainly created for the purpose of keeping steps in the whole procedure to be non conflicting more importantly stores
 	relevant information about the previous state of the triangulation. This _Quad_ struct will aid us in constructing
-	the flipped cofiguartion. The the two new triagles created from the flip are the written by one kernel and appropriate
-	neighbours are then updated in a separate kerel. Splitting the writing of the new flipped triangles is once again
-	important as updating the neighbours relies on writing to the correct index of triangle since nighbouring triangles
+	the flipped configuration. The two new triangles created from the flip are the written by one kernel and appropriate
+	neighbours are then updated in a separate kernel. Splitting the writing of the new flipped triangles is once again
+	important as updating the neighbours relies on writing to the correct index of triangle since neighbouring triangles
 	could also be involved in a flip. @parallel_flip_img showcases the parallel flipping procedure.
 
 
@@ -841,19 +841,19 @@
 	)
 
 	However before the we can perform our parallel flipping we need to know which triangles need to be flipped and
-	which triangles should be flipped in order for there to be no conflicts bewteen flips. In order to know which triangles
+	which triangles should be flipped in order for there to be no conflicts between flips. In order to know which triangles
 	should be flipped a kernel is launched to perform an _incircle_ test on each edge of each triangle currently in the
 	triangulation. The _incircle_ test whether the point opposite each edge of each triangle is contained inside the
 	circumcircle created by the triangle associated with the thread of computation. This test directly follows from 
-	@emptyCirclyProp_thrm. Following this test, some configurtaions of triangles may have been marked in a way that 
+	@emptyCirclyProp_thrm. Following this test, some configurations of triangles may have been marked in a way that 
 	two configurations will share a triangle they want to flip with. In order to avoid we give each configuration
-	of triangles a configuration index obtained by using the mininum index of both triangles and we write this to 
+	of triangles a configuration index obtained by using the minimum index of both triangles and we write this to 
 	both triangles using an atomic min operation given a single triangles can be involved in more than one 
 	configuration. This is done by one CUDA kernel and is followed by another kernel which stores indexes of triangles which 
-	should perform a flipping operation into an auxillary array. Only triangles which are the smallest index of triangles
+	should perform a flipping operation into an auxiliary array. Only triangles which are the smallest index of triangles
 	which will be involved in a flip and whose neighbour and itself both still hold the same configuration index are
 	allowed to flip in a given parallel flipping pass. Once this performing and _incircle_ test and making sure none
-	of our flips will conflict with eachother we can proceed to the parallel flipping procedure desribed previously.
+	of our flips will conflict with each other we can proceed to the parallel flipping procedure described previously.
 
 	#figure(
 		kind: "algorithm",
@@ -861,8 +861,8 @@
 
 		pseudocode-list(booktabs: true, numbered-title: [Parallel flipping])[
 			+ Set array of triangles which should be flipped to -1	
-			+ Perform incircle checks on all triangles and mark sucessful triagles for flipping // checkIncircleAll();   
-			+ Check for possible flip conflicts and mark sucessful triagles for flipping // checkFlipConflicts(); 
+			+ Perform incircle checks on all triangles and mark successful triangles for flipping // checkIncircleAll();   
+			+ Check for possible flip conflicts and mark successful triangles for flipping // checkFlipConflicts(); 
 		
 			+ *while* there are configurations to flip
 				+ Write relevant quadrilaterals 
@@ -880,12 +880,12 @@
 === Updating point locations
  
 	The final part of @ppi_alg is the updating of point locations. This process involves finding points
-	lie in which triangle and noting the index of this triangle to an auxillary array. This is a necessary
+	lie in which triangle and noting the index of this triangle to an auxiliary array. This is a necessary
 	step for the calculation of the nearest point to the circumcenter of the triangle for preparing
 	the point insertion procedure. This is done by one CUDA kernel which spawns a thread for each 
 	point and in each of these threads loops through all triangles which triangle this point lies in.
 	When the triangle is found, the index of the triangle which contains this point is saved to an
-	auxillary array which maps indexes of points to indexes of trangles. 
+	auxiliary array which maps indexes of points to indexes of triangles. 
 
 	#figure(
 		kind: "algorithm",
@@ -906,16 +906,16 @@
 #pagebreak()
 === Analysis
 
-	In this section we will analyse and visulaize some results and which we have produces for our DT algorithm.
+	In this section we will analyse and visualize some results and which we have produces for our DT algorithm.
 	All tests were run with a _NVIDIA GeForce RTX 3090_ as the GPU alongside an _AMD Ryzen Threadripper 3960X 
-	24-Core Processor_ CPU, with the execption of some results in @gpuModelTest_plt.
+	24-Core Processor_ CPU, with the exception of some results in @gpuModelTest_plt.
 	
 	We shall begin with some visualization of the algorithm. @triangulation_history displays the raw evolution
 	of the algorithm. We can follow the figures from left to right in alphabetical order to see the history
-	of the procedure. This series of visualization confirms to us that our algorithm acutally performs
-	the tasks we designed it to perform. The super traingle enveloping all points is created and the
-	algorithm proceeds to insert points and flip necessary configuraions without any intersecting
-	edges. These pictures dont present every single iteration saved by the algorithm as sometimes 
+	of the procedure. This series of visualization confirms to us that our algorithm actually performs
+	the tasks we designed it to perform. The super triangle enveloping all points is created and the
+	algorithm proceeds to insert points and flip necessary configurations without any intersecting
+	edges. These pictures don't present every single iteration saved by the algorithm as sometimes 
 	nothing happens for example when there are no configurations to flip in the early stages of the 
 	algorithms execution.
 
@@ -959,9 +959,9 @@
 	we notice that for a number of points less than $10^3$ the rate of change of runtime algorithm is constant
 	after which a threshold is passed for which the runtime begins to increase by a large amount. One key
 	bottleneck in our implementation is the updating of point locations which is currently done the most
-	naive way possible. We check for each triangle each point which is exetremely ineficient and is 
-	reflected in this graph. A better analyis would involve improving this procedure with a purpose built
-	data structure for accesing point locations and then noting the overall memory locations of relavant 
+	naive way possible. We check for each triangle each point which is extremely inefficient and is 
+	reflected in this graph. A better analysis would involve improving this procedure with a purpose built
+	data structure for accessing point locations and then noting the overall memory locations of relevant 
 	information for this routine. 
 
 	#figure(
@@ -974,28 +974,27 @@
 		
 
 	@nptsVsSpeedup_plt displays the speedup by comparing the serial implementation with our GPU 
-	implemention. This comparison is quite unfair to the serial implementaion as we are not comparing
+	implementation. This comparison is quite unfair to the serial implementation as we are not comparing
 	the same algorithms exactly. The GPU algorithm needed to be rewritten with a deep understanding
 	of the GPU programming model. By the end of the rewrite it is not the same algorithm we started with. 
 	It is still a useful benchmark since it does show us that with a bit of work converting a simple
 	implementation into a highly parallelized version can give immense amounts of speedup. The speedup here
 	is comparing the runtime of the serial code with for a given number of points and with the
-	runtime of the GPU code with the same number of points. Both implementaions are run with single
+	runtime of the GPU code with the same number of points. Both implementations are run with single
 	precision floating point arithmetic. We can notice in @nptsVsSpeedup_plt that we only begin to get 
 	an improvement in performance once we cross $10^3$ points, but as we do we get a drastic increase in
-	performace of $1000$ times in the case of $10^5$.
+	performance of $1000$ times in the case of $10^5$.
 
 	In @triangulation_onlyptins we see what the result would look like in each iteration
-	if not flipping operations were performed. This figure aids to portray the DT as the
-	angle maximizing triangulation. In these figures we see a we dont have any angle
-	maximising work done which can be seen 
-	here in the last few figures with lines drawn which appear to be thick. The 
-	triangles in these figures also appear, for the most part, alot more narrow or skinny than
+	if no flipping operations were performed. This figure aids to portray the DT as the
+	angle maximizing triangulation. In these figures we don't have any angle maximising work done which can be seen 
+	in the last few figures. The lines drawn appear to be thick. The 
+	triangles in these figures also appear, for the most part, a lot more narrow than
 	their counterparts in @triangulation_history.
 
 	#figure(
 		image("main/plotting/nptsVsSpeedup/nptsVsSpeedup.png", width: 80%),
-		caption: [Plot showing speedup of the GPU code with respect to the serial implemenation
+		caption: [Plot showing speedup of the GPU code with respect to the serial implementation
 				  of the incremental point insertion @ripiflip_alg.  Speedup here is defined
 				  as the ratio of time the serial code took to run with the time the GPU code
 				  took to run.
@@ -1024,7 +1023,7 @@
 
 	A key metric which needs to be considered during the use of a GPU algorithm is the _block size_ also
 	known by a more descriptive name, the number of threads per block. This property of the algorithm
-	determines how many threads share a paricular part of memory which the _block size_ determines. In 
+	determines how many threads share a particular part of memory which the _block size_ determines. In 
 	the case of our algorithm, changing this quantity mainly affects some atomic operations which act
 	on this _shared memory_.
 
@@ -1035,7 +1034,7 @@
 				  We clearly see increasing the number of threads per block decreases performance.
 				  This is due to the way we implemented some features of the code
 				  using shared memory for which in this case with a larger block size, more atomic
-				  opertaions be trying to act on the same memory location and this will lead to
+				  operations be trying to act on the same memory location and this will lead to
 				  serialized behaviour with the exception of very small block sizes. Hence by 
 				  observing the figure we can deduce that the most effective block sizes are in
 				  between $64$ and $192$. A block size of $128$ was for performing all experiments
@@ -1047,30 +1046,30 @@
 	takes to complete in each pass of insertion and flipping @timeDistrib_plt. We add these values to
 	obtain the amount of time it took to run each logical chunk over the total runtime of the algorithm.
 	By a quick glance we can see that the updating of point locations take up the majority of the runtime
-	as we increase the number of points. This is mainly because of a naive implementaion of this procedure
-	for which each point checks whether each triangle for whether this point is contained in which trinagle.
-	We can see that this implementaion works well for a small number of points but as we increase the number
-	of points it begins to dominate the runtime and severly affect the performance of the algorithm. The profiling
-	of code as done in this way is in gerneral a very useful way of inspecting the performance of your code
+	as we increase the number of points. This is mainly because of a naive implementation of this procedure
+	for which each point checks whether each triangle for whether this point is contained in which triangle.
+	We can see that this implementation works well for a small number of points but as we increase the number
+	of points it begins to dominate the runtime and severely affect the performance of the algorithm. The profiling
+	of code as done in this way is in general a very useful way of inspecting the performance of your code
 	as this narrows down what the developer should focus on improving. This set of graphs changed a handful of 
 	times during development of this code with initially the _flip_ procedure taking up a majority of the
 	runtime. What made the _flip_ procedure take so long was that it initially saves the state of the triangulation
 	for each pass of parallel flipping. Toggling the incremental saving of data, which is used to plot
-	@triangulation_onlyptins and @triangulation_history, unsuprisingly increased performance of the code which is
-	a reason why I didnt notice how bad the performance of updating points locations was untill late in the
+	@triangulation_onlyptins and @triangulation_history, unsurprisingly increased performance of the code which is
+	a reason why I didn't notice how bad the performance of updating points locations was until late in the
 	development and analysis of the code.
 
 	#figure(
 		image("main/plotting/timeDistrib/timeDistrib.png", width: 100%),
 		caption: [Showing the proportions of time each function took as a percentage of the 
 				  total runtime for a given number of points. Each color represents a different set
-				  opteration which perform a task.
+				  operation which perform a task.
 				  The _prepForInsert_ routine performs necessary steps for to be followed
 				  up by the insertion step. This involves the calculation and writing of which point
-				  is nearest the circumcenter of each triangle and other neccesary resetting of 
-				  values. _insert_ simply inserts the points which were chosen in the prevous step.
+				  is nearest the circumcenter of each triangle and other necessary resetting of 
+				  values. _insert_ simply inserts the points which were chosen in the previous step.
 				  The _flip_ procedure performs passes of parallel flipping by calculating which 
-				  configurations should be flipped and prevents and flipping conflics from occuring.
+				  configurations should be flipped and prevents and flipping conflicts from occurring.
 				  Finally _upadtePointLocations_ checks for each uninserted point for which index of
 				  triangle it lies in. The algorithm for this plot was performed on a uniform distribution
 				  of for 3 different numbers of points.
@@ -1098,13 +1097,13 @@
 
 		rows: (auto, auto, auto, auto),
 		columns: (auto, auto, auto),
-		caption: [Visualisations of Delaunay triangluations of various point distributions. 
+		caption: [Visualisations of Delaunay triangulations of various point distributions. 
 				  The grid should be read as follows. Along the horizontal the number of points
 				  involved increases gradually and with $100$, $500$, $1000$ points in the 
 				  first second and third column respectively. In each row we draw from different 
 				  point distributions. The rows draw from a uniform unit disk distribution, a distribution
 				  on a disk with points clustered in the center, a distribution on a disk with points
-				  clustered near the boundary and a gaussiann distribution with mean $0$ and variance
+				  clustered near the boundary and a Gaussian distribution with mean $0$ and variance
 				  $1$, in rows 1, 2, 3 and 4 respectively.
 		],
 		align: bottom,
@@ -1114,17 +1113,17 @@
 	Depending on the desired application of this algorithm one may use it to obtain only a near Delaunay
 	triangulation. How close a triangulation is to being a DT can be calculated by counting all of the non
 	Delaunay edges. The sum of these edges can be compared with the total number of edges in the
-	triangulation. This is caclulated and printed at the end of running our code alongside checking 
+	triangulation. This is calculated and printed at the end of running our code alongside checking 
 	if the triangulation produced is indeed a DT. Taking a look at @nflipsVsIter_plt we have the number
 	of configurations of triangles flipped for every iteration of the algorithm on the left and the
 	total number of flips for each pass within the _flip_ function. The majority of flips being performed
 	during the execution of the algorithm are performed in the later stages of the algorithm but what can
 	be noticed in the rightmost figure is that, for each pass of parallel flipping, only the first two or
-	three passes constribute significantly to the triangluation performing the majority the flips.
+	three passes contribute significantly to the triangulation performing the majority the flips.
 	Following these flips we are left flipping a relatively tiny number of configurations. One could choose
 	to only perform 2 passes of parallel flipping and the algorithm would process the majority of flipable
 	configurations. This would in turn significantly reduce the amount of time spent on the flipping 
-	precedures as each pass of parallel flipping lasts about the same amount of time for a given iteration.
+	procedures as each pass of parallel flipping lasts about the same amount of time for a given iteration.
 	
 
 	#figure(
@@ -1137,14 +1136,14 @@
 	) <nflipsVsIter_plt>
 
 	After counting how many flips are performed in each pass of flipping and iteration, another similar question
-	to ask is how many point insertions there are per iteraion. Results for the same number of points and the
-	same point distribution as in @nflipsVsIter_plt can be seen in @ninsertVsIter_plt. We can immediataly notice
-	that we have a incredibly similar looking graphs, with the exeption of the numbers on the y axis. The number
-	of flips in each iteration appears to be proportional to the number of point insertions preceeding the 
+	to ask is how many point insertions there are per iteration. Results for the same number of points and the
+	same point distribution as in @nflipsVsIter_plt can be seen in @ninsertVsIter_plt. We can immediately notice
+	that we have a incredibly similar looking graphs, with the exception of the numbers on the y axis. The number
+	of flips in each iteration appears to be proportional to the number of point insertions preceding the 
 	passes of parallel flipping. This should not be unexpected as when we perform point insertions we 
-	are creating three new egdes that can be potentially marked for flipping. From the red line showing us 
+	are creating three new edges that can be potentially marked for flipping. From the red line showing us 
 	by how much the number of points increase per iteration we can notice that the increase number of point
-	insertions per iteration stays roughly around $3$ times untill one step before we reach the peak. The
+	insertions per iteration stays roughly around $3$ times until one step before we reach the peak. The
 	3 times rate can be explained by the underlying uniform point distribution from which we likely insert
 	into most triangles and the fact that when we do perform a point insertion we create $3$ new triangles 
 	after destroying the triangle which had a point inserted into it.
@@ -1167,36 +1166,36 @@
 		caption: [This figure displays the difference in runtime between the same GPU code in
 				  single and in double precision. Solid lines show the run time with their respective
 				  point distribution in single precision and dashed lines of the same color show
-				  the run time of the same distribtion but in double precision instead. 
+				  the run time of the same distribution but in double precision instead. 
 		]
 	) <floatVsDouble_plt>
 
-	When reaching sizes of around $10^6$ points, our DT algorithm begins to get stuck in flipping opertions.
+	When reaching sizes of around $10^6$ points, our DT algorithm begins to get stuck in flipping operations.
 	This is due to the single precision floating point arithmetic used. This flaw is amended by tracking
 	if the algorithm is repeating the same flipping operations but this leaves us without being certain that
 	what we create is indeed a Delaunay triangulation. Hence the need for double precision arithmetic. Other
-	approches is adaptive methods to change the precision of the incircle checks when needed @gDel3D. We
+	approaches is adaptive methods to change the precision of the incircle checks when needed @gDel3D. We
 	implemented a way of changing the precision of the whole algorithm which allows the user to choose
-	bewteen calculating in single or double precision. In @floatVsDouble_plt we compare the runtime of
+	between calculating in single or double precision. In @floatVsDouble_plt we compare the runtime of
 	single and double precision codes with the number of points which construct the triangulation.
-	Unsuprisingly double precsion arithmetic takes longer than single precision however it could
+	Unsurprisingly double precision arithmetic takes longer than single precision however it could
 	be advantageous to run with double with a larger number of points if the precise nature of the
 	Delaunay triangulation is desired.
 
 	When comparing how scalable an algorithm is in the world of parallel CPU programming, with concepts
 	such as strong and weak scaling, there is no standardized way of doing so for a single GPU code.
-	The strong and weak scaling approches of analysis can be usefull for GPUs when we have a multi
+	The strong and weak scaling approaches of analysis can be useful for GPUs when we have a multi
 	GPU code however we have not created a multi GPU code. The next best approach we found, used 
 	by @gDel3D, is to instead compare run time on different GPUs. Alongside the run time we also 
-	calculate the a normalized run time defined by the run time divided by the product of
-	the numer of cores and the base clock frequency of the respective GPU. The normalized runtime is
+	calculate the normalized run time defined by the run time divided by the product of
+	the number of cores and the base clock frequency of the respective GPU. The normalized runtime is
 	a reasonable metric to consider as the divisor is a measure of how often a computation is performed.
 
 	#figure(
 		image("main/plotting/gpuModelTest/gpuModelTest.png", width: 90%),
-		caption: [A comparison of the algorithm running on a variety of NVIDIA GPUs which I had access
+		caption: [A comparison of the algorithm running on a variety of Nvidia GPUs which I had access
 				  to at the time. This benchmark is 
-				  performed by averaging 5 runs of the DT algorithm on a unfiform set of $10 ^ 5$ points. 
+				  performed by averaging 5 runs of the DT algorithm on a uniform set of $10 ^ 5$ points. 
 				  From this figure we can see that this algorithm doesn't scale well as we would like for the
 				  red line (normalized time) to decrease along with the bars (real time). What we can deduce
 				  from this plot is that our algorithm scales well on RTX GPUs but not so well on the A100
@@ -1206,30 +1205,30 @@
 	) <gpuModelTest_plt>
 
 	Both types of GPU series RTX and A100 architectures are designed for different purposes. RTX GPUs are
-	mainly desiged for realtime tasks such as playing videogames where it is imporant for the user to see the
-	results of computations resonably quickly. While the A100s are specifally designed to be run in datacenters
-	or supercomputers which dont necessarily demand the ease of acces of data being processed by the GPU. This
-	leads us to the fast compute which we see on the A100s being around as fast as the RTX 3090 but they dont
-	scale as well in comparison with core count and clock frequency since our algorithm doesnt massively rely
-	on passing massive amounts of data bewteen the host and device.
+	mainly designed for real time tasks such as playing video games where it is important for the user to see the
+	results of computations resonably quickly. While the A100s are specifically designed to be run in data centers
+	or supercomputers which don't necessarily demand the ease of access of data being processed by the GPU. This
+	leads us to the fast compute which we see on the A100s being around as fast as the RTX 3090 but they don't
+	scale as well in comparison with core count and clock frequency since our algorithm doesn't massively rely
+	on passing massive amounts of data between the host and device.
 
 
 //#pagebreak()
 == Data Structures
 
-	The core data structure that is needed in this algorithm is one to represent a the triangulation itself.
-	There are a handful of different approaches to this problem inculding representing edges by the qaud
+	The core data structure that is needed in this algorithm is one to represent the triangulation itself.
+	There are a handful of different approaches to this problem including representing edges by the qaud
 	edge data structure @Guibas85 however we choose to represent the triangles in our triangulation by
-	explicit triangle structures @Nanjappa12 which hold neccesary information about their neighbours for 
-	the construction of the trianulation and for performing point insertion and flipping operations.
+	explicit triangle structures @Nanjappa12 which hold necessary information about their neighbours for 
+	the construction of the triangulation and for performing point insertion and flipping operations.
 
 	#figure( 
-		caption: [Data structure needed for Point instertion algorithm. Its main features are
+		caption: [Data structure needed for Point insertion algorithm. Its main features are
 			      that it holds a pointer to an array of points which will be used for the triangulation,
 			      the index of those points as ints which form this triangle, its daughter triangles 
 			      which are represented as ints which belong to an array of all triangle elements and
-			      whether this triangle is used in the trianglulation constructed so far. Aligned to
-			      64 bytes for more efficient accesing of memory.
+			      whether this triangle is used in the triangulation constructed so far. Aligned to
+			      64 bytes for more efficient accessing of memory.
 		],
 
 		```c
@@ -1259,16 +1258,16 @@
 		image("images/tri_struct.png", width: 50%),
 		caption: [An illustration of the _Tri_ data structures main features. We describe the triangle $t_i$ 
 				  int the figure. Oriented counter clockwise points are stored as indexes an array
-				  containing two dimensional coordinate represeting the point. The neighbours are
+				  containing two dimensional coordinate representing the point. The neighbours are
 				  assigned by using the right hand side of each edge using and index of the point
-				  as the start of the edge and following the edge in the CCW direction. The neighbours 
+				  as the start of the edge and following the edge in the counter clockwise direction. The neighbours 
 				  index will by written in the corresponding entry in the structure. 
 		]
 	) <tri_stuct>
 
-	This data structure was chosen for the ease of implementation and as whenever we want to read a traigle
-	we will be a significant amount of data about it and this locality theoreitcally helps with memory
-	reads, as opposed to storing separate parts of date about the triangle in different structures, ie 
+	This data structure was chosen for the ease of implementation and as whenever we want to read a triangle
+	we will be a significant amount of data about it and this locality theoretically helps with memory
+	reads, as opposed to storing separate parts of date about the triangle in different structures, for example, 
 	separating point and neighbour information into two different structs. 
 
 
@@ -1278,11 +1277,11 @@
 	
 	
 	#figure( 
-		caption: [Data structure used in the flipping algorithm. This qualrilateral data structure
+		caption: [Data structure used in the flipping algorithm. This quadrilateral data structure
 			      holds information about the intermediate state of two triangles involved in a configuration
 			      currently being flipped. This struct is used in the construction of the two new triangles
 			      created and in the updating of neighbouring triangles data. Aligned to 64 bytes for more
-			      efficient accesing of memory.
+			      efficient accessing of memory.
 		],
 
 		```c
@@ -1296,30 +1295,32 @@
 
 = Further work
 	
-	In this secion I hope to describe some of the next steps I would take in this project if I had more time.
+	In this section I hope to describe some of the next steps I would take in this project if I had more time.
 	
-	A better algorithm for the updating of point locations is neccesary to be implemented as in its current state
-	it is extremely inefficient. The best candidate would be to implement a Directed Acuclyc Graph (DAG) data stucture
-	which is commonly dont in applications such as this one. This DAG structure would allow a much faster and
+	A better algorithm for the updating of point locations is necessary to be implemented as in its current state
+	it is extremely inefficient. The best candidate would be to implement a Directed Acyclic Graph (DAG) data structure
+	which is commonly don't in applications such as this one. This DAG structure would allow a much faster and
 	more efficient finding of point locations as we would save the structure of the history of triangle locations
-	nested through flipping opertation and point insertions which would avoid alot of unnecessary calculations and
+	nested through flipping operation and point insertions which would avoid a lot of unnecessary calculations and
 	memory fetches.
 
-	In this report I have mostly only performed an analysis on the runtime of each algorithm but I havent considered
+	In this report I have mostly only performed an analysis on the runtime of each algorithm but I haven't considered
 	to plot how much each memory location is occupied in the GPU. This could further give insight into the inner
 	workings of the algorithm and possibly provide better profiling opportunities which could help in the optimisation
 	of the code.
 
-	During the process of preparing for the point insertion step we allways use the same criterion for picking 
+	During the process of preparing for the point insertion step we always use the same criterion for picking 
 	which point to insert, that is, picking the point nearest the circumcenter of the triangles. There are other 
-	possible cadidated for this procedure some of which being choosing a random point inside the triangle, picking
-	the point nearest the incenter of the triangle or the point neareset the average of the three vertices of the
+	possible candidate for this procedure some of which being choosing a random point inside the triangle, picking
+	the point nearest the incenter of the triangle or the point nearest the average of the three vertices of the
 	triangle.
 
 	Another test I would have like to perform is to see if we could improve the runtime by restricting the maximum
 	number of passes of flipping in each call of the _flip_ function. With similar thinking for this test it would
 	be interesting to see how much close to a DT the final triangulation would be after applying different restrictions	
 	to the algorithm and how much the total runtime would be improved.
+
+	*adding adaptive precision for incircle checks *
 
 #pagebreak()
 = Conclusion
@@ -1330,14 +1331,14 @@
 	can provide us with a tremendously decreased runtime if the algorithm of choice is suited for a highly 
 	parallelisable formulation.
 
-	We have explored the mathematics which allow us to proceed in certainty to ascpects of the algorithm, we noted
+	We have explored the mathematics which allow us to proceed in certainty to aspects of the algorithm, we noted
 	the complications and contrasts between CPU programming when programming for GPUs and we the observed the
-	transformation of the serial code to its paralell counterpart and we analysed the parallel algorithm
+	transformation of the serial code to its parallel counterpart and we analysed the parallel algorithm
 	thoroughly but more analysis and optimisations can still be made.
 
 	We can conclude that while significant speedups can be achieved with writing GPU code, it can be a time
 	intensive process with a lot of choices to be made by the programmer along the way in order for the
-	code to run as efficienly as possible. 
+	code to run as efficiently as possible. 
 
 #pagebreak()
 #bibliography("references.bib")
