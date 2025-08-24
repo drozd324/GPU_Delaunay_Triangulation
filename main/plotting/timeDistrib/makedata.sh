@@ -23,7 +23,7 @@ echo "$EXEDIR" -n "$N"
 RUN=$( { "$EXEDIR" -n "$N" ;} )
 head -n 1 "$DATADIR" >> "$PLOTDATA"
 
-for (( n=$MINPOINTS; n<$MAXPOINTS; n*=$STEPPOINTS)); do
+for (( n=$MINPOINTS; n<=$MAXPOINTS; n*=$STEPPOINTS)); do
 	for (( s=0; s<$MAXS; s++)); do
 		for (( d=0 ; d<$NDISTRIBITIONS; d++)); do
 			echo "$EXEDIR" -n "$n" -s "$s" -d "$d" -t "$t" "$NTPB" 
