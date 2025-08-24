@@ -114,44 +114,45 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 	Triangulations of a set of points are a very useful mathematical construction to describe 
 	properties of discretised physical systems, such as modelling terrains, cars and wind turbines
-	which are a commonly uses for simulations such as compulational fluid dynamics or other physical
-	properties, and even have use in video games for rendiring and visualising complex geometries. To
-	paint a picure you may think of a triangulation given a set of points $P$ to be a bunch of line
+	which are a commonly used for simulations such as compulational fluid dynamics 
+	and even have use in video games for rendering and visualising complex geometries. To
+	paint a picure, you may think of a triangulation of a set of points $P$ to be a bunch of line
 	segments connecting each point in $P$ in a way such that the edges are non instersecting. A  
 	particulary interesting subset of triangulations are Delaunay triangulations (DT). The Delaunay
 	triangulation is a triangulation which maximises all angles in each triangle of the triangulation. 
 	Mathematically this gives us an interesting optimization problem which leads to some rich
-	mathematical properties, at least in 2 dimensions, and for the applied size we have a good way
-	to discretize space for the case of simulations with the aid of methods such as Finite Element
+	mathematical properties, at least in 2 dimensions, and for alot of applications we are provided 
+	with a good way
+	to discretize space for the case of simulations for use in methods such as Finite Element
 	and Finite Volume methods. Delaunay triangulatinos in particular are a good candiate for these
 	numerical methods as they provide us with fat triangles, as opposed to skinny triangles, which
-	can serve as good elements in the Finite Element method as they tend to improve accuracy
-	@MeshSmoothing. 
+	can serve as good elements in the Finite Element method as they tend to improve accuracy of
+	the solvers @MeshSmoothing. 
 
-	There are many algorithms which compute Delaunay triangulations (cite some overview paper), however
+	There are many algorithms which compute Delaunay triangulations , however
 	alot of them use the the operation of 'flipping' or originally called an 'exchange' @Lawson72. This
-	is a fundamental property of moving through triangulations of a set of points to with the goal of
-	optaining the optimal Delaunay triangulation. This flipping operation involves a configuration
-	of two triangles sharing an edge, forming a quadrilateral with its boundary. The shared egde
+	is a fundamental property of moving through all triangulations of a set of points to with the goal of
+	obtaining the Delaunay triangulation. This flipping operation involves a configuration
+	of two triangles sharing an edge, its boundary forming a quadrilateral. The shared edge
 	between these two triangles will be swapped or flipped from the two points at its end to the
-	other two points on the quadrilateral. The original agorithm motivated by (@Lawson72) is hinted
-	to be us this flipping operation to iterate through different triangulations and eventually arrive
+	other two points on the quadrilateral. The original agorithm, motivated by Lawson@Lawson72, hints
+	to us this flipping operation to iterate through different triangulations and eventually arrive
 	at the Delaunay trianglution which we desire.
 
-	With the flippig operation being at the core of the algorithm, we can notice that is has the 
+	With the flipping operation being at the core of the algorithm, we can notice that is has the 
 	possibility of being parallelized. This is desirable as problems which commonly use the DT 
-	are run with large datasets and can benefit from the highly parallelisable nature of this 
-	algorithm. If we wish to parallize this idea, and start with some initial triangulation, 
+	are run with large datasets, in this case a large set of points,
+	and can benefit from the highly parallelisable nature of this 
+	algorithm. If we wish to parallize this algorithm, and start with some initial triangulation, 
 	conflicts would only occur if we chose to flip a configuration of triangles which share a
-	triangle. With some care, this is an avoidable situation leads to a highly scalable algorithm.
+	triangle. With some care, this is an avoidable situation leads to a massivly parallelizable algorithm.
 	In our case the hardware of choice will be the GPU which is designed with the SIMT model which
 	is particularly well suited for this algorithm as we are mostly performing the same operations
 	in each iteration of the algorithm in parallel.
 
 	The goal of this project was to explore the Delaunay triangulations through both serial and parallel
 	algorithms with the goal of presenting a easy to understand, sufficiently complex parallel
-	algorthm designed with with Nvidia's CUDA programming model for running software on their
-	GPUs.
+	algorthim designed with with Nvidia's CUDA programming model for running software on their GPUs.
 ]
 
 
@@ -164,13 +165,10 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 = Delaunay triangulations
 	In this section I aim to introduce triangulations and Delaunay triangulations from a mathematical 
 	perspective with the foresight to help present the motivation and inspiration for the key
-	algorithms used in this project. For the entirety of this project we only focus on 2 dimensional 
-	Delaunay triangulations.
-
-	In order to introduce indroduce the Delaunay Traingulation we first must define what we mean 
-	mean by a triangultion. In order to create a triangualtion we need a set of points 
-	which will make up the vertices of the triangles. But first we want to clarify a possible ambiguity 
-	about edges.
+	algorithms used in this project. In order to introduce indroduce the Delaunay Traingulation
+	we first must define what we mean mean by a triangultion. In order to create a triangualtion we
+	need a set of points which will make up the vertices of the triangles. But first we want to clarify
+	a possible ambiguity about edges.
 
 	#definition[
 		For a point set $P$, the term edge is used to indicate any
@@ -178,7 +176,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		@DiscComGeom.
 	] <edge_def>
 
-	Alterantively we could say an edge doesnt contain its enpoints which could be more 
+	Alterantively we could say an edge doesnt contain its endpoints which could be more 
 	useful in different contexts. But now we define the triangulation.
 
 	#definition[
@@ -188,10 +186,9 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		@DiscComGeom.
 	] <triangulation_def>
 
-	This is a somewhat technical but precise definition. The most imortant point in @triangulation_def is 
+	This is a somewhat technical but precise definition. The most important point in @triangulation_def is 
 	that it is a _maximal_ set of noncrossing egdes which for us means that we will not have any other shapes
-	than triangles int this structure. 
-
+	than triangles in this structure. 
 
 	#subpar.grid(
 		figure(image("images/triangulation1.png", width: 80%), caption: [
@@ -215,7 +212,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	will contain if given a set of points and its convex hull. For our purposes the convex hull will 
 	allways be a set which will covering a set of points, in our case the points in our triangulation.
 	This will be usefull when we will be storing triangles as we will allways know the number of triangles
-	that will be created.
+	that will be created and will need to be stored.
 
 	#theorem[
 		Let $P$ be a set of $n$ points in the plane, not all collinear, and let $k$
@@ -224,9 +221,9 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		@CGAlgoApp 
 	]
 
-	A key feature of all of the Delaunay triangulation theorems we will be considering that 
+	A key feature of all of the Delaunay triangulation theorems we will be considering is that 
 	no three points from the set of points $P$ which will make up our triangulation will lie 
-	on a line and alse that no 4 points like on a circle. Motivation for this defintion will become
+	on a line and also that no 4 points like on a circle. Motivation for this defintion will become
 	more apparent in @emptyCirclyProp_thrm and following. @genpos_def lets us imagine that our points
 	are distributed randomly enough so that our algorithms will work with no degeneracies appearing. 
 	This leads us to the following definition.
@@ -259,21 +256,6 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	] <legaledge_def>
 	
 
-	#definition[
-		For a point set $P$, a _Delaunay triangulation_ of $P$ is a triangulation that
-		only has legal edges.
-		@DiscComGeom
-	] <delaunay_def>
-
-	As per @delaunay_def, Delaunay triangulations wish to only contain legal edges and this provides 
-	us with a "nice" triangluation with fat triangles. 
-
-	#theorem("Empty Circle Property")[
-		Let $P$ be a point set in general position. A triangulation $T$ is a 
-		Delaunay triangulation if and only if no point from $P$ is in the interior
-		of any circumcircle of a triangle of $T$. 
-		@DiscComGeom
-	] <emptyCirclyProp_thrm>
 
 	#subpar.grid(
 		figure(image("images/flip1.png"), caption: [
@@ -283,7 +265,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		]), <b>,
 
 		columns: (1fr, 1fr),
-		caption: [Demonstration of the flipping operation.
+		caption: [Demonstration of the flipping operation for its use in @emptyCirclyProp_thrm.
 			In (a) A configuration that needs to be flipped illustrated by the circumcircle of 
 			$t_1$ containg the auxillary point of $t_2$ in its interior.
 			In (b) configuration (a) which has been flipped and no longer needs to be
@@ -293,6 +275,23 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		label: <triangulations>,
 	)
 
+	#definition[
+		For a point set $P$, a _Delaunay triangulation_ of $P$ is a triangulation that
+		only has legal edges.
+		@DiscComGeom
+	] <delaunay_def>
+
+	With @delaunay_def, Delaunay triangulations wish to only contain legal edges and this provides 
+	us with a "nice" triangluation with fat triangles. 
+
+	#theorem("Empty Circle Property")[
+		Let $P$ be a point set in general position. A triangulation $T$ is a 
+		Delaunay triangulation if and only if no point from $P$ is in the interior
+		of any circumcircle of a triangle of $T$. 
+		@DiscComGeom
+	] <emptyCirclyProp_thrm>
+
+
 	@emptyCirclyProp_thrm is the key ingredient in the the Delaunay triangulation algorithms
 	we are going to use. This is because instead of having to compare angles, as would be 
 	demanded by @delaunay_def, we are allowed to only perform a computation, involving finding a
@@ -301,6 +300,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	Algorithms such as initially intruduced by Lawson @Lawson77 exist which do focus on angle
 	comparisons but are not preferred as they do not introduce desired locality and are more
 	complex.
+
 
 	And finally we present the theorem which guarantees that we will eventually arrive at 
 	our desired Delaunay triangluation by stating that we can travel across all possible 
@@ -312,7 +312,6 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		@Lawson72 
 	] <lawson_thrm>
 
-
 #pagebreak()
 = The GPU
 	The Graphical Processing Unit (GPU) is a type of hardware accelerator originally used to
@@ -320,20 +319,15 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	visualizing the two or three dimensional environments the player would be interacting with
 	or rendering vidoes in movies after the addition of visual effects. Many different hardware accelerators
 	have been tried and tested for more general use, like Intels Xeon Phis, however the more purpose oriented GPU
-	has prevailed in the market and in performance mainly lead by Nvidia in prevoius years, Today, the GPU
+	has prevailed in the market and in performance mainly lead by Nvidia in prevoius years. Today, the GPU
 	has gained a more general purporse status with the rise of General Purpose GPU (GPGPU) programming as more
 	and more people have noticed that GPUs are very useful as a general hardware accelerator.
 
-	The traditional CPU (based on the Von Neumann architecture) which
+	The traditional CPU, based on the Von Neumann architecture, which
 	is built to perform _serial_ tasks , the CPU is built to be a general purpose hardware for
 	performing all tasks a user would demand from the computer. In contrast the GPU can't run alone and must be
 	used in conjuction to the CPU. The CPU sends compute intructions for the GPU to perform and 
-	data is commonly passes between the CPU and GPU. 
-
-//	, for 
-//	dealing with if statements and vairable lenght instructions like for loops with
-//	variable lengh,
-
+	data commonly passes between the CPU and GPU when performing computations.
 
 	#figure(
 		image("images/array_processor.png"),
@@ -343,7 +337,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 				  processing element having its own memory.]
 	) <array_proc_img>
 
-	What makes the GPU increadibly usefull in certain usecases (like the one of this report) is
+	What makes the GPU increadibly usefull in certain usecases, like the one of this thesis, is
 	its architecture which is build to enable massively parallelisable tasks. In Flynn's Taxonomy
 	@FlynnsTaxonomy, the GPUs architecture is based a subcategory of the Single Instruction 
 	Multiple Data (SIMD) classification known as Single Instruction Multiple Threads (SIMT) also known 
@@ -351,6 +345,23 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	same tasks on a shared dataset with the SIMT classification additionally allowing for each processing
 	unit having its own memory allowing for more diverse proccessing of data.
 
+
+	Nvida's GPUs take the SIMT model and further develop it. There are three core abstractions which 
+	allow Nvidia's GPU model to be succesfull; a hierarchy of thread groups, shared memories and 
+	synchronization @CUDACPP. The threads, which represent the a theoretical proccesses which encode
+	programmed instrcutions, are launched together in groups of 32 known as _warps_. This 
+	is the smallest unit of physical instructions that is executed on the GPU, in constrast to a
+	single thread of execution which can also be executed but must be run alongside 31 other processes.
+	The threads are further grouped 
+	into _thread blocks_ which are used as a way of organising the _shared memory_ to be used by each thread
+	in this thread block. And once more the _thread blocks_ grouped into a _grid_. This heirarchy of memories
+	and units of instructions allows the GPU be signifancly faster for suitable algorithms than their CPU
+	equivalent. Along side the compute and memory hierarchies mentioned the GPU code can also be run asyncronously,
+	to allow for instruction coalescence and contains many more other types of memory storage options which 
+	are suitable for more specific tasks ._texture_ and _surface_ memory whose names are derived from their
+	applicaions in video game programming applications have built in interpolation features and _texture_
+	is read only which allows the developer of code to really increase the performance of their code.
+	
 	#figure(
 		image("images/grid_of_thread_blocks.png"),
 		caption: [An illustration of the structure of the GPU programming model. As the lowest
@@ -359,29 +370,31 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 			  	  @CUDACPP]
 	) <grid_of_thread_blocks_img>
 
-	Nvida's GPUs take the SIMT model and further develop it. There are three core abstractions which 
-	allow Nvidia's GPU model to be succesfull; a hierarchy of thread groups, shared memories and 
-	synchronization @CUDACPP. The threads, which represent the a theoretical proccesses which encode
-	programmed instrcutions, are launched together in groups of 32 known as _warps_. This 
-	is the smallest unit of instructions that is executed on the GPU. The threads are further grouped 
-	into _thread blocks_ which are used as a way of organising the shared memory to be used by each thread
-	in this thread block. And once more the _thread blocks_ grouped into a _grid_.
+	Unlike parallel CPU programming models such as OMP and MPI, CUDA which is Nvidia's closed source programming
+	API for developing software for only their own GPUs, most of the time creating modified algorithms for 
+	the GPUs architecture is necessary if we begin with a serialized algorithm. Even though programming 
+	parallel CPU code also requires the development of a modifed algorithm, in my experience, most of the time
+	the existing serial algorithm is devided among CPU cores and message passing bewteen these cores is the most
+	performance critical aspect of the code. Most of the skill in developing GPU code is in making efficient
+	use of the correct memory locations on the GPU and keeping in mind the SIMT progarmming model. In the	
+	case of the GPU, code is run in lock step which means if the kernel has multiple possible execution paths, which 
+	can be introduced by programming language features such as _if_ statements or variable lenght _for_ loops,	
+	the threads on in a streaming multiprocessor will only execute one the of the if statements which others
+	will lay doing nothing, which defeats the entire purpose of the parallel execution of threads. Because of these
+	features, proramming for GPUs is more restrictive bul also allows for very large speedups. Some common 
+	good practices for programming for GPUs include using short _kernel_ calls (the _kernel_ is a function
+	which runs on the GPU) but exreamly spread out problems over the cores of the GPU. Making use of the
+	closest memory locations and not using _global_ memory for reading large chuncks of memory and using
+	the locality of memory reads. And when applicable use asynchronous _kernel_ calls so that the
+	GPU is using its compute and not waiting for memory transfers.
 	
-// Compute on the gpu is useful because allows highly paraellisable algorthims to benenfit
-// from this archicture
-// A subset of SIMD, SIMT - describe the programming model, things that need to be considered,
-// thread divergece,k
-//   memory usage, (shared, texture), occupancy
-// compare it a bit to OMP and MPI
-
-
 #pagebreak()
 = Algorithms
 	
 	In this section we focus on two types of algorithms, serial and parallel, but with a major focus on the 
 	parallel algorithm. Commonly algorithms are first developed with a serialized verion and only 
 	later optimized into parallelized versions if possible. This is how I will be presenting my chosen
-	Delaunay Triangulation (DT) algorithms in order to portray a chronolgical development of ideas used 
+	Delaunay triangulation algorithms in order to portray a chronolgical development of ideas used 
 	in all algorithms. And so we first begin by explaining the chosen serial verion of the DT algorithm.
 	 
 == Serial
@@ -453,7 +466,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	) <legedge_alg>
 
 
-	The contrustions neccesary to explain wyh the _LegalizeEdge_ routine created a DT is again slightly 
+	The contrustions neccesary to explain why the _LegalizeEdge_ routine created a DT is again slightly 
 	mathematically involved but is discussed in @CGAlgoApp.
 	In the following sections we will discuss the point insertion and flipping steps in more detail.
 
@@ -501,6 +514,9 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	the flipping which would take place inbetween which will be further explored in the next section. In
 	@insertion_only we see the result after the super triangle points and their corresponding triangles have
 	been removed. It is good to note that the point insertion algorithm is in general a triangluation algorithm. 
+	The state of the triangulation in @insertion_only is not particularly useful in any applications I seen
+	but I thought I must include it in order to show an intermediate step in the process of the construction
+	of the complete algorithm.
 
 	#figure(
 		image("images/insertion.png"), 
@@ -550,7 +566,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 
 
-=== Implementation
+*Implementation*
 	
 	The implementaion was written in C++ and was not written with a large amount of object oriented 
 	programming (OOP) techniques for an gentler transition to a CUDA implementaion as CUDA heavily relies
@@ -575,11 +591,18 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	#figure(
 		image("main/plotting/serial_nptsVsTime/serial_nptsVsTime.png", width: 80%),
 		caption: [Plot showing the amount of time it took serial code to run with respect
-				  to the number of points in the triangulation. This is a loglog plot which
-				  shows us the algorithm has a complextiy of $O(n^2)$],
+				  to the number of points in the triangulation. From this plot we can 
+				  see that when run with different point distributions the algorithm takes
+				  essentially the same amount of time to complete. The nature of the algorithm is
+				  to pick a point each iteration and perform the same operations around it so 
+				  it is not surprising that different point distributions dont affect the runtime.
+				  The slight increase in change of runtime noticed between $10$ and $10^2$ is
+				  due to the increased memory demands of the executable and is reflected by the
+				  increased time accesing memory from other cache locations. 
+		],
 	) <s_nptsVsTime_plt>
 
-
+#pagebreak()
 == Parallel
 
 	The parallelization of the DT is conceptually not very different than its serial counterpart. We will
@@ -865,7 +888,10 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 
 
 === Updating point locations
-
+ 
+	The final part of @ppi_alg is the updating of point locations. This process involves finding points
+	lie in which triangle and noting the index of this triangle to an auxillary array. This is a necessary
+	step for the calculation of the nearest point to the circumclente in preparing for the insert procedure.
 
 #pagebreak()
 == Data Structures
@@ -948,15 +974,20 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	) <quad_struct>
 
 #pagebreak()
-=== Analysis
+== Analysis
 
-	In this section we will analyze and visulaize some results and which we have produces for our DT algorithm.
+	In this section we will analyse and visulaize some results and which we have produces for our DT algorithm.
 	All tests were run with a _NVIDIA GeForce RTX 3090_ as the GPU alongside an _AMD Ryzen Threadripper 3960X 
 	24-Core Processor_ CPU, with the execption of some results in @gpuModelTest_plt.
 	
 	We shall begin with some visualization of the algorithm. @triangulation_history displays the raw evolution
 	of the algorithm. We can follow the figures from left to right in alphabetical order to see the history
-	of the procedure.
+	of the procedure. This series of visualization confirms to us that our algorithm acutally performs
+	the tasks we designed it to perform. The super traingle enveloping all points is created and the
+	algorithm proceeds to insert points and flip necessary configuraions without any intersecting
+	edges. These pictures dont present every single iteration saved by the algorithm as sometimes 
+	nothing happens for example when there are no configurations to flip in the early stages of the 
+	algorithms execution.
 
 
 	#subpar.grid(
@@ -991,10 +1022,17 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		align: bottom,
 		label: <triangulation_history>,
 	)
-
-	In @nptsVsTime_plt we see the total runtime of the main compute in our algorithm, this excludes the
+	In the following two figures @nptsVsTime_plt @nptsVsSpeedup_plt we see how our algrithms performs in time.
+	These exclude the
 	construction of the supertriangle as it is performed only one and does not contribute to the signifiant
-	parts of the algorithm.  
+	parts of the algorithm. Both plots are logarithmic in both axes to suit the number of points tested. In @nptsVsTime_plt
+	we notice that for a number of points less than $10^3$ the rate of change of runtime algorithm is constant
+	after which a threshold is passed for which the runtime begins to increase by a large amount. One key
+	bottleneck in our implementation is the updating of point locations which is currently done the most
+	naive way possible. We check for each triangle each point which is exetremely ineficient and is 
+	reflected in this graph. A better analyis would involve improving this procedure with a purpose built
+	data structure for accesing point locations and then noting the overall memory locations of relavant 
+	information for this routine. 
 
 	#figure(
 		image("main/plotting/nptsVsTime/nptsVsTime.png", width: 80%),
@@ -1005,48 +1043,58 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	) <nptsVsTime_plt>
 		
 
-	#figure(
-		image("main/plotting/nptsVsSpeedup/nptsVsSpeedup.png", width: 80%),
-		caption: [Plot showing speedup of the GPU code with respect to the serial implemenation
-				  of the incremental point insertion @ripiflip_alg. The speedup here is comparing
-				  the runtime of the serial code with for a given number of points and with the
-				  runtime of the GPU code with the same number of points. Both implementaions 
-				  are run with single precision floating point arithmetic. Speedup here is defined
-				  as the ratio $"timeCPU" / "timeGPU"$.
-		],
-	) <nptsVsSpeedup_plt>
-
 	@nptsVsSpeedup_plt displays the speedup by comparing the serial implementation with our GPU 
 	implemention. This comparison is quite unfair to the serial implementaion as we are not comparing
 	the same algorithms exactly. The GPU algorithm needed to be rewritten with a deep understanding
-	of the GPU programming model. By the end of the rewrite it is not the same algorithms started with. 
+	of the GPU programming model. By the end of the rewrite it is not the same algorithm we started with. 
 	It is still a useful benchmark since it does show us that with a bit of work converting a simple
-	implementation into a highly parallelized version can give immense amounts of speedup.
+	implementation into a highly parallelized version can give immense amounts of speedup. The speedup here
+	is comparing the runtime of the serial code with for a given number of points and with the
+	runtime of the GPU code with the same number of points. Both implementaions are run with single
+	precision floating point arithmetic.
+
+	In @triangulation_onlyptins we see what the result would look like in each iteration
+	if not flipping operations were performed. This figure aids to portray the DT as the
+	angle maximizing triangulation. In these figures we see a we dont have any angle
+	maximising work done which can be seen 
+	here in the last few figures with lines drawn which appear to be thick. The 
+	triangles in these figures also appear, for the most part, alot more narrow or skinny than
+	their counterparts in @triangulation_history.
+
+	#figure(
+		image("main/plotting/nptsVsSpeedup/nptsVsSpeedup.png", width: 80%),
+		caption: [Plot showing speedup of the GPU code with respect to the serial implemenation
+				  of the incremental point insertion @ripiflip_alg.  Speedup here is defined
+				  as the ratio of time the serial code took to run with the time the GPU code
+				  took to run.
+		],
+	) <nptsVsSpeedup_plt>
+
 
 	#subpar.grid(
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter1.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter2.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter3.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter1.png", width: 130%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter2.png", width: 130%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter3.png", width: 130%), caption: [] ),
 
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter4.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter5.png", width: 135%), caption: [] ),
-		figure( image("main/plotting/triangulation_onlyptins/DT_iter6.png", width: 135%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter4.png", width: 130%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter5.png", width: 130%), caption: [] ),
+		figure( image("main/plotting/triangulation_onlyptins/DT_iter6.png", width: 130%), caption: [] ),
 
 		rows: (auto, auto),
 		columns: (auto, auto, auto),
-		caption: [These figures show the evolution of the only the point insertion algorithm. 
-				  The point insertion proceeds in alphabetical order noting the labels of each 
-				  subfigure. During the computation points closest to the circumcenter of each 
-				  triangle are chosen to be inserted and split each existing triangle with a point
-				  to insert. These figures use a uniform point distribution on a unit disk. This figure
-				  aids to portray the DT as the angle maximizing triangulation which lacktherof can be
-				  seen here in the last few figures with lines drawn which appear to be thick. The 
-				  triangles in these figures also appear, for the most part, alot more narrow than
-				  their counterparts in @triangulation_history.
+		caption: [These figures show the evolution of the only the point insertion algorithm without
+				  any flipping of configurations. The point insertion proceeds in alphabetical order
+				  noting the labels of each subfigure. 
 		],
 		align: bottom,
 		label: <triangulation_onlyptins>,
 	)
+
+	A key metric which needs to be considered during the use of a GPU algorithm is the _block size_ also
+	known by a more descriptive name, the number of threads per block. This property of the algorithm
+	determines how many threads share a paricular part of memory which the _block size_ determines. In 
+	the case of our algorithm, changing this quantity mainly affects some atomic operations which act
+	on this _shared memory_.
 
 	#figure(
 		image("main/plotting/blocksizeVsTime/blocksizeVsTime.png", width: 80%),
@@ -1199,7 +1247,8 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 				  red line (normalized time) to decrease along with the bars (real time). What we can deduce
 				  from this plot is that our algorithm scales well on RTX GPUs but not so well on the A100
 				  GPUs since we can see the red line decreasing for the RTX GPUs and not for the A100s.
-				  *EXPLENATION ON ARCHITECTURES MAYBE?*
+				  Both of these GPU architectures are designed for different purposes. The RTX series
+				  is designed for 
 		]
 	) <gpuModelTest_plt>
 
@@ -1209,10 +1258,9 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	
 	#figure( 
 		caption: [A quick illustration of how the Delaunay class is called. This code and other relevant 
-				  source is located in _main/serialIncPtInsertion/src_. Construct an array of points and
+				  source is located in _main/gpu/src_. Construct an array of points and
 				  pass the pointer and the number of pointes generated as arguments to the Delaunay object.
-				  A file is created _main/serialIncPtInsertion/data/tri.txt_ with the history of and final
-				  result of the algorithm.
+				  A file is created _main/gpu/data/tri.txt_ with the final result of the algorithm.
 		],
 
 		```c
@@ -1240,15 +1288,18 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		}
 		```
 
-	) <basic_serial>
-
-
-= Improvements
-write to save history asynchronously
-use DAG
+	) <basic_algorithm>
 
 #pagebreak()
+= improvements
++ DAG
++ memory analysis
++ time analysis on a smaller number of flipping passes say 2
+
+
 = Conclusion
+
+The Delaunay Triangulation is a complex algorithm 
 
 #lorem(100)
 
