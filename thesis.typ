@@ -126,7 +126,7 @@
 	the solvers @MeshSmoothing. 
 
 	There are many algorithms which compute Delaunay triangulations , however
-	alot of them use the operation of 'flipping' or originally called an 'exchange' @Lawson72. This
+	a lot of them use the operation of 'flipping' or originally called an 'exchange' @Lawson72. This
 	is a fundamental property of moving through all triangulations of a set of points to with the goal of
 	obtaining the Delaunay triangulation. This flipping operation involves a configuration
 	of two triangles sharing an edge, its boundary forming a quadrilateral. The shared edge
@@ -141,7 +141,7 @@
 	and can benefit from the highly parallelisable nature of this 
 	algorithm. If we wish to parallelize this algorithm, and start with some initial triangulation, 
 	conflicts would only occur if we chose to flip a configuration of triangles which share a
-	triangle. With some care, this is an avoidable situation leads to a massively parallelizable algorithm.
+	triangle. With some care, this is an avoidable situation leads to a massively parallelisable algorithm.
 	In our case the hardware of choice will be the GPU which is designed with the SIMT model which
 	is particularly well suited for this algorithm as we are mostly performing the same operations
 	in each iteration of the algorithm in parallel.
@@ -153,17 +153,13 @@
 
 
 
-//many fields
-//spanning applications in engineering, aiding in simulating complex gemetries for computational 
-//fluid dyamnics or structural mechanincs, in cosmology
-
 #pagebreak()
 = Delaunay triangulations
 	In this section I aim to introduce triangulations and Delaunay triangulations from a mathematical 
 	perspective with the foresight to help present the motivation and inspiration for the key
 	algorithms used in this project. In order to introduce the Delaunay Triangulation
 	we first must define what we mean by a triangulation. In order to create a triangulation we
-	need a set of points which will make up the vertices of the triangles. But first we want to clarify
+	need a set of points which will make up the vertices of the triangles. First we want to clarify
 	a possible ambiguity about edges.
 
 	#definition[
@@ -173,7 +169,7 @@
 	] <edge_def>
 
 	Alternatively we could say an edge doesn't contain its endpoints which could be more 
-	useful in different contexts. But now we define the triangulation.
+	useful in different contexts. Now we define the triangulation.
 
 	#definition[
 		A _triangulation_ of a planar point set $P$ is a subdivision of the
@@ -597,11 +593,11 @@
 #pagebreak()
 == Parallel
 
-	The parallelization of the DT is conceptually not very different than its serial counterpart. We will
-	be considering only parallelization with a GPU here which lends itself to algorithms which are created with 
+	The parallelisation of the DT is conceptually not very different than its serial counterpart. We will
+	be considering only parallelisation with a GPU here which lends itself to algorithms which are created with 
 	a GPUs architecture in mind. This means that accessing data will be largely done by accessing global arrays
 	which all threads of execution have access to. Methods akin to divide and conquer @DivAndConq would be
-	useful if we consider multi CPU or multi GPU systems but that is not in the scope of this project but would
+	useful if we consider multi CPU or multi GPU systems. However that is not in the scope of this project but would
 	be particularly interesting to see a multi GPU systems implementation for this algorithm made publicly 
 	available. An overview of the parallelized algorithm is in @ppi_alg mostly adapted from @gDel3D which
 	is to my understanding as of this moment the fastest GPU DT algorithm. 
@@ -632,7 +628,7 @@
 	  ]
 	) <ppi_alg>
 
-	@ppi_alg is takes as input a point set $P$ for the triangulation to be constructed from and return
+	@ppi_alg takes as input a point set $P$ for the triangulation to be constructed from and return
 	the DT from the transformed triangulation $T$. _(line 1)_ The triangulation is initialized as a triangle
 	enclosing all points in $P$ by adding 3 new points to the triangulation and is constructed in a way such 
 	that all of the other points lie inside this triangle which is noted in _(line 2)_. These extra three points
@@ -655,12 +651,12 @@
 	@ppi_alg exploits the most parallelisable aspects of the point insertion @ripiflip_alg, which are the 
 	point insertion, for which only one triangle is involved in at a time, and the flipping operation, which
 	can be parallised but some book keeping needs to be taken care of in order for conflicting flip to not
-	be performed. With a large point set this parallelization allows for a massively algorithm as a large 
+	be performed. With a large point set this parallelisation allows for a massively algorithm as a large 
 	number of point insertions and flips can be performed in parallel. Flipping conflicts can happen when
 	two different configurations of neighbouring triangles want to flip and these two configurations share
 	a triangle, as illustrated in @parallel_flip_img.
 	
-=== Constructing the super traingle
+=== Constructing the super triangle
 	
 	In order to be able to begin our DT algorithm, a _supertriangle_ needs to be constructed. This
 	needs to be done only once throughout the duration of the algorithm. Two routines in this algorithm
@@ -670,7 +666,7 @@
 	distance between two points a CUDA kernel is launched which spawns a thread for each point which then compares
 	every other point to it by calculating the distance between them and stores the maximum distance within the
 	memory in each thread. Within this computation each point is compared to itself once which is conscious decision
-	since compute on the GPU is cheap and otherwise each thread would be recieving different instructions which
+	since compute on the GPU is cheap and otherwise each thread would be receiving different instructions which
 	is not friendly to the SIMT programming model on the GPU.
 	Once these calculations are finished an atomic max operation is performed to shared
 	memory and then another atomic max to global memory which gives us our final value of the maximum distance.
@@ -697,7 +693,7 @@
 
 === Point insertion
 
-	The point insertion step is very well suited for parallelization. Parallel point insertion can be
+	The point insertion step is very well suited for parallelisation. Parallel point insertion can be
 	performed with minimal interference with their
 	neighbours. This procedure is performed independently for each triangle with a point to insert. The only
 	complication arises in the updating of neighbouring triangles information about their newly updated
@@ -952,9 +948,9 @@
 		align: bottom,
 		label: <triangulation_history>,
 	)
-	In the following two figures @nptsVsTime_plt @nptsVsSpeedup_plt we see how our algrithms performs in time.
+	In the two figures, @nptsVsTime_plt and @nptsVsSpeedup_plt, we see how our algorithms performs in time.
 	These exclude the
-	construction of the supertriangle as it is performed only one and does not contribute to the signifiant
+	construction of the supertriangle as it is performed only one and does not contribute to the significant
 	parts of the algorithm. Both plots are logarithmic in both axes to suit the number of points tested. In @nptsVsTime_plt
 	we notice that for a number of points less than $10^3$ the rate of change of runtime algorithm is constant
 	after which a threshold is passed for which the runtime begins to increase by a large amount. One key
@@ -1034,7 +1030,7 @@
 				  We clearly see increasing the number of threads per block decreases performance.
 				  This is due to the way we implemented some features of the code
 				  using shared memory for which in this case with a larger block size, more atomic
-				  operations be trying to act on the same memory location and this will lead to
+				  operations are trying to act on the same memory locations and this will lead to
 				  serialized behaviour with the exception of very small block sizes. Hence by 
 				  observing the figure we can deduce that the most effective block sizes are in
 				  between $64$ and $192$. A block size of $128$ was for performing all experiments
@@ -1320,25 +1316,37 @@
 	be interesting to see how much close to a DT the final triangulation would be after applying different restrictions	
 	to the algorithm and how much the total runtime would be improved.
 
-	*adding adaptive precision for incircle checks *
-
-#pagebreak()
+//#pagebreak()
 = Conclusion
+	
+	The Delaunay Triangulation is a complex algorithm with multiple valid approaches to reach the same result.
+	Its foundation in rich mathematical theory, particularly the edge-flipping operation, has inspired both
+	efficient serial algorithms and their highly parallelisable counterparts. Our work demonstrated that
+	significant reductions in runtime can be achieved through parallelisation, provided the algorithm lends
+	itself well to this transformation.
 
-	The Delaunay Triangulation is a complex algorithm with lots of possible routes to obtain the same answer.
-	With rich mathematics inspiring the flipping operation needed to find the DT providing serial algorithms which 
-	also give rise to highly parallelised counter parts. We show that the development of parallelised algorithms
-	can provide us with a tremendously decreased runtime if the algorithm of choice is suited for a highly 
-	parallelisable formulation.
+	We explored the mathematical principles underlying the algorithm and examined the challenges of adapting
+	CPU-based implementations to run on GPUs. This process involved a detailed analysis of the transition from
+	serial to parallel code. While the parallel version showed promising performance improvements, there is still
+	room for further optimisation and analysis.
 
-	We have explored the mathematics which allow us to proceed in certainty to aspects of the algorithm, we noted
-	the complications and contrasts between CPU programming when programming for GPUs and we the observed the
-	transformation of the serial code to its parallel counterpart and we analysed the parallel algorithm
-	thoroughly but more analysis and optimisations can still be made.
+	In conclusion, although GPU programming can offer substantial speedups, it is also a time-intensive process
+	that requires careful algorithm design and performance tuning to maximise efficiency.
 
-	We can conclude that while significant speedups can be achieved with writing GPU code, it can be a time
-	intensive process with a lot of choices to be made by the programmer along the way in order for the
-	code to run as efficiently as possible. 
-
+//	The Delaunay Triangulation is a complex algorithm with lots of possible routes to obtain the same answer.
+//	With rich mathematics inspiring the flipping operation needed to find the DT providing serial algorithms which 
+//	also give rise to highly parallelised counter parts. We show that the development of parallelised algorithms
+//	can provide us with a tremendously decreased runtime if the algorithm of choice is suited for a highly 
+//	parallelisable formulation.
+//
+//	We have explored the mathematics which allow us to proceed in certainty to aspects of the algorithm, we noted
+//	the complications and contrasts between CPU programming when programming for GPUs and we the observed the
+//	transformation of the serial code to its parallel counterpart and we analysed the parallel algorithm
+//	thoroughly but more analysis and optimisations can still be made.
+//
+//	We can conclude that while significant speedups can be achieved with writing GPU code, it can be a time
+//	intensive process with a lot of choices to be made by the programmer along the way in order for the
+//	code to run as efficiently as possible. 
+//
 #pagebreak()
 #bibliography("references.bib")
