@@ -87,12 +87,8 @@
 
 
 
-#pagebreak()
-
-// Acknowledgements section
-= Acknowledgements
-Write acknowledgements to your supervisor, classmates, friends, family, partnerâ€¦ anyone who supported you during the MSc.
-#lorem(2)
+//#pagebreak()
+//= Acknowledgements
 
 #pagebreak()
 
@@ -728,8 +724,6 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		label: <full>,
 	)
 
-	*Implementation*
-
 	The implemenation of the parallel point insertion algorithm relies on two steps, preparation of points to be
 	inserted and the insertion of points. If only the point insertion procedure is performed we also need to 
 	update point locations which is normally done after the flipping operations needed. 
@@ -791,8 +785,8 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	kernel takes care of updating the relevant neighbours of the 3 new triangles. It is necessary to split up this
 	procedure since if it was not split up the external neighbouring triangles could be overwritten while they are being
 	created. The algorithm relies on the neighbouring triangles already exsiting to find the relevant neighbour to update
-	which is done so by traversing the the split triangles counter clockwise in order to the relevant neighbouring triangle
-	*MAKE FIGURE FOR THIS*. It is also important to note that the $"nTri"$ variable, should only be updated after the
+	which is done so by traversing the the split triangles counter clockwise in order to the relevant neighbouring triangle.
+	It is also important to note that the $"nTri"$ variable, should only be updated after the
 	parallel point insertion procedure is complete as the updating it during this process have consequences on the
 	locations of the newly created triangles storage location.
 
@@ -891,90 +885,30 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
  
 	The final part of @ppi_alg is the updating of point locations. This process involves finding points
 	lie in which triangle and noting the index of this triangle to an auxillary array. This is a necessary
-	step for the calculation of the nearest point to the circumclente in preparing for the insert procedure.
-
-#pagebreak()
-== Data Structures
-
-	The core data structure that is needed in this algorithm is one to represent a the triangulation itself.
-	There are a handful of different approaches to this problem inculding representing edges by the qaud
-	edge data structure @Guibas85 however we choose to represent the triangles in our triangulation by
-	explicit triangle structures @Nanjappa12 which hold neccesary information about their neighbours for 
-	the construction of the trianulation and for performing point insertion and flipping operations.
-
-	#figure( 
-		caption: [Data structure needed for Point instertion algorithm. Its main features are
-			      that it holds a pointer to an array of points which will be used for the triangulation,
-			      the index of those points as ints which form this triangle, its daughter triangles 
-			      which are represented as ints which belong to an array of all triangle elements and
-			      whether this triangle is used in the trianglulation constructed so far. Aligned to
-			      64 bytes for more efficient accesing of memory.
-		],
-
-		```c
-			struct __align__(64)  Tri {
-				int p[3]; // indexes of points in pts list
-				int n[3]; // idx to Tri neighbours of this triangle
-				int o[3]; // index in neigbouring tri of point opposite the egde
-
-				// takes values 0 or 1 for marking if it shouldn't or should be inserted into 
-				int insert;
-				// the index of the point to insert
-				int insertPt;
-				// entry for the minimum distance between point and circumcenter
-				REAL insertPt_dist;
-				// marks an edge to flip 0,1 or 2
-				int flip;
-				// mark whether this triangle should flip in the current iteration of flipping
-				int flipThisIter;   
-				// the minimum index for both triangles which could be involved in a flip  
-				int configIdx;      
-			};
-		``` 
-	) <tri_struct>
-	
+	step for the calculation of the nearest point to the circumcenter of the triangle for preparing
+	the point insertion procedure. This is done by one CUDA kernel which spawns a thread for each 
+	point and in each of these threads loops through all triangles which triangle this point lies in.
+	When the triangle is found, the index of the triangle which contains this point is saved to an
+	auxillary array which maps indexes of points to indexes of trangles. 
 
 	#figure(
-		image("images/tri_struct.png", width: 50%),
-		caption: [An illustration of the _Tri_ data structures main features. We describe the triangle $t_i$ 
-				  int the figure. Oriented counter clockwise points are stored as indexes an array
-				  containing two dimensional coordinate represeting the point. The neighbours are
-				  assigned by using the right hand side of each edge using and index of the point
-				  as the start of the edge and following the edge in the CCW direction. The neighbours 
-				  index will by written in the corresponding entry in the structure. 
+		kind: "algorithm",
+		supplement: [Algorithm],
+
+		pseudocode-list(booktabs: true, numbered-title: [Update point locations])[
+			+ *for* each uninserted $p in P$ *do in parallel*
+
+				+ *for* $t in T$ 
+					+ check if $p$ is contained in $t$
+					+ *if* $p$ lies in $t$
+						+ mark $p$ to lie in $t$
+						+ break
 		]
-	) <tri_stuct>
+	) <upPtLoc_alg>
 
-	This data structure was chosen for the ease of implementation and as whenever we want to read a traigle
-	we will be a significant amount of data about it and this locality theoreitcally helps with memory
-	reads, as opposed to storing separate parts of date about the triangle in different structures, ie 
-	separating point and neighbour information into two different structs. 
-
-
-	The @quad_struct below is used in the flipping step of the algorithm and is only used as 
-	an intermediate representation of the triangles which will be created and the data needed 
-	to update its neighbours
-	
-	
-	#figure( 
-		caption: [Data structure used in the flipping algorithm. This qualrilateral data structure
-			      holds information about the intermediate state of two triangles involved in a configuration
-			      currently being flipped. This struct is used in the construction of the two new triangles
-			      created and in the updating of neighbouring triangles data. Aligned to 64 bytes for more
-			      efficient accesing of memory.
-		],
-
-		```c
-			struct __align__(64) Quad  {
-				int p[4]; // indexes of points in pts list
-				int n[4]; // idx to Tri neighbours across the edge
-				int o[4]; // index in neigbouring tri of point opposite the egde
-			}; 
-		```
-	) <quad_struct>
 
 #pagebreak()
-== Analysis
+=== Analysis
 
 	In this section we will analyse and visulaize some results and which we have produces for our DT algorithm.
 	All tests were run with a _NVIDIA GeForce RTX 3090_ as the GPU alongside an _AMD Ryzen Threadripper 3960X 
@@ -1111,25 +1045,29 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		],
 	) <blocksizeVsTime_plt>
 
-	In order to profile the code we dice to measure how long each significant logical part of the algorithm
+	In order to profile the code we decide to measure how long each significant logical part of the algorithm
 	takes to complete in each pass of insertion and flipping @timeDistrib_plt. We add these values to
 	obtain the amount of time it took to run each logical chunk over the total runtime of the algorithm.
-	By a quick glance we can see that the flipping proceducures take up the majority of the runtime. This
-	is due to the fact that multiple iterations of flips are performed after each point insertion. What is
-	costly is that after the first two iterations of flips we see that there is an incredibly small amount
-	of configurations which need to be flipped @nflipsVsIter_plt. These are configurations which would
-	otherwise have conflicted with other configurations or were only possible after. What really
-	harms the speed of the algorithm is that each flipping iteration within the parallel flipping procedure
-	takes roughly the same amount of time to process, even if it is flipping a relatively small number of 
-	configurations. The profling in @timeDistrib_plt gives us an impression of how the code as a whole
-	performs in terms of time spent. This includes both the host and device runtimes in the respective
-	function calls.
+	By a quick glance we can see that the updating of point locations take up the majority of the runtime
+	as we increase the number of points. This is mainly because of a naive implementaion of this procedure
+	for which each point checks whether each triangle for whether this point is contained in which trinagle.
+	We can see that this implementaion works well for a small number of points but as we increase the number
+	of points it begins to dominate the runtime and severly affect the performance of the algorithm. The profiling
+	of code as done in this way is in gerneral a very useful way of inspecting the performance of your code
+	as this narrows down what the developer should focus on improving. This set of graphs changed a handful of 
+	times during development of this code with initially the _flip_ procedure taking up a majority of the
+	runtime. What made the _flip_ procedure take so long was that it initially saves the state of the triangulation
+	for each pass of parallel flipping. Toggling the incremental saving of data, which is used to plot
+	@triangulation_onlyptins and @triangulation_history, unsuprisingly increased performance of the code which is
+	a reason why I didnt notice how bad the performance of updating points locations was untill late in the
+	development and analysis of the code.
 
 	#figure(
 		image("main/plotting/timeDistrib/timeDistrib.png", width: 100%),
 		caption: [Showing the proportions of time each function took as a percentage of the 
-				  total runtime. Each color represents a different set opteration which perform
-				  a task. The _prepForInsert_ routine performs necessary steps for to be followed
+				  total runtime for a given number of points. Each color represents a different set
+				  opteration which perform a task.
+				  The _prepForInsert_ routine performs necessary steps for to be followed
 				  up by the insertion step. This involves the calculation and writing of which point
 				  is nearest the circumcenter of each triangle and other neccesary resetting of 
 				  values. _insert_ simply inserts the points which were chosen in the prevous step.
@@ -1137,7 +1075,7 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 				  configurations should be flipped and prevents and flipping conflics from occuring.
 				  Finally _upadtePointLocations_ checks for each uninserted point for which index of
 				  triangle it lies in. The algorithm for this plot was performed on a uniform distribution
-				  of $10^3$ points.
+				  of for 3 different numbers of points.
 		]
 	) <timeDistrib_plt>
 
@@ -1175,6 +1113,15 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 		label: <triangulations_grid>,
 	)
 
+//	costly is that after the first two iterations of flips we see that there is an incredibly small amount
+//	of configurations which need to be flipped @nflipsVsIter_plt. These are configurations which would
+//	otherwise have conflicted with other configurations or were only possible after. What really
+//	harms the speed of the algorithm is that each flipping iteration within the parallel flipping procedure
+//	takes roughly the same amount of time to process, even if it is flipping a relatively small number of 
+//	configurations. The profling in @timeDistrib_plt gives us an impression of how the code as a whole
+//	performs in terms of time spent. This includes both the host and device runtimes in the respective
+//	function calls.
+//
 
 	Depending on the desired application of this algorithm one may use it to obtain only a near Delaunay
 	triangulation. How close a triangulation is to being a DT can be calculated by counting all of the non
@@ -1191,14 +1138,6 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	configurations. This would in turn significantly reduce the amount of time spent on the flipping 
 	precedures as each pass of parallel flipping lasts about the same amount of time for a given iteration.
 	
-	#figure(
-		image("main/plotting/ninsertVsIter/ninsertVsIter.png", width: 80%),
-		caption: [This figure shows the number of points inserted into the existing triangulation during 
-				  each pass of the algorithm. Algorithm performed on $10^5$ points and a uniform distribution	
-				  of points.
-		]
-	) <ninsertVsIter_plt>
-
 
 	#figure(
 		image("main/plotting/nflipsVsIter/nflipsVsIter.png", width: 115%),
@@ -1208,6 +1147,41 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 				  on $10^5$ points and a uniform distribution of points.
 		]
 	) <nflipsVsIter_plt>
+
+	After counting how many flips are performed in each pass of flipping and iteration, another similar question
+	to ask is how many point insertions there are per iteraion. Results for the same number of points and the
+	same point distribution as in @nflipsVsIter_plt can be seen in @ninsertVsIter_plt. We can immediataly notice
+	that we have a incredibly similar looking graphs, with the exeption of the numbers on the y axis. The number
+	of flips in each iteration appears to be proportional to the number of point insertions preceeding the 
+	passes of parallel flipping. This should not be unexpected as when we perform point insertions we 
+	are creating three new egdes that can be potentially marked for flipping. From the red line showing us 
+	by how much the number of points increase per iteration we can notice that the increase number of point
+	insertions per iteration stays roughly around $3$ times untill one step before we reach the peak. The
+	3 times rate can be explained by the underlying uniform point distribution from which we likely insert
+	into most triangles and the fact that when we do perform a point insertion we create $3$ new triangles 
+	after destroying the triangle which had a point inserted into it.
+			
+	#figure(
+		image("main/plotting/ninsertVsIter/ninsertVsIter.png", width: 80%),
+		caption: [This figure shows the number of points inserted into the existing triangulation during 
+				  each pass of the algorithm as blue bars with quantity noted on the left y axis. In red
+				  a line is shown to represent the ratio of number of points inserted to the previous
+				  number of points inserted. From this we can see by how much points the triangulation
+				  increases in each iteration shown on the right y axis. Algorithm performed on $10^5$
+				  points and a uniform distribution of points.
+		]
+	) <ninsertVsIter_plt>
+
+
+
+	#figure(
+		image("main/plotting/floatVsDouble/floatVsDouble.png", width: 80%),
+		caption: [This figure displays the difference in runtime between the same GPU code in
+				  single and in double precision. Solid lines show the run time with their respective
+				  point distribution in single precision and dashed lines of the same color show
+				  the run time of the same distribtion but in double precision instead. 
+		]
+	) <floatVsDouble_plt>
 
 	When reaching sizes of around $10^6$ points, our DT algorithm begins to get stuck in flipping opertions.
 	This is due to the single precision floating point arithmetic used. This flaw is amended by tracking
@@ -1221,15 +1195,6 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	be advantageous to run with double with a larger number of points if the precise nature of the
 	Delaunay triangulation is desired.
 
-	#figure(
-		image("main/plotting/floatVsDouble/floatVsDouble.png", width: 80%),
-		caption: [This figure displays the difference in runtime between the same GPU code in
-				  single and in double precision. Solid lines show the run time with their respective
-				  point distribution in single precision and dashed lines of the same color show
-				  the run time of the same distribtion but in double precision instead. 
-		]
-	) <floatVsDouble_plt>
-
 	When comparing how scalable an algorithm is in the world of parallel CPU programming, with concepts
 	such as strong and weak scaling, there is no standardized way of doing so for a single GPU code.
 	The strong and weak scaling approches of analysis can be usefull for GPUs when we have a multi
@@ -1240,69 +1205,151 @@ Write acknowledgements to your supervisor, classmates, friends, family, partnerâ
 	a reasonable metric to consider as the divisor is a measure of how often a computation is performed.
 
 	#figure(
-		image("main/plotting/gpuModelTest/gpuModelTest.png", width: 100%),
-		caption: [A comparison of the algorithm running on a variety of NVIDIA GPUs. This benchmark is 
+		image("main/plotting/gpuModelTest/gpuModelTest.png", width: 90%),
+		caption: [A comparison of the algorithm running on a variety of NVIDIA GPUs which I had access
+				  to at the time. This benchmark is 
 				  performed by averaging 5 runs of the DT algorithm on a unfiform set of $10 ^ 5$ points. 
 				  From this figure we can see that this algorithm doesn't scale well as we would like for the
 				  red line (normalized time) to decrease along with the bars (real time). What we can deduce
 				  from this plot is that our algorithm scales well on RTX GPUs but not so well on the A100
 				  GPUs since we can see the red line decreasing for the RTX GPUs and not for the A100s.
-				  Both of these GPU architectures are designed for different purposes. The RTX series
-				  is designed for 
+				  
 		]
 	) <gpuModelTest_plt>
 
-== User Guide 
+	Both types of GPU series RTX and A100 architectures are designed for different purposes. RTX GPUs are
+	mainly desiged for realtime tasks such as playing videogames where it is imporant for the user to see the
+	results of computations resonably quickly. While the A100s are specifally designed to be run in datacenters
+	or supercomputers which dont necessarily demand the ease of acces of data being processed by the GPU. This
+	leads us to the fast compute which we see on the A100s being around as fast as the RTX 3090 but they dont
+	scale as well in comparison with core count and clock frequency since our algorithm doesnt massivly rely
+	on passing massive amounts of data bewteen the host and device.
 
-	A quick demo of how to use the object is given below.
-	
+
+//#pagebreak()
+== Data Structures
+
+	The core data structure that is needed in this algorithm is one to represent a the triangulation itself.
+	There are a handful of different approaches to this problem inculding representing edges by the qaud
+	edge data structure @Guibas85 however we choose to represent the triangles in our triangulation by
+	explicit triangle structures @Nanjappa12 which hold neccesary information about their neighbours for 
+	the construction of the trianulation and for performing point insertion and flipping operations.
+
 	#figure( 
-		caption: [A quick illustration of how the Delaunay class is called. This code and other relevant 
-				  source is located in _main/gpu/src_. Construct an array of points and
-				  pass the pointer and the number of pointes generated as arguments to the Delaunay object.
-				  A file is created _main/gpu/data/tri.txt_ with the final result of the algorithm.
+		caption: [Data structure needed for Point instertion algorithm. Its main features are
+			      that it holds a pointer to an array of points which will be used for the triangulation,
+			      the index of those points as ints which form this triangle, its daughter triangles 
+			      which are represented as ints which belong to an array of all triangle elements and
+			      whether this triangle is used in the trianglulation constructed so far. Aligned to
+			      64 bytes for more efficient accesing of memory.
 		],
 
 		```c
-		#include "delaunay.h"
-		#include "point.h"
-		#include "ran.h"
+			struct __align__(64)  Tri {
+				int p[3]; // indexes of points in pts list
+				int n[3]; // idx to Tri neighbours of this triangle
+				int o[3]; // index in neigbouring tri of point opposite the egde
 
-		int main(int argc, char *argv[]) {
-		  
-				int n = 100;
-				int seed = 69420;
+				// takes values 0 or 1 for marking if it shouldn't or should be inserted into 
+				int insert;
+				// the index of the point to insert
+				int insertPt;
+				// entry for the minimum distance between point and circumcenter
+				REAL insertPt_dist;
+				// marks an edge to flip 0,1 or 2
+				int flip;
+				// mark whether this triangle should flip in the current iteration of flipping
+				int flipThisIter;   
+				// the minimum index for both triangles which could be involved in a flip  
+				int configIdx;      
+			};
+		``` 
+	) <tri_struct>
+	
 
-				Point* points = (Point*) malloc(n * sizeof(Point));
+	#figure(
+		image("images/tri_struct.png", width: 50%),
+		caption: [An illustration of the _Tri_ data structures main features. We describe the triangle $t_i$ 
+				  int the figure. Oriented counter clockwise points are stored as indexes an array
+				  containing two dimensional coordinate represeting the point. The neighbours are
+				  assigned by using the right hand side of each edge using and index of the point
+				  as the start of the edge and following the edge in the CCW direction. The neighbours 
+				  index will by written in the corresponding entry in the structure. 
+		]
+	) <tri_stuct>
 
-				Ran ran(seed);
-				for (int i=0; i<n; ++i) {
-					points[i].x[0] = ran.doub();
-					points[i].x[1] = ran.doub();
-				}
+	This data structure was chosen for the ease of implementation and as whenever we want to read a traigle
+	we will be a significant amount of data about it and this locality theoreitcally helps with memory
+	reads, as opposed to storing separate parts of date about the triangle in different structures, ie 
+	separating point and neighbour information into two different structs. 
 
-				Delaunay delaunay(points, n);
 
-				free(points);
-				return 0;
-		}
+	The @quad_struct below is used in the flipping step of the algorithm and is only used as 
+	an intermediate representation of the triangles which will be created and the data needed 
+	to update its neighbours
+	
+	
+	#figure( 
+		caption: [Data structure used in the flipping algorithm. This qualrilateral data structure
+			      holds information about the intermediate state of two triangles involved in a configuration
+			      currently being flipped. This struct is used in the construction of the two new triangles
+			      created and in the updating of neighbouring triangles data. Aligned to 64 bytes for more
+			      efficient accesing of memory.
+		],
+
+		```c
+			struct __align__(64) Quad  {
+				int p[4]; // indexes of points in pts list
+				int n[4]; // idx to Tri neighbours across the edge
+				int o[4]; // index in neigbouring tri of point opposite the egde
+			}; 
 		```
+	) <quad_struct>
 
-	) <basic_algorithm>
+= Further work
+	
+	In this secion I hope to describe some of the next steps I would take in this project if I had more time.
+	
+	A better algorithm for the updating of point locations is neccesary to be implemented as in its current state
+	it is extremely inefficient. The best candidate would be to implement a Directed Acuclyc Graph (DAG) data stucture
+	which is commonly dont in applications such as this one. This DAG structure would allow a much faster and
+	more efficient finding of point locations as we would save the structure of the history of triangle locations
+	nested through flipping opertation and point insertions which would avoid alot of unnecessary calculations and
+	memory fetches.
+
+	In this report I have mostly only performed an analysis on the runtime of each algorithm but I havent considered
+	to plot how much each memory location is occupied in the GPU. This could further give insight into the inner
+	workings of the algorithm and possibly provide better profiling opportunities which could help in the optimisation
+	of the code.
+
+	During the process of preparing for the point insertion step we allways use the same criterion for picking 
+	which point to insert, that is, picking the point nearest the circumcenter of the triangles. There are other 
+	possible cadidated for this procedure some of which being choosing a random point inside the triangle, picking
+	the point nearest the incenter of the triangle or the point neareset the average of the three vertices of the
+	triangle.
+
+	Another test I would have like to perform is to see if we could improve the runtime by restricting the maximum
+	number of passes of flipping in each call of the _flip_ function. With similar thinking for this test it would
+	be interesting to see how much close to a DT the final triangulation would be after applying different restrictions	
+	to the algorithm and how much the total runtime would be improved.
 
 #pagebreak()
-= improvements
-+ DAG
-+ memory analysis
-+ time analysis on a smaller number of flipping passes say 2
-
-
 = Conclusion
 
-The Delaunay Triangulation is a complex algorithm 
+	The Delaunay Triangulation is a complex algorithm with lots of possible routes to obtain the same answer.
+	With rich mathematics inspiring the flipping operation needed to find the DT providing serial algorithms which 
+	also give rise to highly parallelised counter parts. We show that the development of parallelised algorithms
+	can provide us with a tremendously decreased runtime if the algorithm of choice is suited for a highly 
+	parallelisable formulation.
 
-#lorem(100)
+	We have explored the mathematics which allow us to proceed in certainty to ascpects of the algorithm, we noted
+	the complications and contrasts between CPU programming when programming for GPUs and we the observed the
+	transformation of the serial code to its paralell counterpart and we analysed the the parallel algorithm
+	thoroughly but more analysis and optimisations can still be made.
 
+	We can conclude that while significant speedups can be achieved with writing GPU code, it can be a time
+	intensive process with a lot of choices to be made by the programmer along the way in order for the
+	code to run as efficienly as possible. 
 
 #pagebreak()
 #bibliography("references.bib")

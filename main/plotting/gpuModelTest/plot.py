@@ -7,6 +7,7 @@ deviceModels = [
 	#"NVIDIA GeForce GTX 1080 Ti",
 	"NVIDIA GeForce RTX 2080 SUPER",
 	"NVIDIA GeForce RTX 3090",
+	"NVIDIA GeForce RTX 4060 Ti",
 	"NVIDIA A100-PCIE-40GB",
 	"NVIDIA A100-SXM4-80GB"
 ]
@@ -16,6 +17,7 @@ normalization = [
 	#1/(3584*1481),
 	1/(3072*1650),
 	1/(10496*1395),
+	1/(4352*2310),
 	1/(6912*765),
 	1/(6912*1275)
 ]
@@ -46,7 +48,7 @@ times_sorted = np.array(times_sorted)
 availableNormalization_sorted = np.array(availableNormalization_sorted)
 
 # Create figure and axis
-fig, ax1 = plt.subplots(figsize=(12,5))
+fig, ax1 = plt.subplots(figsize=(12,6))
 
 # Bar chart on left y-axis
 bars = ax1.bar(availableDeviceModels_sorted, times_sorted, label="Total time", edgecolor="black", color="cornflowerblue")
@@ -56,6 +58,8 @@ for bar in bars:
 ax1.set_xlabel("Device")
 ax1.set_ylabel("Total Time (s)")
 ax1.tick_params(axis='y')
+
+plt.xticks(rotation=5, ha="right")
 
 #colors = ['forestgreen', 'gold', 'cornflowerblue', 'salmon']
 # Create a second y-axis
