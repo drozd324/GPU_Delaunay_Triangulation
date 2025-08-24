@@ -69,12 +69,6 @@ struct Delaunay {
 	Delaunay(Point* points, int n, int numThreadsPerBlock, int seed_mark, int distribution_mark);
 	void constructor(Point* points, int n);
 
-	Tri* triangles_;
-	int lenTriangles_;
-		
-//	int len() { return lenTriangles; }
-//	Tri* triangles() { return triangles_; }
-
 	~Delaunay();
 
 	//int ntpb = 128; // number of threads per block
@@ -159,7 +153,6 @@ __device__ void flipFromQuad(int a, int e, int b, Tri* triList, Quad* quad);
 /* UPDATE POINTS */
 __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri, int* ptsUninserted, int* nptsUninserted);
 __device__ int contains(int t, int r, Tri* triList, Point* pts);
-__device__ int contains(Tri* tri, int r, Point* pts);
 
 /* Delaunay Check */
 __global__ void delaunayCheckKernel(Tri* triList, int* nTri, Point* pts, int* nEdges);

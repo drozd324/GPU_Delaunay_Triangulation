@@ -795,23 +795,6 @@ void Delaunay::updatePointLocations() {
 	dim3 threadsPerBlock2(ntpb);
 	dim3 numBlocks2(N/threadsPerBlock2.x + (!(N % threadsPerBlock2.x) ? 0:1));
 	updatePointLocationsKernel<<<numBlocks2, threadsPerBlock2>>>(pts_d, npts_d, triList_d, nTri_d, ptToTri_d, ptsUninserted_d, nptsUninserted_d);
-//
-//	cudaMemcpy(nptsUninserted, nptsUninserted_d, sizeof(int), cudaMemcpyDeviceToHost);
-//	cudaMemcpy(nTri, nTri_d, sizeof(int), cudaMemcpyDeviceToHost);
-//	int N = (*nptsUninserted)*(*nTri);
-//	printf("================================= N=%d | (*nptsUninserted)=%d | (*nTri)=%d \n", N, (*nptsUninserted), (*nTri));
-//	dim3 threadsPerBlock2(ntpb);
-//	dim3 numBlocks2(N/threadsPerBlock2.x + (!(N % threadsPerBlock2.x) ? 0:1));
-//	updatePointLocationsKernel<<<numBlocks2, threadsPerBlock2>>>(pts_d, npts_d, triList_d, nTri_d, ptToTri_d, ptsUninserted_d, nptsUninserted_d);
-
-
-//	cudaMemcpy(nTri, nTri_d, sizeof(int), cudaMemcpyDeviceToHost);
-//	int N = (*nTri);
-////	cudaMemcpy(nptsUninserted, nptsUninserted_d, sizeof(int), cudaMemcpyDeviceToHost);
-////	int N = *nptsUninserted;
-//	dim3 threadsPerBlock2(ntpb);
-//	dim3 numBlocks2(N/threadsPerBlock2.x + (!(N % threadsPerBlock2.x) ? 0:1));
-//	updatePointLocationsKernel<<<numBlocks2, threadsPerBlock2>>>(pts_d, npts_d, triList_d, nTri_d, ptToTri_d, ptsUninserted_d, nptsUninserted_d);
 }
 
 
@@ -837,10 +820,6 @@ __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, 
 
 		// definitely can optimize this
 		for (int t=0; t<(*nTri); ++t) { // for each triangle check if point is contained inside it
-//			if (contains(t, ptIdx, triList, pts) == 1) {
-//				used++;
-//				local_t = t;
-//			}
 			cont = (contains(t, ptIdx, triList, pts) == 1);
 			used += cont;
 			local_t = local_t*(cont == 0) + t*(cont == 1);
@@ -849,139 +828,9 @@ __global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, 
 		if (used > 1) { printf("POINT %d LIES IN MORE THAN 1 TRIANGLE\n", ptIdx); }
 
 		if (used == 1) {
-			//atomicExch(&(ptToTri[ptIdx]), local_t);
 			ptToTri[ptIdx] = local_t;
 		}
 	}
-}
-
-//__global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri, int* ptsUninserted, int* nptsUninserted) {
-//	int idx = blockIdx.x*blockDim.x + threadIdx.x;
-//
-//	// definitely can optimize this part, reduce thread divergence
-//	if (idx < (*nptsUninserted)*(*nTri)) {
-//	//if (idx < (*nptsUninserted)) {
-//		//int ptIdx = ptsUninserted[idx];
-//		int ptIdx = ptsUninserted[idx / (*nTri)];
-//		int t = idx % (*nTri);
-//		int local_t = 0;
-//		int used = 0;
-//		int cont;
-//		Tri tri;
-//
-//		// definitely can optimize this
-//		//for (int t=0; t<(*nTri); ++t) { // for each triangle check if point is contained inside it
-//			for (int i=0; i<3; ++i) {
-//				tri.p[i] = triList[t].p[i];
-//			}
-//			
-//			cont = (contains(&tri, ptIdx, pts) == 1);
-//			used += cont;
-//			local_t = local_t*(cont == 0) + t*(cont == 1);
-//		//}
-//
-//		if (used > 1) { printf("POINT %d LIES IN MORE THAN 1 TRIANGLE\n", ptIdx); }
-//
-//		if (used == 1) {
-//			//atomicExch(&(ptToTri[ptIdx]), local_t);
-//			ptToTri[ptIdx] = local_t;
-//		}
-//	}
-//}
-//
-//__global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri, int* ptsUninserted, int* nptsUninserted) {
-//	int idx = blockIdx.x*blockDim.x + threadIdx.x;
-//
-//	// definitely can optimize this part, reduce thread divergence
-//	if (idx < (*nTri)) {
-//		//int ptIdx = ptsUninserted[idx];
-//		//int ptIdx = ptsUninserted[idx / (*nTri)];
-//		int loc_ptIdx;
-//		int t = idx;// % (*nTri);
-//		int local_t = 0;
-//		int used = 0;
-//		int cont;
-//		Tri tri;
-//		for (int i=0; i<3; ++i) {
-//			tri.p[i] = triList[t].p[i];
-//		}
-//
-//		// definitely can optimize this
-//		for (int ptIdx=0; ptIdx<(*nptsUninserted); ++ptIdx) { // for each triangle check if point is contained inside it
-//			cont = (contains(&tri, ptIdx, pts) == 1);
-//			used += cont;
-//			//local_t = local_t*(cont == 0) + t*(cont == 1);
-//			loc_ptIdx = loc_ptIdx *(cont == 0) + ptIdx*(cont == 1);
-//
-//			if (used > 1) { printf("POINT %d LIES IN MORE THAN 1 TRIANGLE\n", ptIdx); }
-//		}
-//
-//		if (used == 1) {
-//			//atomicExch(&(ptToTri[ptIdx]), local_t);
-//			ptToTri[loc_ptIdx] = local_t;
-//		}
-//	}
-//}
-
-//__global__ void updatePointLocationsKernel(Point* pts, int* npts, Tri* triList, int* nTri, int* ptToTri, int* ptsUninserted, int* nptsUninserted) {
-//	int t = blockIdx.x*blockDim.x + threadIdx.x;
-//
-//
-//	// definitely can optimize this part, reduce thread divergence
-//	if (t < (*nTri)) {
-//	//if (idx < (*nptsUninserted)) {
-//		//int ptIdx = ptsUninserted[idx];
-//		//int local_t = 0;
-//		int local_ptIdx = 0;
-//		int used = 0;
-//		int cont;
-//		Tri tri;
-//		for (int i=0; i<3; i++) {
-//			tri.p[i] = triList[t].p[i];
-//		}	
-//
-//		// definitely can optimize this
-//		//for (int t=0; t<(*nTri); ++t) { // for each triangle check if point is contained inside it
-//		for (int ptIdx=0; ptIdx<(*nptsUninserted); ++ptIdx) { // for each triangle check if point is contained inside it
-//			cont = (contains(&tri, ptIdx, pts) == 1);
-//			used += cont;
-//			//local_t = local_t*(cont == 0) + t*(cont == 1);
-//			local_ptIdx = local_ptIdx*(cont == 0) + ptIdx*(cont == 1);
-//		}
-//
-//		if (used > 1) { printf("POINT %d LIES IN MORE THAN 1 TRIANGLE\n", local_ptIdx); }
-//
-//		if (used == 1) {
-//			//atomicExch(&(ptToTri[ptIdx]), local_t);
-//			//ptToTri[ptIdx] = local_t;
-//			//atomicExch(&(ptToTri[local_ptIdx]), t);
-//			ptToTri[local_ptIdx] = t;
-//		}
-//	}
-//}
-//
-
-
-/*
- * Checks if a triangle with index 't' contains point with index 'r'. Returns 1 if the
- * point is inside or if on the boundary and -1 if its on the outside.
- */
-__device__ int contains(Tri* tri, int r, Point* pts) {
-
-	REAL area;
-	int i, j;
-	int not_contained = 0;
-
-	for (i=0; i<3; ++i) {
-		j = (i+1) % 3;
-		// area = area of triangle (21.3.2) (21.3.10) 
-		area = (pts[tri->p[j]].x[0] - pts[tri->p[i]].x[0])*(pts[r].x[1] - pts[tri->p[i]].x[1]) - 
-			   (pts[tri->p[j]].x[1] - pts[tri->p[i]].x[1])*(pts[r].x[0] - pts[tri->p[i]].x[0]);
-
-		not_contained = not_contained | (area <= 0.0);
-	}
-
-	return (-(not_contained == 1)) + (not_contained == 0);
 }
 
 /*
@@ -996,7 +845,7 @@ __device__ int contains(int t, int r, Tri* triList, Point* pts) {
 
 	for (i=0; i<3; ++i) {
 		j = (i+1) % 3;
-		// area = area of triangle (21.3.2) (21.3.10) 
+		// area of triangle 
 		area = (pts[triList[t].p[j]].x[0] - pts[triList[t].p[i]].x[0])*(pts[r].x[1] - pts[triList[t].p[i]].x[1]) - 
 			   (pts[triList[t].p[j]].x[1] - pts[triList[t].p[i]].x[1])*(pts[r].x[0] - pts[triList[t].p[i]].x[0]);
 
