@@ -109,46 +109,46 @@
 	*Abstract*\
 
 	Triangulations of a set of points are a very useful mathematical construction to describe 
-	properties of discretised physical systems, such as modelling terrains, cars and wind turbines
-	which are a commonly used for simulations such as compulational fluid dynamics 
+	properties of discretized physical systems, such as modelling terrains, cars and wind turbines
+	which are a commonly used for simulations such as computational fluid dynamics 
 	and even have use in video games for rendering and visualising complex geometries. To
-	paint a picure, you may think of a triangulation of a set of points $P$ to be a bunch of line
-	segments connecting each point in $P$ in a way such that the edges are non instersecting. A  
-	particulary interesting subset of triangulations are Delaunay triangulations (DT). The Delaunay
+	paint a picture, you may think of a triangulation of a set of points $P$ to be a bunch of line
+	segments connecting each point in $P$ in a way such that the edges are non intersecting. A  
+	particularly interesting subset of triangulations are Delaunay triangulations (DT). The Delaunay
 	triangulation is a triangulation which maximises all angles in each triangle of the triangulation. 
 	Mathematically this gives us an interesting optimization problem which leads to some rich
 	mathematical properties, at least in 2 dimensions, and for alot of applications we are provided 
 	with a good way
 	to discretize space for the case of simulations for use in methods such as Finite Element
-	and Finite Volume methods. Delaunay triangulatinos in particular are a good candiate for these
+	and Finite Volume methods. Delaunay triangulations in particular are a good candidate for these
 	numerical methods as they provide us with fat triangles, as opposed to skinny triangles, which
 	can serve as good elements in the Finite Element method as they tend to improve accuracy of
 	the solvers @MeshSmoothing. 
 
 	There are many algorithms which compute Delaunay triangulations , however
-	alot of them use the the operation of 'flipping' or originally called an 'exchange' @Lawson72. This
+	alot of them use the operation of 'flipping' or originally called an 'exchange' @Lawson72. This
 	is a fundamental property of moving through all triangulations of a set of points to with the goal of
 	obtaining the Delaunay triangulation. This flipping operation involves a configuration
 	of two triangles sharing an edge, its boundary forming a quadrilateral. The shared edge
 	between these two triangles will be swapped or flipped from the two points at its end to the
-	other two points on the quadrilateral. The original agorithm, motivated by Lawson@Lawson72, hints
+	other two points on the quadrilateral. The original algorithm, motivated by Lawson@Lawson72, hints
 	to us this flipping operation to iterate through different triangulations and eventually arrive
-	at the Delaunay trianglution which we desire.
+	at the Delaunay triangulation which we desire.
 
 	With the flipping operation being at the core of the algorithm, we can notice that is has the 
 	possibility of being parallelized. This is desirable as problems which commonly use the DT 
 	are run with large datasets, in this case a large set of points,
 	and can benefit from the highly parallelisable nature of this 
-	algorithm. If we wish to parallize this algorithm, and start with some initial triangulation, 
+	algorithm. If we wish to parallelize this algorithm, and start with some initial triangulation, 
 	conflicts would only occur if we chose to flip a configuration of triangles which share a
-	triangle. With some care, this is an avoidable situation leads to a massivly parallelizable algorithm.
+	triangle. With some care, this is an avoidable situation leads to a massively parallelizable algorithm.
 	In our case the hardware of choice will be the GPU which is designed with the SIMT model which
 	is particularly well suited for this algorithm as we are mostly performing the same operations
 	in each iteration of the algorithm in parallel.
 
 	The goal of this project was to explore the Delaunay triangulations through both serial and parallel
 	algorithms with the goal of presenting a easy to understand, sufficiently complex parallel
-	algorthim designed with with Nvidia's CUDA programming model for running software on their GPUs.
+	algorithim designed with Nvidia's CUDA programming model for running software on their GPUs.
 ]
 
 
@@ -161,8 +161,8 @@
 = Delaunay triangulations
 	In this section I aim to introduce triangulations and Delaunay triangulations from a mathematical 
 	perspective with the foresight to help present the motivation and inspiration for the key
-	algorithms used in this project. In order to introduce indroduce the Delaunay Traingulation
-	we first must define what we mean mean by a triangultion. In order to create a triangualtion we
+	algorithms used in this project. In order to introduce the Delaunay Traingulation
+	we first must define what we mean by a triangultion. In order to create a triangualtion we
 	need a set of points which will make up the vertices of the triangles. But first we want to clarify
 	a possible ambiguity about edges.
 
@@ -257,7 +257,7 @@
 		figure(image("images/flip1.png"), caption: [
 		]), <a>,
 
-		figure(image("images/flip2.png"), caption: [
+		figure(image("images/flip2.png", width: 90%), caption: [
 		]), <b>,
 
 		columns: (1fr, 1fr),
@@ -288,7 +288,7 @@
 	] <emptyCirclyProp_thrm>
 
 
-	@emptyCirclyProp_thrm is the key ingredient in the the Delaunay triangulation algorithms
+	@emptyCirclyProp_thrm is the key ingredient in the Delaunay triangulation algorithms
 	we are going to use. This is because instead of having to compare angles, as would be 
 	demanded by @delaunay_def, we are allowed to only perform a computation, involving finding a
 	circumcicle and performing one comparison which would involve determining whether the
@@ -366,20 +366,20 @@
 			  	  @CUDACPP]
 	) <grid_of_thread_blocks_img>
 
-	Unlike parallel CPU programming models such as OMP and MPI, CUDA which is Nvidia's closed source programming
-	API for developing software for only their own GPUs, most of the time creating modified algorithms for 
+	Unlike parallel CPU programming models such as OMP and MPI, CUDA which is Nvidia's programming
+	API for developing software for their GPUs, most of the time creating modified algorithms for 
 	the GPUs architecture is necessary if we begin with a serialized algorithm. Even though programming 
 	parallel CPU code also requires the development of a modifed algorithm, in my experience, most of the time
-	the existing serial algorithm is devided among CPU cores and message passing bewteen these cores is the most
+	the existing serial algorithm is divided among CPU cores and message passing bewteen these cores is the most
 	performance critical aspect of the code. Most of the skill in developing GPU code is in making efficient
 	use of the correct memory locations on the GPU and keeping in mind the SIMT progarmming model. In the	
 	case of the GPU, code is run in lock step which means if the kernel has multiple possible execution paths, which 
 	can be introduced by programming language features such as _if_ statements or variable lenght _for_ loops,	
-	the threads on in a streaming multiprocessor will only execute one the of the if statements which others
+	the cores in a streaming multiprocessor will only execute one the of the if statements which others
 	will lay doing nothing, which defeats the entire purpose of the parallel execution of threads. Because of these
-	features, proramming for GPUs is more restrictive bul also allows for very large speedups. Some common 
+	features, proramming for GPUs is more restrictive but also allows for very large speedups. Some common 
 	good practices for programming for GPUs include using short _kernel_ calls (the _kernel_ is a function
-	which runs on the GPU) but exreamly spread out problems over the cores of the GPU. Making use of the
+	which runs on the GPU) but extreamly spread out problems over the cores of the GPU. Making use of the
 	closest memory locations and not using _global_ memory for reading large chuncks of memory and using
 	the locality of memory reads. And when applicable use asynchronous _kernel_ calls so that the
 	GPU is using its compute and not waiting for memory transfers.
@@ -535,7 +535,7 @@
 			caption: [ Before flipping. ],
 		), <a>,
 
-		figure(image("images/insert_flip2.png"),
+		figure(image("images/insert_flip2.png", width: 90%),
 			caption: [ After flipping. ],
 		), <b>,
 
@@ -555,15 +555,10 @@
 				  points are opposite the neigbouring edge updated. 
 		],
 		
-		align: top,
+		align: bottom,
 		label: <s_flip_img>,
 	) 
 
-
-
-
-*Implementation*
-	
 	The implementaion was written in C++ and was not written with a large amount of object oriented 
 	programming (OOP) techniques for an gentler transition to a CUDA implementaion as CUDA heavily relies
 	on pointer semantics and does not support some of the more convenient OOP feautres. However as CUDA
@@ -606,7 +601,7 @@
 	a GPUs architecture in mind. This means that accesing data will be largely done by accessing global arrays
 	which all threads of execution have access to. Methods akin to divide and conquer @DivAndConq would be
 	useful if we consider multi CPU or multi GPU systems but that is not in the scope of this project but would
-	be particulary interesing to see a multi GPU systems implementation for this algorithm made publicly 
+	be particularly interesing to see a multi GPU systems implementation for this algorithm made publicly 
 	available. An overview of the parallelized algorithm is in @ppi_alg mostly adapted from @gDel3D which
 	is to my understanding as of this moment the fastest GPU delaunay triangluation algorithm. 
 
@@ -666,9 +661,9 @@
 	
 === Constructing the super traingle
 	
-	In order to be able to begin our DT algorithm, a _supertriangle_ needs to be constructed. This only
+	In order to be able to begin our DT algorithm, a _supertriangle_ needs to be constructed. This
 	needs to be done only once throughout the duration of the algorithm. Two routines in this algorithm
-	deserve to be paralellized, computing the average point and computing the largest distance between two
+	deserve to be parallelized, computing the average point and computing the largest distance between two
 	points. Computing the average point involves calculating the total sum of all points by a reduction which
 	is followed by a division in each coordinate by the number of points in the set. When computing the maximum
 	distance bewteen two points a CUDA kernel is lauched which spaws a thread for each point which then compares
@@ -699,7 +694,7 @@
 	) <constructsupt_alg>
 
 
-=== Insertion
+=== Point insertion
 
 	The point insertion step is very well suited for parallelization. Parallel point insertion can be
 	performed with minimal interfernce with their
@@ -785,7 +780,7 @@
 	kernel takes care of updating the relevant neighbours of the 3 new triangles. It is necessary to split up this
 	procedure since if it was not split up the external neighbouring triangles could be overwritten while they are being
 	created. The algorithm relies on the neighbouring triangles already exsiting to find the relevant neighbour to update
-	which is done so by traversing the the split triangles counter clockwise in order to the relevant neighbouring triangle.
+	which is done so by traversing the split triangles counter clockwise in order to the relevant neighbouring triangle.
 	It is also important to note that the $"nTri"$ variable, should only be updated after the
 	parallel point insertion procedure is complete as the updating it during this process have consequences on the
 	locations of the newly created triangles storage location.
@@ -985,7 +980,9 @@
 	implementation into a highly parallelized version can give immense amounts of speedup. The speedup here
 	is comparing the runtime of the serial code with for a given number of points and with the
 	runtime of the GPU code with the same number of points. Both implementaions are run with single
-	precision floating point arithmetic.
+	precision floating point arithmetic. We can notice in @nptsVsSpeedup_plt that we only begin to get 
+	an improvement in performance once we cross $10^3$ points, but as we do we get a drastic increase in
+	performace of $1000$ times in the case of $10^5$.
 
 	In @triangulation_onlyptins we see what the result would look like in each iteration
 	if not flipping operations were performed. This figure aids to portray the DT as the
@@ -1102,7 +1099,7 @@
 		columns: (auto, auto, auto),
 		caption: [Visualisations of Delaunay triangluations of various point distributions. 
 				  The grid should be read as follows. Along the horizontal the number of points
-				  involved increases gradually and with $100$, $500$, $1000$ points in the the	
+				  involved increases gradually and with $100$, $500$, $1000$ points in the 
 				  first second and third column respectively. In each row we draw from different 
 				  point distributions. The rows draw from a uniform unit disk distribution, a distribution
 				  on a disk with points clustered in the center, a distribution on a disk with points
@@ -1113,16 +1110,6 @@
 		label: <triangulations_grid>,
 	)
 
-//	costly is that after the first two iterations of flips we see that there is an incredibly small amount
-//	of configurations which need to be flipped @nflipsVsIter_plt. These are configurations which would
-//	otherwise have conflicted with other configurations or were only possible after. What really
-//	harms the speed of the algorithm is that each flipping iteration within the parallel flipping procedure
-//	takes roughly the same amount of time to process, even if it is flipping a relatively small number of 
-//	configurations. The profling in @timeDistrib_plt gives us an impression of how the code as a whole
-//	performs in terms of time spent. This includes both the host and device runtimes in the respective
-//	function calls.
-//
-
 	Depending on the desired application of this algorithm one may use it to obtain only a near Delaunay
 	triangulation. How close a triangulation is to being a DT can be calculated by counting all of the non
 	Delaunay edges. The sum of these edges can be compared with the total number of edges in the
@@ -1132,7 +1119,7 @@
 	total number of flips for each pass within the _flip_ function. The majority of flips being performed
 	during the execution of the algorithm are performed in the later stages of the algorithm but what can
 	be noticed in the rightmost figure is that, for each pass of parallel flipping, only the first two or
-	three passes constribute significantly to the triangluation performing the majority the the flips.
+	three passes constribute significantly to the triangluation performing the majority the flips.
 	Following these flips we are left flipping a relatively tiny number of configurations. One could choose
 	to only perform 2 passes of parallel flipping and the algorithm would process the majority of flipable
 	configurations. This would in turn significantly reduce the amount of time spent on the flipping 
@@ -1222,7 +1209,7 @@
 	results of computations resonably quickly. While the A100s are specifally designed to be run in datacenters
 	or supercomputers which dont necessarily demand the ease of acces of data being processed by the GPU. This
 	leads us to the fast compute which we see on the A100s being around as fast as the RTX 3090 but they dont
-	scale as well in comparison with core count and clock frequency since our algorithm doesnt massivly rely
+	scale as well in comparison with core count and clock frequency since our algorithm doesnt massively rely
 	on passing massive amounts of data bewteen the host and device.
 
 
@@ -1344,7 +1331,7 @@
 
 	We have explored the mathematics which allow us to proceed in certainty to ascpects of the algorithm, we noted
 	the complications and contrasts between CPU programming when programming for GPUs and we the observed the
-	transformation of the serial code to its paralell counterpart and we analysed the the parallel algorithm
+	transformation of the serial code to its paralell counterpart and we analysed the parallel algorithm
 	thoroughly but more analysis and optimisations can still be made.
 
 	We can conclude that while significant speedups can be achieved with writing GPU code, it can be a time
