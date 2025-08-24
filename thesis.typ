@@ -148,7 +148,7 @@
 
 	The goal of this project was to explore the Delaunay triangulations through both serial and parallel
 	algorithms with the goal of presenting a easy to understand, sufficiently complex parallel
-	algorithim designed with Nvidia's CUDA programming model for running software on their GPUs.
+	algorithm designed with Nvidia's CUDA programming model for running software on their GPUs.
 ]
 
 
@@ -161,8 +161,8 @@
 = Delaunay triangulations
 	In this section I aim to introduce triangulations and Delaunay triangulations from a mathematical 
 	perspective with the foresight to help present the motivation and inspiration for the key
-	algorithms used in this project. In order to introduce the Delaunay Traingulation
-	we first must define what we mean by a triangultion. In order to create a triangualtion we
+	algorithms used in this project. In order to introduce the Delaunay Triangulation
+	we first must define what we mean by a triangulation. In order to create a triangulation we
 	need a set of points which will make up the vertices of the triangles. But first we want to clarify
 	a possible ambiguity about edges.
 
@@ -172,18 +172,18 @@
 		@DiscComGeom.
 	] <edge_def>
 
-	Alterantively we could say an edge doesnt contain its endpoints which could be more 
+	Alternatively we could say an edge doesn't contain its endpoints which could be more 
 	useful in different contexts. But now we define the triangulation.
 
 	#definition[
 		A _triangulation_ of a planar point set $P$ is a subdivision of the
-		plane determined by a maximal set of noncrossing edges whose vertex
+		plane determined by a maximal set of non-crossing edges whose vertex
 		set is $P$ 
 		@DiscComGeom.
 	] <triangulation_def>
 
 	This is a somewhat technical but precise definition. The most important point in @triangulation_def is 
-	that it is a _maximal_ set of noncrossing egdes which for us means that we will not have any other shapes
+	that it is a _maximal_ set of non crossing egdes which for us means that we will not have any other shapes
 	than triangles in this structure. 
 
 	#subpar.grid(
@@ -197,7 +197,7 @@
 		]), <c>,
 
 		columns: (1fr, 1fr, 1fr),
-		caption: [Examples of two traingulations (a) (b) on the same set of points.
+		caption: [Examples of two triangulations (a) (b) on the same set of points.
 		          In (c) an illustration of a non maximal set of edges.
 		],
 		align: bottom,
@@ -206,8 +206,8 @@
 
 	A useful fact about triangulations is that we can know how many triangles our triangulation
 	will contain if given a set of points and its convex hull. For our purposes the convex hull will 
-	allways be a set which will covering a set of points, in our case the points in our triangulation.
-	This will be usefull when we will be storing triangles as we will allways know the number of triangles
+	always be a set which will covering a set of points, in our case the points in our triangulation.
+	This will be useful when we will be storing triangles as we will always know the number of triangles
 	that will be created and will need to be stored.
 
 	#theorem[
@@ -219,7 +219,7 @@
 
 	A key feature of all of the Delaunay triangulation theorems we will be considering is that 
 	no three points from the set of points $P$ which will make up our triangulation will lie 
-	on a line and also that no 4 points like on a circle. Motivation for this defintion will become
+	on a line and also that no 4 points like on a circle. Motivation for this definition will become
 	more apparent in @emptyCirclyProp_thrm and following. @genpos_def lets us imagine that our points
 	are distributed randomly enough so that our algorithms will work with no degeneracies appearing. 
 	This leads us to the following definition.
@@ -229,8 +229,8 @@
 		are colinear and that no 4 points are cocircular.
 	] <genpos_def>
 	
-	From this point onwards we will allways assume that the point set $P$ from which 
-	we obtain our triangulation will be in _general position_. This is neccesary for the 
+	From this point onwards we will always assume that the point set $P$ from which 
+	we obtain our triangulation will be in _general position_. This is necessary for the 
 	definitions and theorems we will define. 
 
 	In order to define a Delaunay triangulation we would like to establish the motivation for the definition
@@ -238,8 +238,8 @@
 	a sense maximizes smallest angles in a triangulation $T$. This idea is formalized by defining an 
 	_angle sequence_ $(alpha_1, alpha_2, ... , alpha_(3n))$ of $T$ which is an ordered list of all angles
 	of T sorted from the smallest to largest. With angle sequences we can now compare two triangulations
-	to eachother. We can say for two triangulations $T_1$ and $T_2$ we write $T_1 > T_2$ ($T_1$ is fatter
-	than $T_2$) if the angle sequence of $T_1$ is lexographically greater than $T_2$. Now we can compare
+	to each other. We can say for two triangulations $T_1$ and $T_2$ we write $T_1 > T_2$ ($T_1$ is fatter
+	than $T_2$) if the angle sequence of $T_1$ is lexicographically greater than $T_2$. Now we can compare
 	triangulations. And by defining @legaledge_def are able to define a _Delaunay triangulation_.
 
 	#definition[
@@ -263,7 +263,7 @@
 		columns: (1fr, 1fr),
 		caption: [Demonstration of the flipping operation for its use in @emptyCirclyProp_thrm.
 			In (a) A configuration that needs to be flipped illustrated by the circumcircle of 
-			$t_1$ containg the auxillary point of $t_2$ in its interior.
+			$t_1$ containing the auxiliary point of $t_2$ in its interior.
 			In (b) configuration (a) which has been flipped and no longer needs to be
 			flipped as illustrated by the both circumcirles of $t_1$ and $t_2$.
 		],
@@ -278,7 +278,7 @@
 	] <delaunay_def>
 
 	With @delaunay_def, Delaunay triangulations wish to only contain legal edges and this provides 
-	us with a "nice" triangluation with fat triangles. 
+	us with a "nice" triangulation with fat triangles. 
 
 	#theorem("Empty Circle Property")[
 		Let $P$ be a point set in general position. A triangulation $T$ is a 
@@ -293,14 +293,14 @@
 	demanded by @delaunay_def, we are allowed to only perform a computation, involving finding a
 	circumcicle and performing one comparison which would involve determining whether the
 	point not shared by triangles circumcircle is contained inside the circumcircle or not.
-	Algorithms such as initially intruduced by Lawson @Lawson77 exist which do focus on angle
+	Algorithms such as initially introduced by Lawson @Lawson77 exist which do focus on angle
 	comparisons but are not preferred as they do not introduce desired locality and are more
 	complex.
 
 
 	And finally we present the theorem which guarantees that we will eventually arrive at 
 	our desired Delaunay triangluation by stating that we can travel across all possible 
-	triangultions of our point set $P$ by using the fliping operation.
+	triangulations of our point set $P$ by using the flipping operation.
 
 	#theorem("Lawson")[
 		Given any two triangulations of a set of points $P$, $T_1$ and $T_2$, there exist
@@ -313,55 +313,56 @@
 	The Graphical Processing Unit (GPU) is a type of hardware accelerator originally used to
 	significantly improve running video rendering tasks for example in video games through 
 	visualizing the two or three dimensional environments the player would be interacting with
-	or rendering vidoes in movies after the addition of visual effects. Many different hardware accelerators
-	have been tried and tested for more general use, like Intels Xeon Phis, however the more purpose oriented GPU
-	has prevailed in the market and in performance mainly lead by Nvidia in prevoius years. Today, the GPU
-	has gained a more general purporse status with the rise of General Purpose GPU (GPGPU) programming as more
+	or rendering videos in movies after the addition of visual effects. Many different hardware accelerators
+	have been tried and tested for more general use, like Intel's Xeon Phis, however the more purpose oriented GPU
+	has prevailed in the market and in performance mainly lead by Nvidia in previous years. Today, the GPU
+	has gained a more general purpose status with the rise of General Purpose GPU (GPGPU) programming as more
 	and more people have noticed that GPUs are very useful as a general hardware accelerator.
 
 	The traditional CPU, based on the Von Neumann architecture, which
 	is built to perform _serial_ tasks , the CPU is built to be a general purpose hardware for
 	performing all tasks a user would demand from the computer. In contrast the GPU can't run alone and must be
-	used in conjuction to the CPU. The CPU sends compute intructions for the GPU to perform and 
+	used in conjunction to the CPU. The CPU sends compute instructions for the GPU to perform and 
 	data commonly passes between the CPU and GPU when performing computations.
 
 	#figure(
 		image("images/array_processor.png"),
 		caption: [The _Single Instruction Multiple Threads (SIMT)_ classification, originally known
-				  as an _Array Processor_ as illustriated by Michael J. Flynn @FlynnsTaxonomy. The 
+				  as an _Array Processor_ as illustrated by Michael J. Flynn @FlynnsTaxonomy. The 
 				  control unit communicates instructions to the $N$ processing element with each
 				  processing element having its own memory.]
 	) <array_proc_img>
 
-	What makes the GPU increadibly usefull in certain usecases, like the one of this thesis, is
-	its architecture which is build to enable massively parallelisable tasks. In Flynn's Taxonomy
+	What makes the GPU incredibly useful in certain use cases, like the one of this thesis, is
+	its architecture which is build to enable massively parallelizable tasks. In Flynn's Taxonomy
 	@FlynnsTaxonomy, the GPUs architecture is based a subcategory of the Single Instruction 
 	Multiple Data (SIMD) classification known as Single Instruction Multiple Threads (SIMT) also known 
-	as an Array Processor. The SIMD classification allows for many proccessing units to perform the 
+	as an Array Processor. The SIMD classification allows for many processing units to perform the 
 	same tasks on a shared dataset with the SIMT classification additionally allowing for each processing
-	unit having its own memory allowing for more diverse proccessing of data.
+	unit having its own memory allowing for more diverse processing of data.
 
 
 	Nvida's GPUs take the SIMT model and further develop it. There are three core abstractions which 
-	allow Nvidia's GPU model to be succesfull; a hierarchy of thread groups, shared memories and 
-	synchronization @CUDACPP. The threads, which represent the a theoretical proccesses which encode
-	programmed instrcutions, are launched together in groups of 32 known as _warps_. This 
-	is the smallest unit of physical instructions that is executed on the GPU, in constrast to a
+	allow Nvidia's GPU model to be successful; a hierarchy of thread groups, shared memories and 
+	synchronization @CUDACPP. The threads, which represents a theoretical processes which encode
+	programmed instructions, are launched together in groups of 32 known as _warps_. This 
+	is the smallest unit of physical instructions that is executed on the GPU, in contrast to a
 	single thread of execution which can also be executed but must be run alongside 31 other processes.
 	The threads are further grouped 
 	into _thread blocks_ which are used as a way of organising the _shared memory_ to be used by each thread
-	in this thread block. And once more the _thread blocks_ grouped into a _grid_. This heirarchy of memories
-	and units of instructions allows the GPU be signifancly faster for suitable algorithms than their CPU
-	equivalent. Along side the compute and memory hierarchies mentioned the GPU code can also be run asyncronously,
+	in this thread block. And once more the _thread blocks_ grouped into a _grid_. This hierarchy of memories
+	and units of instructions allows the GPU be significantly faster for suitable algorithms than their CPU
+	equivalent. Along side the compute and memory hierarchies mentioned the GPU code can also be run
+	asynchronously,
 	to allow for instruction coalescence and contains many more other types of memory storage options which 
 	are suitable for more specific tasks ._texture_ and _surface_ memory whose names are derived from their
-	applicaions in video game programming applications have built in interpolation features and _texture_
+	applications in video game programming applications have built in interpolation features and _texture_
 	is read only which allows the developer of code to really increase the performance of their code.
 	
 	#figure(
 		image("images/grid_of_thread_blocks.png"),
 		caption: [An illustration of the structure of the GPU programming model. As the lowest
-				  compute instrcution we have a thread block consisting of a number
+				  compute instruction we have a thread block consisting of a number
 				  threads $<=$ 1024. The thread blocks are contained in a grid.
 			  	  @CUDACPP]
 	) <grid_of_thread_blocks_img>
@@ -369,18 +370,18 @@
 	Unlike parallel CPU programming models such as OMP and MPI, CUDA which is Nvidia's programming
 	API for developing software for their GPUs, most of the time creating modified algorithms for 
 	the GPUs architecture is necessary if we begin with a serialized algorithm. Even though programming 
-	parallel CPU code also requires the development of a modifed algorithm, in my experience, most of the time
-	the existing serial algorithm is divided among CPU cores and message passing bewteen these cores is the most
+	parallel CPU code also requires the development of a modified algorithm, in my experience, most of the time
+	the existing serial algorithm is divided among CPU cores and message passing between these cores is the most
 	performance critical aspect of the code. Most of the skill in developing GPU code is in making efficient
-	use of the correct memory locations on the GPU and keeping in mind the SIMT progarmming model. In the	
+	use of the correct memory locations on the GPU and keeping in mind the SIMT programming model. In the	
 	case of the GPU, code is run in lock step which means if the kernel has multiple possible execution paths, which 
 	can be introduced by programming language features such as _if_ statements or variable lenght _for_ loops,	
 	the cores in a streaming multiprocessor will only execute one the of the if statements which others
 	will lay doing nothing, which defeats the entire purpose of the parallel execution of threads. Because of these
-	features, proramming for GPUs is more restrictive but also allows for very large speedups. Some common 
+	features, programming for GPUs is more restrictive but also allows for very large speedups. Some common 
 	good practices for programming for GPUs include using short _kernel_ calls (the _kernel_ is a function
-	which runs on the GPU) but extreamly spread out problems over the cores of the GPU. Making use of the
-	closest memory locations and not using _global_ memory for reading large chuncks of memory and using
+	which runs on the GPU) but extremely spread out problems over the cores of the GPU. Making use of the
+	closest memory locations and not using _global_ memory for reading large chunks of memory and using
 	the locality of memory reads. And when applicable use asynchronous _kernel_ calls so that the
 	GPU is using its compute and not waiting for memory transfers.
 	
@@ -388,10 +389,10 @@
 = Algorithms
 	
 	In this section we focus on two types of algorithms, serial and parallel, but with a major focus on the 
-	parallel algorithm. Commonly algorithms are first developed with a serialized verion and only 
+	parallel algorithm. Commonly algorithms are first developed with a serialized version and only 
 	later optimized into parallelized versions if possible. This is how I will be presenting my chosen
-	Delaunay triangulation algorithms in order to portray a chronolgical development of ideas used 
-	in all algorithms. And so we first begin by explaining the chosen serial verion of the DT algorithm.
+	Delaunay triangulation algorithms in order to portray a chronological development of ideas used 
+	in all algorithms. And so we first begin by explaining the chosen serial version of the DT algorithm.
 	 
 == Serial
 
@@ -402,7 +403,7 @@
 		supplement: [Algorithm],
 
 		pseudocode-list(booktabs: true, numbered-title: [Lawson Flip algorithm])[
-			Let $P$ be a point set in general position. Initialize $T$ as any trianulation of $P$.
+			Let $P$ be a point set in general position. Initialize $T$ as any triangulation of $P$.
 			If $T$ has an illegal edge, flip the edge and make it legal. Continue flipping illegal
 			edges, moving through the flip graph of $P$ in any order, until no more illegal
 			edges remain.
@@ -413,16 +414,16 @@
 	This algorithm presents with a bit of ambiguity however I believe its a good algorithm to keep in mind
 	when progressing to more complex algorithms as it presents the most important feature in a DT algorithm,
 	that is, checking if an edge in the triangulation is legal, and if its not, we flip it. Most DT algorithms
-	take this core concept and build a more optimized verions of it with as @flipping_alg has a complexity
+	take this core concept and build a more optimized versions of it with as @flipping_alg has a complexity
 	of $O(n^2)$ @ZurichDT.
 
 	The next best serial algorithm commonly presented by popular textbooks @CGAlgoApp @NumericalRecipies is the 
-	_randomized incrimental point insertion_ @ripiflip_alg. When implemented properly this algorithm should
+	_randomized incremental point insertion_ @ripiflip_alg. When implemented properly this algorithm should
 	have a complexity of $O(n log(n))$ @CGAlgoApp. This algorithm is favoured for its relative low complexity
-	and ease of implementaion. The construction this algorithm is a bit mathematically involved however the 
-	motivation behind the construction of the algorithm is to perform point instertions, and after each point
+	and ease of implementation . The construction this algorithm is a bit mathematically involved however the 
+	motivation behind the construction of the algorithm is to perform point insertions, and after each point
 	insertion we perform necessary flips to transform the current triangulation into a DT. This in turn 
-	reduces the number of flips we need to perform and this is reflected in the runtume complexity.
+	reduces the number of flips we need to perform and this is reflected in the runtime complexity.
 
 	#figure(
 		kind: "algorithm",
