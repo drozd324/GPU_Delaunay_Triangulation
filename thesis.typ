@@ -108,47 +108,80 @@
 	#set par(justify: false)
 	*Abstract*\
 
-	Triangulations of a set of points are a very useful mathematical construction to describe 
-	properties of discretized physical systems, such as modelling terrains, cars and wind turbines
-	which are a commonly used for simulations such as computational fluid dynamics 
-	and even have use in video games for rendering and visualising complex geometries. To
-	paint a picture, you may think of a triangulation of a set of points $P$ to be a bunch of line
-	segments connecting each point in $P$ in a way such that the edges are non intersecting. A  
-	particularly interesting subset of triangulations are Delaunay triangulations (DT). The Delaunay
-	triangulation is a triangulation which maximises all angles in each triangle of the triangulation. 
-	Mathematically this gives us an interesting optimization problem which leads to some rich
-	mathematical properties, at least in 2 dimensions, and for alot of applications we are provided 
-	with a good way
-	to discretize space for the case of simulations for use in methods such as Finite Element
-	and Finite Volume methods. Delaunay triangulations in particular are a good candidate for these
-	numerical methods as they provide us with fat triangles, as opposed to skinny triangles, which
-	can serve as good elements in the Finite Element method as they tend to improve accuracy of
-	the solvers @MeshSmoothing. 
 
-	There are many algorithms which compute Delaunay triangulations , however
-	a lot of them use the operation of 'flipping' or originally called an 'exchange' @Lawson72. This
-	is a fundamental property of moving through all triangulations of a set of points to with the goal of
-	obtaining the Delaunay triangulation. This flipping operation involves a configuration
-	of two triangles sharing an edge, its boundary forming a quadrilateral. The shared edge
-	between these two triangles will be swapped or flipped from the two points at its end to the
-	other two points on the quadrilateral. The original algorithm, motivated by Lawson@Lawson72, hints
-	to us this flipping operation to iterate through different triangulations and eventually arrive
-	at the Delaunay triangulation which we desire.
 
-	With the flipping operation being at the core of the algorithm, we can notice that is has the 
-	possibility of being parallelized. This is desirable as problems which commonly use the DT 
-	are run with large datasets, in this case a large set of points,
-	and can benefit from the highly parallelisable nature of this 
-	algorithm. If we wish to parallelize this algorithm, and start with some initial triangulation, 
-	conflicts would only occur if we chose to flip a configuration of triangles which share a
-	triangle. With some care, this is an avoidable situation leads to a massively parallelisable algorithm.
-	In our case the hardware of choice will be the GPU which is designed with the SIMT model which
-	is particularly well suited for this algorithm as we are mostly performing the same operations
-	in each iteration of the algorithm in parallel.
+	Triangulations are an incredibly useful mathematical construction which can be used to describe the
+	properties of discretised physical systems. A triangulation is a collection of non-intersecting line
+	segments connecting the points of a set. In two dimensional datasets, these discretise space, allowing
+	for ease of simulation using Finite Element and Finite Volume methods. Their applications are wide and include:
+	the modeling of complex surfaces such as terrains, cars and wind turbines, the simulation of computational fluid
+	dynamics, and the rendering and visualization of complex geometries for video games. We are particularly interested in
+	Delaunay triangulations (DT), those which  maximise the angles in each triangle of the triangulation. These triangulations
+	are good candidates for the above applications, as they provide us with fat triangles as opposed to skinny triangles, which
+	serve as good elements in the Finite Element Method as they tend to improve the overall accuracy of numerical solvers@MeshSmoothing. 
 
-	The goal of this project was to explore the Delaunay triangulations through both serial and parallel
-	algorithms with the goal of presenting a easy to understand, sufficiently complex parallel
-	algorithm designed with Nvidia's CUDA programming model for running software on their GPUs.
+	There are a great number of algorithms which compute Delaunay triangulations, with many of them relying on an operation
+	known as 'flipping', originally called an 'exchange' @Lawson72. This operation is performed over
+	two triangles sharing an edge, with the boundary of the triangles forming a convex quadrilateral: the shared
+	edge is replaced by one connecting the other two corners of the quadrilateral, effectively exchanging the edge within
+	the enclosed area. This operation allows us to traverse the space of possible triangulations. We will use
+	an algorithm, motivated by Lawson @Lawson72, to reach a Delaunay triangulation, by iteratively applying the flipping operation. 
+
+	Often we require Delaunay triangulations for large sets of points,
+	making the parallelisation of the algorithm highly desirable to improve performance. The flipping operation, lying at the
+	centre of our algorithm and affecting the triangulation only locally, can be easily parallelised. An issue may
+	arise if we attempt to parallelise the algorithm over two sections of the set which share a triangle.
+	However we find that this can be avoided with some care, providing a massively parallelised algorithm.
+
+	The hardware of choice for this project will be the GPU which is designed with the SIMT model. This model is
+	particularly well suited to performing this algorithm as we are executing each iteration of the algorithm in parallel.
+	The desired outcome of this project is to explore the Delaunay triangulations through both serial and parallel algorithms, 
+	with the goal of presenting an easy to understand, sufficiently complex parallel algorithm designed with Nvidia's
+	CUDA programming model, run on Nvidia GPUs.
+
+	
+
+//	Triangulations of a set of points are a very useful mathematical construction to describe 
+//	properties of discretized physical systems, such as modelling terrains, cars and wind turbines
+//	which are a commonly used for simulations such as computational fluid dynamics 
+//	and even have use in video games for rendering and visualising complex geometries. To
+//	paint a picture, you may think of a triangulation of a set of points $P$ to be a bunch of line
+//	segments connecting each point in $P$ in a way such that the edges are non intersecting. A  
+//	particularly interesting subset of triangulations are Delaunay triangulations (DT). The Delaunay
+//	triangulation is a triangulation which maximises all angles in each triangle of the triangulation. 
+//	Mathematically this gives us an interesting optimization problem which leads to some rich
+//	mathematical properties, at least in 2 dimensions, and for alot of applications we are provided 
+//	with a good way
+//	to discretize space for the case of simulations for use in methods such as Finite Element
+//	and Finite Volume methods. Delaunay triangulations in particular are a good candidate for these
+//	numerical methods as they provide us with fat triangles, as opposed to skinny triangles, which
+//	can serve as good elements in the Finite Element method as they tend to improve accuracy of
+//	the solvers . 
+//
+//	There are many algorithms which compute Delaunay triangulations , however
+//	a lot of them use the operation of 'flipping' or originally called an 'exchange' . This
+//	is a fundamental property of moving through all triangulations of a set of points to with the goal of
+//	obtaining the Delaunay triangulation. This flipping operation involves a configuration
+//	of two triangles sharing an edge, its boundary forming a quadrilateral. The shared edge
+//	between these two triangles will be swapped or flipped from the two points at its end to the
+//	other two points on the quadrilateral. The original algorithm, motivated by Lawson@Lawson72, hints
+//	to us this flipping operation to iterate through different triangulations and eventually arrive
+//	at the Delaunay triangulation which we desire.
+//
+//	With the flipping operation being at the core of the algorithm, we can notice that is has the 
+//	possibility of being parallelized. This is desirable as problems which commonly use the DT 
+//	are run with large datasets, in this case a large set of points,
+//	and can benefit from the highly parallelisable nature of this 
+//	algorithm. If we wish to parallelize this algorithm, and start with some initial triangulation, 
+//	conflicts would only occur if we chose to flip a configuration of triangles which share a
+//	triangle. With some care, this is an avoidable situation leads to a massively parallelisable algorithm.
+//	In our case the hardware of choice will be the GPU which is designed with the SIMT model which
+//	is particularly well suited for this algorithm as we are mostly performing the same operations
+//	in each iteration of the algorithm in parallel.
+//
+//	The goal of this project was to explore the Delaunay triangulations through both serial and parallel
+//	algorithms with the goal of presenting a easy to understand, sufficiently complex parallel
+//	algorithm designed with Nvidia's CUDA programming model for running software on their GPUs.
 ]
 
 
@@ -370,10 +403,10 @@
 	the existing serial algorithm is divided among CPU cores and message passing between these cores is the most
 	performance critical aspect of the code. Most of the skill in developing GPU code is in making efficient
 	use of the correct memory locations on the GPU and keeping in mind the SIMT programming model. In the	
-	case of the GPU, code is run in lock step which means if the kernel has multiple possible execution paths, which 
+	case of the GPU, code is run in lock step. This means if the kernel has multiple possible execution paths, which 
 	can be introduced by programming language features such as _if_ statements or variable lenght _for_ loops,	
 	the cores in a streaming multiprocessor will only execute one the of the if statements which others
-	will lay doing nothing, which defeats the entire purpose of the parallel execution of threads. Because of these
+	will lay doing nothing. This which defeats the entire purpose of the parallel execution of threads. Because of these
 	features, programming for GPUs is more restrictive but also allows for very large speedups. Some common 
 	good practices for programming for GPUs include using short _kernel_ calls (the _kernel_ is a function
 	which runs on the GPU) but extremely spread out problems over the cores of the GPU. Making use of the
