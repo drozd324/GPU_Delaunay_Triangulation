@@ -1,19 +1,3 @@
-#import numpy as np
-#import matplotlib.pyplot as plt 
-#import pandas as pd
-#
-#nins = np.loadtxt("./insertedPerIter.txt", dtype=int)
-#iter = np.arange(0, len(nins), 1) 
-#
-#plt.bar(iter, nins, color="cornflowerblue", edgecolor="black", hatch="//");
-#
-#plt.plot(iter[1:], [nins[i+1] / nins[i] for i in range(len(iter)-1)])
-#
-#plt.xlabel("Iteration")
-#plt.ylabel("Number of point insertions")
-#plt.savefig("ninsertVsIter.png", dpi=200)
-#
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -32,7 +16,7 @@ ax1.tick_params(axis="y")
 
 ax2 = ax1.twinx()
 line, = ax2.plot(iter[1:], ratios, color="red", marker="o", label="ratio")
-ax2.set_ylabel("Ratio of next number of insertions to previous")
+ax2.set_ylabel("Insertion ratio")
 ax2.tick_params(axis="y")
 
 handles = [bars, line]

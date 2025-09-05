@@ -24,7 +24,7 @@ for i, dist in enumerate(dist_names):
 	#plt.semilogx(nptsCPU, speedup, label=dist)
 
 plt.xlabel("Number of points")
-plt.ylabel("Speedup")
+plt.ylabel(r"Speedup ($\frac{time CPU}{time GPU}$)")
 #plt.xscale("log", base=2)
 #plt.yscale("log", base=2)
 
