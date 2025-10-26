@@ -1,0 +1,2 @@
+ntpb,npts,nTriMax,totalRuntime,totalCPUTime,totalGPUTime,prepForInsertTimeTot,insertTimeTot,flipTimeTot,updatePtsTimeTot,seed,distribution,deviceName
+128,10000,20001,0.068675,0.001378,0.067297,0.009746,0.000771,0.030524,0.026255,69420,0,NVIDIA A100-PCIE-40GB
