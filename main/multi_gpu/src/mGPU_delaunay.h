@@ -32,8 +32,6 @@ struct mGPUDelaunay: public delaunay {
 	cudaDeviceProp* devices;
 
 	Delaunay(Point* points, int n, int numThreadsPerBlock, int seed_mark, int distribution_mark);
-
-	Tri* triangles_;
 };
 
 
